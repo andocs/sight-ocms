@@ -124,6 +124,7 @@ const getTransactionDetails = asyncHandler(async (req, res) => {
 const updateTransaction = asyncHandler(async (req, res) => {
   const doctorId = req.user.id;
   const transactionId = req.params.id;
+  const updatedFields = req.body;
 
   const transaction = await Transaction.findOne({
     _id: transactionId,
@@ -134,18 +135,6 @@ const updateTransaction = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Record not found or unauthorized!');
   }
-
-  const {
-    typeOfLens,
-    typeOfFrame,
-    amount,
-  } = req.body;
-
-  // Create an object to store the updated fields
-  const updatedFields = {};
-  if (typeOfLens) updatedFields.typeOfLens = typeOfLens;
-  if (typeOfFrame) updatedFields.typeOfFrame = typeOfFrame;
-  if (amount) updatedFields.amount = amount;
 
   const session = await Transaction.startSession(sessionOptions);
   try{
@@ -179,7 +168,7 @@ const updateTransaction = asyncHandler(async (req, res) => {
     throw error
   }
   session.endSession();
-})
+});
 
 //@desc Delete a transaction
 //@route DELETE /api/doctor/transactions/:id
@@ -197,7 +186,7 @@ const deleteTransaction = asyncHandler(async (req, res) => {
       _id: transactionId,
       doctor: doctorId,
     },
-    {session});
+    { session });
   
     if (!transaction) {
       res.status(404);
@@ -317,6 +306,7 @@ const getRecordDetails = asyncHandler(async (req, res) => {
 const updateRecord = asyncHandler(async (req, res) => {
   const doctorId = req.user.id;
   const recordId = req.params.id;
+  const updatedFields = req.body;
 
   const record = await EyeRecord.findOne({
     _id: recordId,
@@ -327,18 +317,6 @@ const updateRecord = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Record not found or unauthorized!');
   }
-
-  const {
-    rightEye,
-    leftEye,
-    additionalNotes,
-  } = req.body;
-
-  // Create an object to store the updated fields
-  const updatedFields = {};
-  if (rightEye) updatedFields.rightEye = rightEye;
-  if (leftEye) updatedFields.leftEye = leftEye;
-  if (additionalNotes) updatedFields.additionalNotes = additionalNotes;
 
   const session = await EyeRecord.startSession(sessionOptions);
   try{
@@ -512,6 +490,7 @@ const getAppointmentDetails = asyncHandler(async (req, res) => {
 const updateAppointment = async (req, res) => {
   const doctorId = req.user.id;
   const appointmentId = req.params.id;
+  const updatedFields = req.body;
   
   const appointment = await Appointment.findOne({
     _id: appointmentId,
@@ -522,19 +501,6 @@ const updateAppointment = async (req, res) => {
     res.status(404);
     throw new Error('Appointment not found or unauthorized!');
   }
-
-  const { 
-    date, 
-    startTime, 
-    endTime, 
-    notes 
-  } = req.body;
-
-  const updatedFields = {};
-  if (date) updatedFields.date = date;
-  if (startTime) updatedFields.startTime = startTime;
-  if (endTime) updatedFields.endTime = endTime;
-  if (notes) updatedFields.notes = notes;
 
   const session = await Appointment.startSession(sessionOptions);
   try{

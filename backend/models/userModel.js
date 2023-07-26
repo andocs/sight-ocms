@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema({
   personalInfo: {
     fname: String,
     lname: String,
+    gender: String,
     contact: String,
     address: String,
     city: String,
