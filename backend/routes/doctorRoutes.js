@@ -11,7 +11,12 @@ const {
     getAllRecords,
     getTransactionDetails,
     updateTransaction,
-    deleteTransaction
+    deleteTransaction,
+    createAppointment,
+    getAllAppointments,
+    getAppointmentDetails,
+    updateAppointment,
+    deleteAppointment
   } = require("../controllers/doctorController");
 
 const validateToken = require("../middleware/validateTokenHandler");
@@ -37,5 +42,14 @@ router.route("/records/:id")
     .get(getRecordDetails)
     .put(updateRecord)
     .delete(deleteRecord)
+
+router.route("/appointments")
+.post(createAppointment)
+.get(getAllAppointments)
+
+router.route("/appointments/:id")
+    .get(getAppointmentDetails)
+    .put(updateAppointment)
+    .delete(deleteAppointment)
 
 module.exports = router;

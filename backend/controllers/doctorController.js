@@ -1,9 +1,12 @@
 const asyncHandler = require("express-async-handler");
+const AuditLog = require("../models/auditLogModel");
+
 const User = require("../models/userModel");
 const Transaction = require("../models/transactionModel");
 const EyeRecord = require("../models/eyeRecordsModel");
 const Appointment = require("../models/appointmentModel");
-const auditLogController  = require("./auditLogController");
+
+const sessionOptions = { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" }  }
 
 /**
 ##### FUNCTIONS #####
@@ -19,28 +22,11 @@ const generateReceipt = (transaction) => {
     typeOfFrame: transaction.typeOfFrame,
     amount: transaction.amount,
     timestamp: transaction.createdAt,
-    // Add additional receipt properties as needed
   };
 
   // Customize the receipt formatting or additional calculations as per your requirements
 
   return receipt;
-};
-
-const logAuditTrail = async (doctorId, operation, entity, entityId, oldValues, newValues, userIpAddress, userAgent, additionalInfo, session) => {
-  const auditLog = await auditLogController.createAuditLog({
-    userId: doctorId,
-    operation,
-    entity,
-    entityId,
-    oldValues,
-    newValues,
-    userIpAddress,
-    userAgent,
-    additionalInfo,
-    session, // Pass the MongoDB session to the audit log creation function
-  });
-  return auditLog;
 };
 
 /**
@@ -65,19 +51,44 @@ const createTransaction = asyncHandler(async (req, res) => {
     throw new Error('Patient not found!');
   }
 
-  // Create a new transaction
-  const transaction = await Transaction.create({
-    doctor: req.user.id,
-    patient: patient._id,
-    typeOfLens,
-    typeOfFrame,
-    amount
-  });
+  const session = await Transaction.startSession(sessionOptions);
+  try{
+    session.startTransaction();
 
-  // Generate receipt
-  const receipt = generateReceipt(transaction);
+    const transaction = await Transaction.create(
+      [{
+      doctor: req.user.id,
+      patient: patient._id,
+      typeOfLens,
+      typeOfFrame,
+      amount
+      }],
+      { session }
+    );
 
-  res.status(201).json({ transaction, receipt });
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'create',
+      entity: 'Transaction',
+      entityId: transaction[0]._id,
+      oldValues: null,
+      newValues: transaction[0],
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'New transaction added'
+      }],
+      { session }
+    );
+    await session.commitTransaction();
+    const receipt = generateReceipt(transaction);
+    res.status(201).json({ transaction, receipt });
+  }
+  catch(error){
+    await session.abortTransaction();
+    throw error
+  }
+  session.endSession();
 });
 
 //@desc Get all transactions for a doctor
@@ -114,7 +125,7 @@ const updateTransaction = asyncHandler(async (req, res) => {
   const doctorId = req.user.id;
   const transactionId = req.params.id;
 
-  const transaction = await EyeRecord.findOne({
+  const transaction = await Transaction.findOne({
     _id: transactionId,
     doctor: doctorId,
   });
@@ -136,15 +147,38 @@ const updateTransaction = asyncHandler(async (req, res) => {
   if (typeOfFrame) updatedFields.typeOfFrame = typeOfFrame;
   if (amount) updatedFields.amount = amount;
 
-  // Update the record with the new fields
-  const updatedTransaction = await Transaction.findByIdAndUpdate(
-    transactionId,
-    updatedFields,
-    { new: true, runValidators: true }
-  );
+  const session = await Transaction.startSession(sessionOptions);
+  try{
+    session.startTransaction();
 
-  res.json(updatedTransaction);
+    const updatedTransaction = await Transaction.findByIdAndUpdate(
+      transactionId,
+      updatedFields,
+      { new: true, runValidators: true, session }
+    );
 
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'update',
+      entity: 'Transaction',
+      entityId: transactionId,
+      oldValues: transaction,
+      newValues: updatedTransaction,
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'Transaction updated'
+      }],
+      { session }
+    );
+    await session.commitTransaction();
+    res.status(201).json(updatedTransaction);
+  }
+  catch(error){
+    await session.abortTransaction();
+    throw error
+  }
+  session.endSession();
 })
 
 //@desc Delete a transaction
@@ -154,21 +188,48 @@ const deleteTransaction = asyncHandler(async (req, res) => {
   const doctorId = req.user.id;
   const transactionId = req.params.id;
 
-  const transaction = await EyeRecord.findOneAndDelete({
-    _id: transactionId,
-    doctor: doctorId,
-  });
+  const session = await Transaction.startSession(sessionOptions);
+  try{
+    session.startTransaction();
+    
+    const transaction = await Transaction.findOneAndDelete(
+    {
+      _id: transactionId,
+      doctor: doctorId,
+    },
+    {session});
+  
+    if (!transaction) {
+      res.status(404);
+      throw new Error('Record not found or unauthorized!');
+    };
 
-  if (!transaction) {
-    res.status(404);
-    throw new Error('Record not found or unauthorized!');
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'delete',
+      entity: 'Transaction',
+      entityId: transactionId,
+      oldValues: transaction,
+      newValues: null,
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'Transaction deleted'
+      }],
+      { session }
+    );
+    await session.commitTransaction();
+    res.status(201).json('Transaction deleted successfully');
   }
-
-  res.json({ message: 'Record deleted successfully' });
+  catch(error){
+    await session.abortTransaction();
+    throw error
+  }
+  session.endSession();
 });
 
 /**
-##### RECORDS #####
+##### EYE RECORDS #####
 **/
 
 //@desc Add a new eye record
@@ -184,53 +245,43 @@ const addRecord = asyncHandler(async (req, res) => {
     throw new Error('Patient not found!');
   }
 
-  // Start the transaction
-  const session = await EyeRecord.startSession();
-  session.startTransaction();
-
+  const session = await EyeRecord.startSession(sessionOptions);
   try {
+    session.startTransaction();
+
     const eyeRecord = await EyeRecord.create(
       [{
         doctor: req.user.id,
         patientId: patient._id,
-        rightEye: {
-          sphere: +2.50,
-          cylinder: -1.00,
-          axis: 90,
-        },
-        leftEye: {
-          sphere: +2.75,
-          cylinder: -0.75,
-          axis: 95,
-        }
+        rightEye,
+        leftEye,
+        additionalNotes
       }],
       { session }
     );
 
-    // Log the audit trail for eye record creation
-    await logAuditTrail(
-      req.user.id,
-      'create', // CRUD operation: 'create', 'update', 'delete', etc.
-      'EyeRecord', // Entity type
-      eyeRecord[0]._id, // EyeRecord ID
-      null, // For creation, there are no old values
-      eyeRecord[0], // New eye record values
-      req.ip, // User's IP address
-      req.get('user-agent'), // User agent information
-      'New eye record added', // Additional info (if needed)
-      { session } // Pass the MongoDB session to the audit log creation function
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'create',
+      entity: 'EyeRecord',
+      entityId: eyeRecord[0]._id,
+      oldValues: null,
+      newValues: eyeRecord[0],
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'New eye record added'
+      }],
+      { session }
     );
-
     await session.commitTransaction();
-    session.endSession();
-
     res.status(201).json(eyeRecord);
-
-  } catch (error) {
+  }
+  catch (error) {
     await session.abortTransaction();
-    session.endSession();
     throw error;
   }
+  session.endSession();
 });
 
 //@desc Get all records by a doctor
@@ -289,15 +340,38 @@ const updateRecord = asyncHandler(async (req, res) => {
   if (leftEye) updatedFields.leftEye = leftEye;
   if (additionalNotes) updatedFields.additionalNotes = additionalNotes;
 
-  // Update the record with the new fields
-  const updatedRecord = await EyeRecord.findByIdAndUpdate(
-    recordId,
-    updatedFields,
-    { new: true, runValidators: true }
-  );
+  const session = await EyeRecord.startSession(sessionOptions);
+  try{
+    session.startTransaction();
 
-  res.json(updatedRecord);
+    const updatedRecord = await EyeRecord.findByIdAndUpdate(
+      recordId,
+      updatedFields,
+      { new: true, runValidators: true, session }
+    );
 
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'update',
+      entity: 'EyeRecord',
+      entityId: recordId,
+      oldValues: record,
+      newValues: updatedRecord,
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'Eye Record updated'
+      }],
+      { session }
+    );
+    await session.commitTransaction();  
+    res.status(201).json(updatedRecord);
+  }
+  catch(error){
+    await session.abortTransaction();
+    throw error
+  }
+  session.endSession();
 })
 
 //@desc Delete an eye record
@@ -307,153 +381,242 @@ const deleteRecord = asyncHandler(async (req, res) => {
   const doctorId = req.user.id;
   const recordId = req.params.id;
 
-  const record = await EyeRecord.findOneAndDelete({
-    _id: recordId,
-    doctor: doctorId,
-  });
+  const session = await EyeRecord.startSession(sessionOptions);
+  try{
+    session.startTransaction();
 
-  if (!record) {
-    res.status(404);
-    throw new Error('Record not found or unauthorized!');
+    const record = await EyeRecord.findOneAndDelete(
+    {
+      _id: recordId,
+      doctor: doctorId,
+    },
+    { session });
+
+    if (!record) {
+      res.status(404);
+      throw new Error('Record not found or unauthorized!');
+    };
+
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'delete',
+      entity: 'EyeRecord',
+      entityId: recordId,
+      oldValues: record,
+      newValues: null,
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'Eye Record deleted'
+      }],
+      { session }
+    );
+    await session.commitTransaction();
+    res.status(201).json('Record deleted successfully');
   }
-
-  res.json({ message: 'Record deleted successfully' });
+  catch(error){
+    await session.abortTransaction();
+    throw error
+  }
+  session.endSession();
 });
 
 /**
 ##### APPOINTMENTS #####
 **/
 
+//@desc Add a appointment
+//@route POST /api/doctor/appointments
+//@access private (doctor only)
 const createAppointment = async (req, res) => {
-  try {
-    const { patientId, date, startTime, endTime, notes } = req.body;
+  const { patientId, date, startTime, endTime, notes } = req.body;
 
-    // Check if the patient exists (you may need to validate the patientId)
-    // Assuming the authenticated user is a doctor, and their ID is available in req.user.id
-    const doctorId = req.user.id;
+  const doctorId = req.user.id;
 
-    // Create the new appointment
-    const appointment = await Appointment.create({
+  const patient = await User.findById(patientId);
+
+  if (!patient) {
+    res.status(404);
+    throw new Error('Patient not found!');
+  }
+
+  const session = await Appointment.startSession(sessionOptions);
+  try{
+    session.startTransaction();
+
+    const appointment = await Appointment.create(
+    [{
       doctor: doctorId,
       patient: patientId,
       date,
       startTime,
       endTime,
       notes,
-    });
+    }],
+    { session });
 
-    // Log the audit trail for appointment creation
-    await logAuditTrail(
-      doctorId,
-      req.user.email, // Assuming the authenticated user has an email field
-      'create', // CRUD operation: 'create', 'update', 'delete', etc.
-      'Appointment', // Entity type
-      appointment._id, // Appointment ID
-      null, // For creation, there are no old values
-      appointment, // New appointment values
-      req.ip, // User's IP address
-      req.get('user-agent'), // User agent information
-      'New appointment created' // Additional info (if needed)
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'create',
+      entity: 'Appointment',
+      entityId: appointment[0]._id,
+      oldValues: null,
+      newValues: appointment[0],
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'New appointment added'
+      }],
+      { session }
     );
-
-    res.status(201).json({ appointment });
-  } catch (error) {
-    console.error('Error creating appointment:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    await session.commitTransaction();
+    res.status(201).json(appointment);
   }
+  catch(error){
+    await session.abortTransaction();
+    throw error;
+  }
+  session.endSession(); 
 };
 
-// Function to update an existing appointment with rescheduling
+//@desc Get all appointments by a doctor
+//@route GET /api/doctor/appointments
+//@access private (doctor only)
+const getAllAppointments = asyncHandler(async (req, res) => {
+  const appointment = await Appointment.find({ doctor: req.user.id })
+  res.json(appointment);
+});
+
+//@desc Get appointment details
+//@route GET /api/doctor/appointments/:id
+//@access private (doctor only)
+const getAppointmentDetails = asyncHandler(async (req, res) => {
+  const appointmentId = req.params.id;
+  const doctorId = req.user.id;
+
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    doctor: doctorId,
+  });
+
+  if (!appointment) {
+    res.status(404);
+    throw new Error('Appointment not found!');
+  }
+  res.json(appointment);
+});
+
+//@desc Update an appointment
+//@route PUT /api/doctor/appointments/:id
+//@access private (doctor only)
 const updateAppointment = async (req, res) => {
-  try {
-    const { appointmentId, date, startTime, endTime, notes } = req.body;
+  const doctorId = req.user.id;
+  const appointmentId = req.params.id;
+  
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    doctor: doctorId,
+  });
 
-    // Check if the appointment exists and belongs to the authenticated doctor
-    // Assuming the authenticated user is a doctor, and their ID is available in req.user.id
-    const doctorId = req.user.id;
-    const appointment = await Appointment.findOne({
-      _id: appointmentId,
-      doctor: doctorId,
-    });
+  if (!appointment) {
+    res.status(404);
+    throw new Error('Appointment not found or unauthorized!');
+  }
 
-    if (!appointment) {
-      return res.status(404).json({ message: 'Appointment not found or unauthorized!' });
-    }
+  const { 
+    date, 
+    startTime, 
+    endTime, 
+    notes 
+  } = req.body;
 
-    // Store the old values for the audit trail
-    const oldValues = {
-      date: appointment.date,
-      startTime: appointment.startTime,
-      endTime: appointment.endTime,
-      notes: appointment.notes,
-    };
+  const updatedFields = {};
+  if (date) updatedFields.date = date;
+  if (startTime) updatedFields.startTime = startTime;
+  if (endTime) updatedFields.endTime = endTime;
+  if (notes) updatedFields.notes = notes;
 
-    // Update the appointment with the new values
-    appointment.date = date;
-    appointment.startTime = startTime;
-    appointment.endTime = endTime;
-    appointment.notes = notes;
-    await appointment.save();
-
-    // Log the audit trail for appointment update (with rescheduling)
-    await logAuditTrail(
-      doctorId,
-      req.user.email, // Assuming the authenticated user has an email field
-      'update', // CRUD operation: 'create', 'update', 'delete', etc.
-      'Appointment', // Entity type
-      appointment._id, // Appointment ID
-      oldValues, // Old appointment values
-      appointment, // New appointment values
-      req.ip, // User's IP address
-      req.get('user-agent'), // User agent information
-      'Appointment rescheduled' // Additional info (if needed)
+  const session = await Appointment.startSession(sessionOptions);
+  try{
+    session.startTransaction();
+    
+    const updatedAppointment = await Appointment.findByIdAndUpdate(
+      appointmentId,
+      updatedFields,
+      { new: true, runValidators: true, session }
     );
 
-    res.json({ appointment });
-  } catch (error) {
-    console.error('Error updating appointment:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'update',
+      entity: 'Appointment',
+      entityId: appointmentId,
+      oldValues: appointment,
+      newValues: updatedAppointment,
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'Appointment updated'
+      }],
+      { session }
+    );
+    await session.commitTransaction(); 
+    res.status(201).json(appointment);
   }
+  catch(error){
+    await session.abortTransaction();
+    throw error
+  }
+  session.endSession();
 };
 
-// Function to delete or cancel an existing appointment
+//@desc Delete an appointment
+//@route DELETE /api/doctor/appointments/:id
+//@access private (doctor only)
 const deleteAppointment = async (req, res) => {
-  try {
-    const appointmentId = req.params.id;
+  const doctorId = req.user.id;
+  const appointmentId = req.params.id;
 
-    // Check if the appointment exists and belongs to the authenticated doctor
-    // Assuming the authenticated user is a doctor, and their ID is available in req.user.id
-    const doctorId = req.user.id;
-    const appointment = await Appointment.findOneAndDelete({
+  const session = await Appointment.startSession(sessionOptions);
+  try{
+    session.startTransaction();
+
+    const appointment = await Appointment.findOneAndDelete(
+    {
       _id: appointmentId,
       doctor: doctorId,
-    });
+    },
+    { session });
 
     if (!appointment) {
-      return res.status(404).json({ message: 'Appointment not found or unauthorized!' });
+      res.status(404)
+      throw new Error('Appointment not found or unauthorized!');
     }
-
-    // Log the audit trail for appointment deletion or cancellation
-    await logAuditTrail(
-      doctorId,
-      req.user.email, // Assuming the authenticated user has an email field
-      'delete', // CRUD operation: 'create', 'update', 'delete', etc.
-      'Appointment', // Entity type
-      appointment._id, // Appointment ID
-      appointment, // Old appointment values (for record keeping)
-      null, // For deletion, there are no new values
-      req.ip, // User's IP address
-      req.get('user-agent'), // User agent information
-      'Appointment cancelled or deleted' // Additional info (if needed)
+    
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'delete',
+      entity: 'Appointment',
+      entityId: appointmentId,
+      oldValues: appointment,
+      newValues: null,
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'Appointment deleted'
+      }],
+      { session }
     );
+    await session.commitTransaction();
+    res.status(201).json('Appointment deleted successfully');
 
-    res.json({ message: 'Appointment deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting appointment:', error);
-    res.status(500).json({ message: 'Internal server error' });
   }
+  catch(error){
+    await session.abortTransaction();
+    throw error
+  }
+  session.endSession();
 };
-
 
 module.exports = {
   createTransaction,
@@ -461,9 +624,16 @@ module.exports = {
   getTransactionDetails,
   updateTransaction,
   deleteTransaction,
+
   addRecord,
   getAllRecords,
   getRecordDetails,
   updateRecord,
-  deleteRecord
+  deleteRecord,
+
+  createAppointment,
+  getAllAppointments,
+  getAppointmentDetails,
+  updateAppointment,
+  deleteAppointment  
 };

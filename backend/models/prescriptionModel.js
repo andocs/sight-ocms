@@ -41,6 +41,6 @@ const prescriptionSchema = new mongoose.Schema(
   }
 );
 
-const Prescription = mongoose.model("Prescription", prescriptionSchema);
+const Prescription = mongoose.model("Prescription", prescriptionSchema, "prescriptionDetails");
 
 module.exports = Prescription;

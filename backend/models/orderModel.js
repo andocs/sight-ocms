@@ -36,9 +36,12 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // Additional fields related to the order
-});
+},
+  {
+    timestamps: true,
+  }
+);
 
-const Order = mongoose.model('Order', orderSchema);
+const Order = mongoose.model('Order', orderSchema, "orderDetails");
 
 module.exports = Order;

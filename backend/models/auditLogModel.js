@@ -23,7 +23,7 @@ const auditLogSchema = new mongoose.Schema({
   },
   newValues: {
     type: mongoose.Schema.Types.Mixed,
-    required: true,
+    default: null,
   },
   userIpAddress: {
     type: String,
