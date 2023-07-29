@@ -10,11 +10,11 @@ const Maintenance = require("../models/maintenanceModel");
 const sessionOptions = { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" }  }
 
 /**
-##### STAFF MANAGEMENT #####
+##### STAFF MANAGEMENT (CRUD) #####
 **/
 
 //@desc REGISTER NEW STAFF ACCOUNT
-//@route POST /api/admin/register
+//@route POST /api/admin/staff
 //@access private (admin only)
 const registerStaff = asyncHandler(async (req, res) => {
     const {
@@ -110,7 +110,7 @@ const getStaffList = asyncHandler(async (req, res) => {
 });
 
 //@desc GET STAFF ACCOUNT DETAILS
-//@route GET /api/admin/:id
+//@route GET /api/admin/staff/:id
 //@access Private (admin only)
 const getStaffDetails = asyncHandler(async (req, res) => {
     const staffId = req.params.id;
@@ -123,7 +123,7 @@ const getStaffDetails = asyncHandler(async (req, res) => {
 });
 
 //@desc UPDATE EXISTING STAFF ACCOUNT
-//@route PUT /api/admin/:id
+//@route PUT /api/admin/staff/:id
 //@access private (admin only)
 const updateStaff = asyncHandler(async (req, res) => {
     const staffId = req.params.id;
@@ -179,7 +179,7 @@ const updateStaff = asyncHandler(async (req, res) => {
 });
 
 //@desc DELETE STAFF ACCOUNT
-//@route DELETE /api/admin/:id
+//@route DELETE /api/admin/staff/:id
 //@access private (admin only)
 const deleteUser = asyncHandler(async (req, res) => {
     const userId = req.params.id;
@@ -224,7 +224,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 
 /**
-##### INVENTORY MANAGEMENT #####
+##### INVENTORY MANAGEMENT (CRUD) #####
 **/
 
 //@desc ADD INVENTORY ITEMS
@@ -288,7 +288,7 @@ const addInventoryItem = asyncHandler(async (req, res) => {
 //@route GET /api/admin/inventory
 //@access private (admin only)
 const getInventoryList = asyncHandler(async (req, res) => {
-    const inventoryList = await Inventory.find({})
+    const inventoryList = await Inventory.find()
     if (inventoryList = {}){
         res.json("No items currently in inventory.")
     }
@@ -297,7 +297,7 @@ const getInventoryList = asyncHandler(async (req, res) => {
 
 //@desc GET INVENTORY ITEM DETAILS
 //@route GET /api/admin/inventory/:id
-//@access private (doctor only)
+//@access private (admin only)
 const getItemDetails = asyncHandler(async (req, res) => {
     const itemId = req.params.id;
     const inventoryItem = await Inventory.findOne({ _id: itemId });
@@ -310,7 +310,7 @@ const getItemDetails = asyncHandler(async (req, res) => {
 
 //@desc UPDATE INVENTORY ITEM
 //@route PUT /api/admin/inventory/:id
-//@access private (doctor only)
+//@access private (admin only)
 const updateItem = asyncHandler(async (req, res) => {
     const itemId = req.params.id;
     const updatedFields = req.body;
@@ -358,7 +358,7 @@ const updateItem = asyncHandler(async (req, res) => {
 
 //@desc DELETE INVENTORY ITEM
 //@route DELETE /api/admin/inventory/:id
-//@access private (doctor only)
+//@access private (admin only)
 const deleteItem = asyncHandler(async (req, res) => {
     const itemId = req.params.id;
   
@@ -398,12 +398,105 @@ const deleteItem = asyncHandler(async (req, res) => {
 });
 
 /**
-##### MAINTENANCE MANAGEMENT #####
+##### MAINTENANCE MANAGEMENT (READ AND UPDATE) #####
 **/
 
+//@desc GET MAINTENANCE REQUEST LIST 
+//@route GET /api/admin/maintenance
+//@access private (admin only)
+const getMaintenanceList = asyncHandler(async (req, res) => {
+    const maintenanceRequests = await Maintenance.find()
+    if (maintenanceRequests = {}){
+        res.json("No items currently in inventory.")
+    }
+    res.json(maintenanceRequests);
+});
+
+//@desc GET MAINTENANCE REQUEST DETAILS
+//@route GET /api/admin/maintenance/:id
+//@access private (admin only)
+const getMaintenanceRequestDetails = asyncHandler(async (req, res) => {
+    const requestId = req.params.id;
+    const maintenanceRequest = await Maintenance.findOne({ _id: requestId });
+    if (!maintenanceRequest) {
+      res.status(404);
+      throw new Error('Item not found!');
+    }
+    res.json(maintenanceRequest);
+});
+
+//@desc UPDATE MAINTENANCE REQUEST STATUS
+//@route PUT /api/admin/maintenance/:id
+//@access private (admin only)
+const updateRequestStatus = asyncHandler(async (req, res) => {
+    const requestId = req.params.id;
+    const { status } = req.body;
+  
+    const request = await Maintenance.findOne({ _id: requestId });
+  
+    if (!request) {
+      res.status(404);
+      throw new Error('Item not found!');
+    }
+  
+    const session = await Maintenance.startSession(sessionOptions);
+    try{
+      session.startTransaction();
+  
+      const updatedStatus = await Maintenance.findByIdAndUpdate(
+        requestId,
+        status,
+        { new: true, runValidators: true, session }
+      );
+  
+      await AuditLog.create(
+        [{
+        userId: req.user.id,
+        operation: 'update',
+        entity: 'Maintenance',
+        entityId: requestId,
+        oldValues: request,
+        newValues: updatedStatus,
+        userIpAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        additionalInfo: 'Maintenance Status updated'
+        }],
+        { session }
+      );
+      await session.commitTransaction();
+      res.status(201).json(updatedStatus);
+    }
+    catch(error){
+      await session.abortTransaction();
+      throw error
+    }
+    session.endSession();
+});
+
 /**
-##### AUDIT LOGS #####
+##### AUDIT LOGS (READ ONLY) #####
 **/
+
+//@desc GET LIST OF AUDIT LOGS
+//@route GET /api/admin/log
+//@access private (admin only)
+const getAuditLogs = asyncHandler(async (req, res) => {
+    const auditLogs = await AuditLog.find();
+    res.json(auditLogs);
+});
+
+//@desc GET AUDIT LOG DETAILS
+//@route GET /api/admin/log/:id
+//@access private (admin only)
+const getAuditLogDetails = asyncHandler(async (req, res) => {
+    const auditLogId = req.params.id;
+    const auditLog = await AuditLog.findById(auditLogId);
+    if (!auditLog) {
+      res.status(404);
+      throw new Error("Audit log not found!");
+    }
+    res.json(auditLog);
+});
 
 module.exports = {
     registerStaff,
@@ -416,5 +509,12 @@ module.exports = {
     getInventoryList,
     getItemDetails,
     updateItem,
-    deleteItem
+    deleteItem,
+
+    getMaintenanceList,
+    getMaintenanceRequestDetails,
+    updateRequestStatus,
+
+    getAuditLogs,
+    getAuditLogDetails
  };
