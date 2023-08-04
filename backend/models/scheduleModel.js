@@ -1,38 +1,50 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-// Enum for the days of the week
-const daysOfWeekEnum = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+// Custom validator function for time in 'HH:mm AM/PM' format
+function validateTime(value) {
+  const timeRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9]) (AM|PM)$/;
 
-// Enum for the available time intervals from 9:00 AM to 5:00 PM with 30-minute intervals
-const availableTimeIntervals = [
-  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-  '15:00', '15:30', '16:00', '16:30', '17:00'
-];
+  if (!timeRegex.test(value)) {
+    throw new Error("Invalid time format. Use 'HH:mm AM/PM' format.");
+  }
+}
+
+// Generate time slots from 9 AM to 5 PM with 30-minute intervals
+const timeSlots = [];
+for (let hour = 9; hour <= 16; hour++) {
+  for (let minute = 0; minute <= 30; minute += 30) {
+    const ampm = hour < 12 ? "AM" : "PM";
+    const hourFormatted = hour % 12 || 12;
+    const timeSlot = `${hourFormatted.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")} ${ampm}`;
+    timeSlots.push(timeSlot);
+  }
+}
 
 const doctorScheduleSchema = new mongoose.Schema({
   doctor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true,
   },
   dayOfWeek: {
     type: String,
-    enum: daysOfWeekEnum,
+    enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     required: true,
   },
   startTime: {
     type: String,
-    enum: availableTimeIntervals,
     required: true,
+    validate: [validateTime, "Invalid startTime format"],
+    enum: timeSlots,
   },
   endTime: {
     type: String,
-    enum: availableTimeIntervals,
     required: true,
+    validate: [validateTime, "Invalid endTime format"],
+    enum: timeSlots,
   },
 });
 
-const DoctorSchedule = mongoose.model('Schedule', doctorScheduleSchema, 'scheduleDetails');
+const DoctorSchedule = mongoose.model("DoctorSchedule", doctorScheduleSchema, "scheduleDetails");
 
 module.exports = DoctorSchedule;

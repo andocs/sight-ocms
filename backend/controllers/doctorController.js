@@ -5,6 +5,7 @@ const User = require("../models/userModel");
 const Transaction = require("../models/transactionModel");
 const EyeRecord = require("../models/eyeRecordsModel");
 const Appointment = require("../models/appointmentModel");
+const Schedule = require("../models/scheduleModel");
 
 const sessionOptions = { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" }  }
 
@@ -30,10 +31,10 @@ const generateReceipt = (transaction) => {
 };
 
 /**
-##### TRANSACTIONS #####
+##### TRANSACTIONS (CRUD) #####
 **/
 
-//@desc Create a new transaction
+//@desc ADDS A NEW TRANSACTION
 //@route POST /api/doctor/transactions
 //@access private (doctor only)
 const createTransaction = asyncHandler(async (req, res) => {
@@ -91,7 +92,7 @@ const createTransaction = asyncHandler(async (req, res) => {
   session.endSession();
 });
 
-//@desc Get all transactions for a doctor
+//@desc GET THE LIST OF THE DOCTOR'S TRANSACTION
 //@route GET /api/doctor/transactions
 //@access private (doctor only)
 const getAllTransactions = asyncHandler(async (req, res) => {
@@ -99,7 +100,7 @@ const getAllTransactions = asyncHandler(async (req, res) => {
   res.json(transactions);
 });
 
-//@desc Get transaction details
+//@desc GET TRANSACTION DETAILS
 //@route GET /api/doctor/transactions/:id
 //@access private (doctor only)
 const getTransactionDetails = asyncHandler(async (req, res) => {
@@ -118,7 +119,7 @@ const getTransactionDetails = asyncHandler(async (req, res) => {
   res.json(transaction);
 });
 
-//@desc Update a transaction
+//@desc UPDATES EXISTING TRANSACTION
 //@route PUT /api/doctor/transactions/:id
 //@access private (doctor only)
 const updateTransaction = asyncHandler(async (req, res) => {
@@ -170,7 +171,7 @@ const updateTransaction = asyncHandler(async (req, res) => {
   session.endSession();
 });
 
-//@desc Delete a transaction
+//@desc DELETES TRANSACTION
 //@route DELETE /api/doctor/transactions/:id
 //@access private (doctor only)
 const deleteTransaction = asyncHandler(async (req, res) => {
@@ -218,10 +219,10 @@ const deleteTransaction = asyncHandler(async (req, res) => {
 });
 
 /**
-##### EYE RECORDS #####
+##### EYE RECORDS (CRUD) #####
 **/
 
-//@desc Add a new eye record
+//@desc ADDS A NEW EYE RECORD FOR THE PATIENT
 //@route POST /api/doctor/records
 //@access private (doctor only)
 const addRecord = asyncHandler(async (req, res) => {
@@ -273,7 +274,7 @@ const addRecord = asyncHandler(async (req, res) => {
   session.endSession();
 });
 
-//@desc Get all records by a doctor
+//@desc GET ALL THE RECORDS MADE BY THE DOCTOR
 //@route GET /api/doctor/records
 //@access private (doctor only)
 const getAllRecords = asyncHandler(async (req, res) => {
@@ -281,7 +282,7 @@ const getAllRecords = asyncHandler(async (req, res) => {
   res.json(records);
 });
 
-//@desc Get eye record
+//@desc GET DETAILS OF PATIENT EYE RECORD
 //@route GET /api/doctor/records/:id
 //@access private (doctor only)
 const getRecordDetails = asyncHandler(async (req, res) => {
@@ -300,7 +301,7 @@ const getRecordDetails = asyncHandler(async (req, res) => {
   res.json(record);
 });
 
-//@desc Update an eye record
+//@desc UPDATES PATIENT'S EYE RECORD
 //@route PUT /api/doctor/records/:id
 //@access private (doctor only)
 const updateRecord = asyncHandler(async (req, res) => {
@@ -352,7 +353,7 @@ const updateRecord = asyncHandler(async (req, res) => {
   session.endSession();
 })
 
-//@desc Delete an eye record
+//@desc DELETES EYE RECORD
 //@route DELETE /api/doctor/records/:id
 //@access private (doctor only)
 const deleteRecord = asyncHandler(async (req, res) => {
@@ -400,10 +401,10 @@ const deleteRecord = asyncHandler(async (req, res) => {
 });
 
 /**
-##### APPOINTMENTS #####
+##### APPOINTMENTS (CRUD) #####
 **/
 
-//@desc Add a appointment
+//@desc ADDS APPOINTMENT (MAINLY FOLLOW UPS)
 //@route POST /api/doctor/appointments
 //@access private (doctor only)
 const createAppointment = async (req, res) => {
@@ -457,7 +458,7 @@ const createAppointment = async (req, res) => {
   session.endSession(); 
 };
 
-//@desc Get all appointments by a doctor
+//@desc GET LIST OF DOCTOR'S APPOINTMENTS
 //@route GET /api/doctor/appointments
 //@access private (doctor only)
 const getAllAppointments = asyncHandler(async (req, res) => {
@@ -465,7 +466,7 @@ const getAllAppointments = asyncHandler(async (req, res) => {
   res.json(appointment);
 });
 
-//@desc Get appointment details
+//@desc GET APPOINTMENT DETAILS
 //@route GET /api/doctor/appointments/:id
 //@access private (doctor only)
 const getAppointmentDetails = asyncHandler(async (req, res) => {
@@ -484,7 +485,7 @@ const getAppointmentDetails = asyncHandler(async (req, res) => {
   res.json(appointment);
 });
 
-//@desc Update an appointment
+//@desc UPDATES APPOINTMENT DETAILS
 //@route PUT /api/doctor/appointments/:id
 //@access private (doctor only)
 const updateAppointment = async (req, res) => {
@@ -527,7 +528,7 @@ const updateAppointment = async (req, res) => {
       { session }
     );
     await session.commitTransaction(); 
-    res.status(201).json(appointment);
+    res.status(201).json(updatedAppointment);
   }
   catch(error){
     await session.abortTransaction();
@@ -536,7 +537,7 @@ const updateAppointment = async (req, res) => {
   session.endSession();
 };
 
-//@desc Delete an appointment
+//@desc DELETES APPOINTMENT
 //@route DELETE /api/doctor/appointments/:id
 //@access private (doctor only)
 const deleteAppointment = async (req, res) => {
@@ -584,6 +585,180 @@ const deleteAppointment = async (req, res) => {
   session.endSession();
 };
 
+/**
+##### SCHEDULE (CRUD) #####
+**/
+
+//@desc ADD DOCTOR SCHEDULE
+//@route POST /api/doctor/schedule
+//@access private (doctor only)
+const addDoctorSchedule = asyncHandler(async (req, res) => {
+  const { dayOfWeek, startTime, endTime } = req.body;
+  const doctorId = req.user.id;
+  const session = await Schedule.startSession(sessionOptions);
+  try{
+    session.startTransaction();
+    const doctorSchedule = await Schedule.create(
+    [{
+      doctor: doctorId,
+      dayOfWeek,
+      startTime,
+      endTime,
+    }],
+    { session });
+
+    await AuditLog.create(
+      [{
+      userId: doctorId,
+      operation: 'create',
+      entity: 'Schedule',
+      entityId: doctorSchedule[0]._id,
+      oldValues: null,
+      newValues: doctorSchedule[0],
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'New doctor schedule added'
+      }],
+      { session }
+    );
+    await session.commitTransaction();
+    res.status(201).json(doctorSchedule);
+  } 
+  catch(error){
+    await session.abortTransaction();
+    throw error;
+  }
+  session.endSession(); 
+});
+
+//@desc GET LIST OF DOCTOR'S SCHEDULE
+//@route GET /api/doctor/schedule
+//@access private (doctor only)
+const getDoctorSchedule = asyncHandler(async (req, res) => {
+  const doctorId = req.user.id;
+  const doctorSchedules = await Schedule.find({ doctor: doctorId });
+  res.json(doctorSchedules);
+});
+
+//@desc GET SCHEDULE DETAILS
+//@route GET /api/doctor/schedule/:id
+//@access private (doctor only)
+const getScheduleDetails = asyncHandler(async (req, res) => {
+  const scheduleId = req.params.id;
+  const doctorId = req.user.id;
+
+  const schedule = await Schedule.findOne({
+    _id: scheduleId,
+    doctor: doctorId,
+  });
+
+  if (!schedule) {
+    res.status(404);
+    throw new Error('Appointment not found!');
+  }
+  res.json(schedule);
+});
+
+//@desc UPDATE DOCTOR'S SCHEDULE
+//@route PUT /api/doctor/schedule/:id
+//@access private (doctor only)
+const updateDoctorSchedule = asyncHandler(async (req, res) => {
+  const doctorId = req.user.id;
+  const scheduleId = req.params.id;
+  const updatedFields = req.body;
+
+  const schedule = await Schedule.findOne({
+    _id: scheduleId,
+    doctor: doctorId,
+  });
+
+  if (!schedule) {
+    res.status(404);
+    throw new Error('Doctor schedule not found or unauthorized!');
+  }
+
+  const session = await Schedule.startSession(sessionOptions);
+  try{
+    session.startTransaction();
+
+    const updatedSchedule = await Schedule.findByIdAndUpdate(
+      scheduleId,
+      updatedFields,
+      { new: true, runValidators: true, session }
+    );
+
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'update',
+      entity: 'Schedule',
+      entityId: scheduleId,
+      oldValues: schedule,
+      newValues: updatedSchedule,
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'Doctor schedule updated'
+      }],
+      { session }
+    );
+    await session.commitTransaction(); 
+    res.json(updatedSchedule);
+  }
+  catch(error){
+    await session.abortTransaction();
+    throw error
+  }
+  session.endSession();
+});
+
+//@desc DELETE DOCTOR'S SCHEDULE
+//@route DELETE /api/doctor/schedule/:id
+//@access private (doctor only)
+const deleteDoctorSchedule = asyncHandler(async (req, res) => {
+  const doctorId = req.user.id;
+  const scheduleId = req.params.id;
+
+  const session = await Schedule.startSession(sessionOptions);
+  try{
+    session.startTransaction();
+
+    const schedule = await Schedule.findOneAndDelete(
+    {
+      _id: scheduleId,
+      doctor: doctorId,
+    },
+    { session });
+
+    if (!schedule) {
+      res.status(404);
+      throw new Error('Doctor schedule not found or unauthorized!');
+    }
+
+    await AuditLog.create(
+      [{
+      userId: req.user.id,
+      operation: 'delete',
+      entity: 'Schedule',
+      entityId: scheduleId,
+      oldValues: schedule,
+      newValues: null,
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'Doctor schedule deleted'
+      }],
+      { session }
+    );
+    await session.commitTransaction();
+    res.status(201).json('Doctor appointment deleted successfully');
+  }
+  catch(error){
+    await session.abortTransaction();
+    throw error
+  }
+  session.endSession();  
+});
+
+
 module.exports = {
   createTransaction,
   getAllTransactions,
@@ -601,5 +776,11 @@ module.exports = {
   getAllAppointments,
   getAppointmentDetails,
   updateAppointment,
-  deleteAppointment  
+  deleteAppointment,
+
+  addDoctorSchedule,
+  getDoctorSchedule,
+  getScheduleDetails,
+  updateDoctorSchedule,
+  deleteDoctorSchedule
 };

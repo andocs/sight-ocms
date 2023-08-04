@@ -16,7 +16,12 @@ const {
     getAllAppointments,
     getAppointmentDetails,
     updateAppointment,
-    deleteAppointment
+    deleteAppointment,
+    addDoctorSchedule,
+    getDoctorSchedule,
+    getScheduleDetails,
+    updateDoctorSchedule,
+    deleteDoctorSchedule
   } = require("../controllers/doctorController");
 
 const validateToken = require("../middleware/validateTokenHandler");
@@ -51,5 +56,14 @@ router.route("/appointments/:id")
     .get(getAppointmentDetails)
     .put(updateAppointment)
     .delete(deleteAppointment)
+
+router.route("/schedule")
+    .post(addDoctorSchedule)
+    .get(getDoctorSchedule)
+
+router.route("/schedule/:id")
+    .get(getScheduleDetails)
+    .put(updateDoctorSchedule)
+    .delete(deleteDoctorSchedule)
 
 module.exports = router;

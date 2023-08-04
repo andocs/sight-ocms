@@ -212,11 +212,12 @@ const changePassword = asyncHandler(async (req, res) => {
     res.json(user);
   }); 
 
-module.exports = {  registerUser,
-                    loginUser,
-                    addInfo,
-                    updateInfo,
-                    getUserById,
-                    changeEmail,
-                    changePassword
-                 };
+module.exports = {  
+    registerUser,
+    loginUser,
+    addInfo,
+    updateInfo,
+    getUserById,
+    changeEmail,
+    changePassword
+};
