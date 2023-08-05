@@ -4,7 +4,9 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { login } from '../../features/auth/authSlice'
+import decode from "jwt-decode"
 import Spinner from '../../components/spinner.component'
+
 
 function Login() {
 
@@ -27,19 +29,18 @@ function Login() {
     }
 
     if(isSuccess){
-      const decodedToken = JSON.parse(token);
+      const decodedToken = decode(token)
       console.log(decodedToken);
-      const name = decodedToken.name;
-      const role = decodedToken.role;
+      const name = decodedToken.user.name;
+      const role = decodedToken.user.role;
       toast.success(`You have successfully logged in ${name} | ${role}`)
       navigate(`/${role}`)
     }
 
     if(!isSuccess && token){
-      toast.error('test')
-      const decodedToken = JSON.parse(token);
+      const decodedToken = decode(token)
       console.log(decodedToken);
-      const role = decodedToken.role;
+      const role = decodedToken.user.role;
       navigate(`/${role}`)
     }
 

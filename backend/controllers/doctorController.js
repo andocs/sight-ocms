@@ -6,6 +6,7 @@ const Transaction = require("../models/transactionModel");
 const EyeRecord = require("../models/eyeRecordsModel");
 const Appointment = require("../models/appointmentModel");
 const Schedule = require("../models/scheduleModel");
+const Order = require("../models/orderModel");
 
 const sessionOptions = { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" }  }
 
@@ -757,6 +758,56 @@ const deleteDoctorSchedule = asyncHandler(async (req, res) => {
   }
   session.endSession();  
 });
+
+/**
+##### ORDERS (CRUD) #####
+**/
+
+//@desc CREATE ORDER FOR GLASSES/LENSES
+//@route POST /api/doctor/order/:id
+//@access private (doctor only)
+const createOrder = asyncHandler(async (req, res) => {
+  const { dayOfWeek, startTime, endTime } = req.body;
+  const doctorId = req.user.id;
+  const patientId = req.params.id;
+  const session = await Order.startSession(sessionOptions);
+  try{
+    session.startTransaction();
+    const orderDetails = await Order.create(
+    [{
+      doctor: doctorId,
+      dayOfWeek,
+      startTime,
+      endTime,
+    }],
+    { session });
+
+    await AuditLog.create(
+      [{
+      userId: doctorId,
+      operation: 'create',
+      entity: 'Schedule',
+      entityId: doctorSchedule[0]._id,
+      oldValues: null,
+      newValues: doctorSchedule[0],
+      userIpAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      additionalInfo: 'New doctor schedule added'
+      }],
+      { session }
+    );
+    await session.commitTransaction();
+    res.status(201).json(doctorSchedule);
+  } 
+  catch(error){
+    await session.abortTransaction();
+    throw error;
+  }
+  session.endSession(); 
+});
+
+
+
 
 
 module.exports = {

@@ -2,14 +2,15 @@ import { useState } from "react";
 import AdminNav from "./adminnav.component";
 import PatientNav from "./patientnav.component";
 import DoctorNav from "./doctornav.component";
+import decode from "jwt-decode"
 
 function Sidenav() {
 
   const token = localStorage.getItem('user')
   let role = null
   if (token) {
-    const decodedToken = JSON.parse(token);
-    role = decodedToken.role;
+    const decodedToken = decode(token);
+    role = decodedToken.user.role;
   } 
 
   const [isExpanded, setIsExpanded] = useState(true);

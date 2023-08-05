@@ -54,7 +54,7 @@ const loginUser = asyncHandler(async (req, res) => {
     if(user && (await bcrypt.compare(password, user.password))){
         const token = jwt.sign({
             user: {
-                email: user.email,
+                name: user.personalInfo.fname + " " + user.personalInfo.lname,
                 role: user.role,
                 id: user.id,
             },
