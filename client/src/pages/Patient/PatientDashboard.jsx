@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate, Outlet } from "react-router-dom"
 import { toast } from 'react-toastify';
+
+import decode from "jwt-decode";
 import PatientHome from "./PatientHome";
 import Sidenav from "../../components/sidenav.component";
 
@@ -13,8 +15,8 @@ function PatientDashboard() {
 
     useEffect(() => {
         if (token) {
-            const decodedToken = JSON.parse(token);
-            const role = decodedToken.role;
+            const decodedToken = decode(token);
+            const role = decodedToken.user.role;
             
             if (role !== "patient") {
                 navigate(`/${role}`);
@@ -24,7 +26,6 @@ function PatientDashboard() {
                     pushed++
                 }
             } 
-            console.log(token,decodedToken,role,role !== 'patient');
         } else {
             navigate("/login");
             errors.push("Unauthorized Access!");

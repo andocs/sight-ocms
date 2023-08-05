@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom"
 import { toast } from 'react-toastify';
 
+import decode from "jwt-decode";
 import Sidenav from "../../components/sidenav.component";
 import AdminHome from "./AdminHome";
 
@@ -15,8 +16,8 @@ function AdminDashboard() {
 
     useEffect(() => {
         if (token) {
-            const decodedToken = JSON.parse(token);
-            const role = decodedToken.role;
+            const decodedToken = decode(token);
+            const role = decodedToken.user.role;
             
             if (role !== "admin") {
                 navigate(`/${role}`);

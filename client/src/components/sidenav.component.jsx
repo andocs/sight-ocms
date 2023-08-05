@@ -2,7 +2,7 @@ import { useState } from "react";
 import AdminNav from "./adminnav.component";
 import PatientNav from "./patientnav.component";
 import DoctorNav from "./doctornav.component";
-import decode from "jwt-decode"
+import decode from "jwt-decode";
 
 function Sidenav() {
 
@@ -39,7 +39,7 @@ function Sidenav() {
         {role ==='admin' && <AdminNav/>}
         {role ==='patient' && <PatientNav/>}
         {role ==='doctor' && <DoctorNav/>}
-        {/* {role ==='admin' && <AdminNav/>} */}
+        {/* {role ==='technician' && <AdminNav/>} */}
         </div>
 
         

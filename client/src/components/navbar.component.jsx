@@ -4,6 +4,7 @@ import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { logout, reset } from '../features/auth/authSlice'
+import decode from "jwt-decode";
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -32,8 +33,8 @@ export default function Navbar() {
   const token = localStorage.getItem('user')
   let role = null
   if (token) {
-    const decodedToken = JSON.parse(token);
-    role = decodedToken.role;
+    const decodedToken = decode(token);
+    role = decodedToken.user.role;
   } 
 
   const updatedNavigation = user

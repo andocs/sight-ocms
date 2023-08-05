@@ -27,7 +27,6 @@ function DoctorDashboard() {
                     pushed++
                 }
             } 
-            console.log(token,decodedToken,role,role !== 'doctor');
         } else {
             navigate("/login");
             errors.push("Unauthorized Access!");
