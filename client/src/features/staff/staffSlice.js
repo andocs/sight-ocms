@@ -2,7 +2,8 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import staffService from './staffService';
 
 const initialState = {
-  staff: null,
+  newStaff: null,
+  staff: [],
   isLoading: false,
   isError: false,
   isSuccess: false,
@@ -26,6 +27,35 @@ export const createStaffAccount = createAsyncThunk(
       return thunkAPI.rejectWithValue(message);
     }
   }
+);
+
+// Get all staff accounts
+export const getStaffAccounts = createAsyncThunk(
+  'staff/getStaffAccount', async (_, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState().auth.user.token
+      const staffArray = await staffService.getStaffAccounts(token);
+      const staffData = Object.keys(staffArray).map(key => ({
+        ...staffArray[key].personalInfo,
+        _id: staffArray[key]._id,
+        email: staffArray[key].email,
+        role: staffArray[key].role,
+        createdAt: staffArray[key].createdAt,
+        updatedAt: staffArray[key].updatedAt,
+      }));
+      return staffData
+    }
+    catch (error){
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+  
 );
 
 // Edit staff account
@@ -74,7 +104,7 @@ const staffSlice = createSlice({
       state.isError = false
       state.isSuccess = false
       state.message = ''
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -84,9 +114,23 @@ const staffSlice = createSlice({
       .addCase(createStaffAccount.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.staff = action.payload;
+        state.newStaff = action.payload;
       })
       .addCase(createStaffAccount.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+        state.newStaff = null;
+      })
+      .addCase(getStaffAccounts.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getStaffAccounts.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.staff = action.payload;
+      })
+      .addCase(getStaffAccounts.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;

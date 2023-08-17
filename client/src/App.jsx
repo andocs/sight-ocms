@@ -21,9 +21,10 @@ import ViewOrder from './pages/Patient/ViewOrder';
 import ViewRecords from './pages/Patient/ViewRecords';
 
 //ADMIN
-import AddUser from './pages/Admin/AddUser';
-import DeleteUser from './pages/Admin/DeleteUser';
-import EditUser from './pages/Admin/EditUser';
+import AddStaff from './pages/Admin/AddStaffAccount';
+import ViewStaff from './pages/Admin/ViewStaff';
+import StaffDetails from './pages/Admin/StaffDetails';
+import EditStaff from './pages/Admin/EditStaffAccount';
 import ViewInventory from './pages/Admin/ViewInventory';
 import AddItems from './pages/Admin/AddItems';
 import RemoveItems from './pages/Admin/RemoveItems';
@@ -37,6 +38,7 @@ import GeneratePrescription from './pages/Doctor/GeneratePrescription';
 import UpdateRecords from './pages/Doctor/UpdateRecords';
 
 import Navbar from './components/navbar.component';
+
 
 function App() {
 
@@ -53,10 +55,11 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
-          <Route path="admin" element={<AdminDashboard />}>
-            <Route path="add-user" element={<AddUser />} />
-            <Route path="delete-user" element={<DeleteUser/>} />
-            <Route path="edit-user" element={<EditUser />} />
+          <Route path="/admin" element={<AdminDashboard />}>
+            <Route path="add-staff" element={<AddStaff />} />
+            <Route path="view-staff" element={<ViewStaff/>} />
+            <Route path="staff-details" element={<StaffDetails />}/>
+            <Route path="edit-staff" element={<EditStaff />} />
             <Route path="view-inventory" element={<ViewInventory />} />
             <Route path="add-item" element={<AddItems />} />
             <Route path="remove-item" element={<RemoveItems />} />

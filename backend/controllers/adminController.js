@@ -54,8 +54,7 @@ const registerStaff = asyncHandler(async (req, res) => {
         contact,
         address,
         city,
-        province,
-        postal,
+        province
     }
 
     const session = await User.startSession(sessionOptions);

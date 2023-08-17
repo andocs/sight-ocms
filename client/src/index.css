@@ -7,3 +7,17 @@
 .sidenav{
     height: calc(100vh - theme('spacing.32'));
 }
+th:first-child{
+    border-bottom-left-radius: 6px;
+    
+}
+th:last-child{
+    border-bottom-right-radius: 6px;
+}
+.header-shadow{
+    box-shadow: 0 5px 10px rgb(0 0 0 / 0.1);
+}
+tbody{
+    top: -3px;
+    box-shadow: 0 5px 10px rgb(0 0 0 / 0.1);
+}

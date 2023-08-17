@@ -1,11 +1,11 @@
 
-function DeleteUser() {
+function EditStaffAccount() {
   return (
     <>
     <div className="w-full border-b">
       <div className="m-8">
         <div>
-          <p className='font-medium text-5xl'>Delete User</p>
+          <p className='font-medium text-5xl'>Edit User</p>
         </div>
       </div>
     </div>
@@ -13,4 +13,4 @@ function DeleteUser() {
   )
 }
 
-export default DeleteUser
+export default EditStaffAccount

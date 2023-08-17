@@ -760,7 +760,7 @@ const deleteDoctorSchedule = asyncHandler(async (req, res) => {
 });
 
 /**
-##### ORDERS (CRUD) #####
+##### ORDERS (CRUD) INCOMPLETE #####
 **/
 
 //@desc CREATE ORDER FOR GLASSES/LENSES
@@ -805,10 +805,6 @@ const createOrder = asyncHandler(async (req, res) => {
   }
   session.endSession(); 
 });
-
-
-
-
 
 module.exports = {
   createTransaction,

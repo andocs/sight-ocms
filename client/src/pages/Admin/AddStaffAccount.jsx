@@ -19,7 +19,7 @@ const roles = [
   { role: 'Technician' }
 ]
 
-function AddUser() {
+function AddStaffAccount() {
 
   const [formData, setFormData] = useState({
     fname: '',
@@ -50,24 +50,24 @@ function AddUser() {
 
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const { staff, isLoading, isError, isSuccess, message } = useSelector((state) => state.staff) 
+  const { newStaff, isLoading, isError, isSuccess, message } = useSelector((state) => state.staff)
 
   useEffect(() => {
     if(isError){
         toast.error(message)
     }
 
-    if(isSuccess && staff){
-      toast.success(`${userData.role} ${userData.fname} ${userData.lname} successfully registered.`)
-      navigate('/admin')
+    if(isSuccess && newStaff !== null){
+      const userData = newStaff[0];
+      const str = userData.role;
+      const role = str.toUpperCase();
+      toast.success(`${role} ${userData.personalInfo.fname} ${userData.personalInfo.lname} successfully registered.`)
+      navigate('/admin')      
     }
 
     dispatch(reset());
-    // if(isLoading){
-    //   return <Spinner/>
-    // }
 
-  }, [staff, isLoading, isError, isSuccess, message, navigate, dispatch])
+  }, [newStaff, isLoading, isError, isSuccess, message, navigate, dispatch])
 
   const onChange = (e) => {
     setFormData((prevState) => ({
@@ -93,7 +93,7 @@ function AddUser() {
         address,
         city,
         province,
-        role: selectedRole.role
+        role: selectedRole.role.toLowerCase()
       };
       const validationErrors = validateRegistration(userData);
           if (validationErrors.length > 0) {
@@ -119,7 +119,7 @@ function AddUser() {
             <p className='font-medium text-5xl'>Add Staff Account</p>
           </div>
           <div>
-            <button type='submit' className="w-52 bg-blue-950 text-white rounded-lg text-base py-2 px-8 hover:bg-blue-900">Add Account</button>
+            <button type='submit' className="w-52 bg-blue-950 text-white rounded-lg text-base py-2 px-8 hover:bg-blue-900">Create Account</button>
           </div>
         </div>
       </div>
@@ -329,4 +329,4 @@ function AddUser() {
 }
               
 
-export default AddUser
+export default AddStaffAccount
