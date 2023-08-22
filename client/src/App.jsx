@@ -25,10 +25,11 @@ import AddStaff from './pages/Admin/AddStaffAccount';
 import ViewStaff from './pages/Admin/ViewStaff';
 import StaffDetails from './pages/Admin/StaffDetails';
 import EditStaff from './pages/Admin/EditStaffAccount';
-import ViewInventory from './pages/Admin/ViewInventory';
 import AddItems from './pages/Admin/AddItems';
+import ViewInventory from './pages/Admin/ViewInventory';
+import ItemDetails from './pages/Admin/ItemDetails';
+import EditItem from './pages/Admin/EditItem';
 import RemoveItems from './pages/Admin/RemoveItems';
-import UpdateInventory from './pages/Admin/UpdateInventory';
 
 //DOCTOR
 import AddRecords from './pages/Doctor/AddRecords';
@@ -38,6 +39,8 @@ import GeneratePrescription from './pages/Doctor/GeneratePrescription';
 import UpdateRecords from './pages/Doctor/UpdateRecords';
 
 import Navbar from './components/navbar.component';
+
+
 
 
 function App() {
@@ -59,11 +62,12 @@ function App() {
             <Route path="add-staff" element={<AddStaff />} />
             <Route path="view-staff" element={<ViewStaff/>} />
             <Route path="staff-details" element={<StaffDetails />}/>
-            <Route path="edit-staff" element={<EditStaff />} />
-            <Route path="view-inventory" element={<ViewInventory />} />
+            <Route path="edit-staff/:id" element={<EditStaff />} />
             <Route path="add-item" element={<AddItems />} />
+            <Route path="view-inventory" element={<ViewInventory />} />
+            <Route path="item-details" element={<ItemDetails />} />
+            <Route path="edit-item/:id" element={<EditItem />} />
             <Route path="remove-item" element={<RemoveItems />} />
-            <Route path="update-inventory" element={<UpdateInventory />} />
           </Route>
 
           <Route path="/patient" element={<PatientDashboard />}>

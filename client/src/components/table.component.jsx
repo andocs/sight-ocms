@@ -16,7 +16,7 @@ const ReusableTable = ({ data, columns, actions }) => {
                 {column.header}
               </th>
             ))}
-            <th className='px-6 py-3 text-center' style={{ width: `${100 / (columns.length + 1)}%` }}>Actions</th>
+            <th className='px-6 py-3 text-center' style={{ width: `${120 / (columns.length + 1)}%` }}>Actions</th>
           </tr>
         </thead>
 

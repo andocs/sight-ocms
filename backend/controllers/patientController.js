@@ -28,8 +28,7 @@ const getRecordDetails = asyncHandler(async (req, res) => {
   });
 
   if (!record) {
-    res.status(404);
-    throw new Error('Transaction not found!');
+    return res.status(404).json({ message: "Transaction not found!" });
   }
   res.json(record);
 });
@@ -60,8 +59,7 @@ const getTransactionDetails = asyncHandler(async (req, res) => {
   });
 
   if (!transaction) {
-    res.status(404);
-    throw new Error('Transaction not found!');
+    return res.status(404).json({ message: "Transaction not found!" });
   }
   res.json(transaction);
 });

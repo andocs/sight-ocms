@@ -1,83 +1,128 @@
-import { useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { getStaffAccounts, reset } from '../../features/staff/staffSlice'
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import {
+	clear,
+	deleteStaffAccount,
+	getStaffAccounts,
+	reset,
+} from "../../features/staff/staffSlice";
 
-import Spinner from '../../components/spinner.component'
+import Spinner from "../../components/spinner.component";
+import DeleteConfirmation from "../../components/deleteconfirmation.component";
 
-import Table from "../../components/table.component"
-import { useNavigate } from 'react-router-dom'
+import Table from "../../components/table.component";
 
 function ViewStaff() {
+	let [isOpen, setIsOpen] = useState(false);
+	const [isConfirmed, setConfirmation] = useState(false);
+	const [staffId, setStaffId] = useState("");
 
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-  const { staff, isLoading, isError, message } = useSelector((state) => state.staff) 
+	const navigate = useNavigate();
+	const dispatch = useDispatch();
+	const { staff, isLoading, isSuccess, isError, message } = useSelector(
+		(state) => state.staff
+	);
 
-  useEffect(() => {
-    if(isError){
-        toast.error(message)
-    }
-    dispatch(getStaffAccounts())
-    return () => {
-      dispatch(reset())
-    }
-  }, [isError, message, dispatch])
+	useEffect(() => {
+		if (isError) {
+			toast.error(message);
+		}
+		if (isSuccess && message !== "") {
+			toast.success(message);
+		}
+		dispatch(getStaffAccounts());
+		return () => {
+			dispatch(reset());
+			dispatch(clear());
+		};
+	}, [isError, message, dispatch]);
 
-  if(isLoading){
-    return <Spinner/>
-  }
+	if (isLoading) {
+		return <Spinner />;
+	}
 
-  const columns = [
-    { header: 'Role', field: 'role' },
-    { header: 'Last Name', field: 'lname' },
-    { header: 'First Name', field: 'fname' },
-    { header: 'Email', field: 'email' }, 
-    { header: 'Contact', field: 'contact' },
-  ];
+	function closeModal() {
+		setIsOpen(false);
+	}
 
-  const actions = [
-    {
-      label: 'View',
-      handler: (details) => {
-        navigate('/admin/staff-details', {state:{ details }})
-      },
-    },
-    {
-      label: 'Update',
-      handler: (item) => {
-        
-      },
-    },
-    {
-      label: 'Delete',
-      handler: (item) => {
-        // Handle delete action here
-      },
-    },
-  ];
+	function openModal(staffId) {
+		setIsOpen(true);
+		setStaffId(staffId);
+	}
 
-  return (
-    <>
-    <div className="w-full bg-white border-b">
-      <div className="p-8 flex justify-between items-center xl:w-5/6">
-          <div>
-            <p className='font-medium text-5xl'>View Staff Accounts</p>
-          </div>
-          <div>
-            <button onClick={() => navigate('/admin/add-staff')} className="w-52 bg-blue-950 text-white rounded-lg text-base py-2 px-8 hover:bg-blue-900">Add Account</button>
-          </div>
-      </div>
-    </div>
-    
-    <div className="p-8">
+	function checkConfirmation() {
+		setConfirmation(true);
+		dispatch(deleteStaffAccount(staffId));
+		if (isSuccess && message) {
+			toast.message(message);
+		}
+		setIsOpen(false);
+	}
 
-      <div className='xl:w-5/6 flex flex-row'>
-        <Table data={staff} columns={columns} actions={actions} />
-      </div>
-      
-    </div>
-    </>
-  )
+	const columns = [
+		{ header: "Role", field: "role" },
+		{ header: "Last Name", field: "lname" },
+		{ header: "First Name", field: "fname" },
+		{ header: "Email", field: "email" },
+		{ header: "Contact", field: "contact" },
+	];
+
+	const actions = [
+		{
+			label: "View",
+			handler: (details) => {
+				navigate("/admin/staff-details", { state: { details } });
+			},
+		},
+		{
+			label: "Update",
+			handler: (details) => {
+				navigate(`/admin/edit-staff/${details._id}`, { state: { details } });
+			},
+		},
+		{
+			label: "Delete",
+			handler: (details) => {
+				openModal(details._id);
+			},
+		},
+	];
+
+	console.log(staff);
+
+	return (
+		<>
+			<DeleteConfirmation
+				isOpen={isOpen}
+				closeModal={closeModal}
+				onConfirm={checkConfirmation}
+			/>
+
+			<div className="w-full bg-white border-b">
+				<div className="p-8 flex justify-between items-center xl:w-5/6">
+					<div>
+						<p className="font-medium text-5xl">Staff Accounts</p>
+					</div>
+					<div>
+						<button
+							onClick={() => navigate("/admin/add-staff")}
+							className="w-52 bg-blue-950 text-white rounded-lg text-base py-2 px-8 hover:bg-blue-900"
+						>
+							Add Account
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div className="p-8">
+				<div className="xl:w-5/6 flex flex-row">
+					<Table data={staff} columns={columns} actions={actions} />
+				</div>
+			</div>
+		</>
+	);
 }
 
-export default ViewStaff
+export default ViewStaff;

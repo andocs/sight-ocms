@@ -5,39 +5,34 @@ import { useLocation } from "react-router-dom";
 
 const baseURL = '/admin'
 
-console.log(location.pathname);
-
-const svgadd = <svg aria-hidden="true" className={classNames(location.pathname === `${baseURL}/add-staff` ?'text-white':'text-gray-400',' ml-3 w-8 h-8 transition duration-75 group-hover:text-gray-900')} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
-const svgdel = <svg aria-hidden="true" className={classNames(location.pathname === `${baseURL}/view-staff` ?'text-white':'text-gray-400',' ml-3 w-8 h-8 transition duration-75 group-hover:text-gray-900')} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-
-const userLinks = [
-  { href: `${baseURL}/add-staff`, label: 'Add Staff', svg: svgadd },
-  { href: `${baseURL}/view-staff`, label: 'View Staff', svg: svgdel }
-]
-
-const svgview = <svg aria-hidden="true" className={classNames(location.pathname === `${baseURL}/view-inventory` ?'text-white':'text-gray-400',' ml-3 w-8 h-8 transition duration-75 group-hover:text-gray-900')} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
-const svgadditem = <svg aria-hidden="true" className={classNames(location.pathname === `${baseURL}/add-item` ?'text-white':'text-gray-400',' ml-3 w-8 h-8 transition duration-75 group-hover:text-gray-900')} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
-const svgrmitem = <svg aria-hidden="true" className={classNames(location.pathname === `${baseURL}/remove-item` ?'text-white':'text-gray-400',' ml-3 w-8 h-8 transition duration-75 group-hover:text-gray-900')} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
-const svgupdinv = <svg aria-hidden="true" className={classNames(location.pathname === `${baseURL}/update-inventory` ?'text-white':'text-gray-400',' ml-3 w-8 h-8 transition duration-75 group-hover:text-gray-900')} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
-
-const inventoryLinks = [
-  { href: `${baseURL}/view-inventory`, label: 'View Inventory', svg: svgview },
-  { href: `${baseURL}/add-item`, label: 'Add Items', svg: svgadditem },
-  { href: `${baseURL}/remove-item`, label: 'Remove Items', svg: svgrmitem },
-  { href: `${baseURL}/update-inventory`, label: 'Update Inventory', svg: svgupdinv }
-]
-
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
 function AdminNav() {
-  const location = useLocation()
+
+  const location = useLocation();
+
+  const svgadd = (<svg aria-hidden="true" className={classNames(location.pathname === `${baseURL}/add-staff` ?'text-white':'text-gray-400',' ml-3 w-8 h-8 transition duration-75 group-hover:text-gray-900')} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>)
+  const svgdel = (<svg aria-hidden="true" className={classNames(location.pathname === `${baseURL}/view-staff` ?'text-white':'text-gray-400',' ml-3 w-8 h-8 transition duration-75 group-hover:text-gray-900')} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>)
+
+  const userLinks = [
+    { href: `${baseURL}/view-staff`, label: 'View Staff', svg: svgdel },
+    { href: `${baseURL}/add-staff`, label: 'Add Staff', svg: svgadd }
+  ]
+
+  const svgview = <svg aria-hidden="true" className={classNames(location.pathname === `${baseURL}/view-inventory` ?'text-white':'text-gray-400',' ml-3 w-8 h-8 transition duration-75 group-hover:text-gray-900')} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
+  const svgadditem = <svg aria-hidden="true" className={classNames(location.pathname === `${baseURL}/add-item` ?'text-white':'text-gray-400',' ml-3 w-8 h-8 transition duration-75 group-hover:text-gray-900')} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
+
+  const inventoryLinks = [
+    { href: `${baseURL}/view-inventory`, label: 'View Inventory', svg: svgview },
+    { href: `${baseURL}/add-item`, label: 'Add Items', svg: svgadditem },
+  ]
 
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
   const [isInventoryMenuOpen, setInventoryMenuOpen] = useState(false);
 
-  const isUserLinkRoute = [`${baseURL}/add-staff`, `${baseURL}/view-staff`, `${baseURL}/edit-staff`].some((route) =>
+  const isUserLinkRoute = [`${baseURL}/add-staff`, `${baseURL}/view-staff`].some((route) =>
     location.pathname.startsWith(route)
   );
 

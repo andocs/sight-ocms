@@ -1,23 +1,23 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import staffService from "./staffService";
+import inventoryService from "./inventoryService";
 
 const initialState = {
-	newStaff: null,
-	staffUpdate: null,
-	staff: [],
+	newItem: null,
+	itemUpdate: null,
+	item: [],
 	isLoading: false,
 	isError: false,
 	isSuccess: false,
 	message: "",
 };
 
-// Create staff account
-export const createStaffAccount = createAsyncThunk(
-	"staff/createStaffAccount",
-	async (staffData, thunkAPI) => {
+// Add new item
+export const addNewItem = createAsyncThunk(
+	"inventory/addNewItem",
+	async (itemDetails, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await staffService.createStaffAccount(staffData, token);
+			return await inventoryService.addNewItem(itemDetails, token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -30,22 +30,13 @@ export const createStaffAccount = createAsyncThunk(
 	}
 );
 
-// Get all staff accounts
-export const getStaffAccounts = createAsyncThunk(
-	"staff/getStaffAccount",
+// Get all inventory items
+export const getInventoryItems = createAsyncThunk(
+	"inventory/getInventoryItems",
 	async (_, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			const staffArray = await staffService.getStaffAccounts(token);
-			const staffData = Object.keys(staffArray).map((key) => ({
-				...staffArray[key].personalInfo,
-				_id: staffArray[key]._id,
-				email: staffArray[key].email,
-				role: staffArray[key].role,
-				createdAt: staffArray[key].createdAt,
-				updatedAt: staffArray[key].updatedAt,
-			}));
-			return staffData;
+			return await inventoryService.getInventoryItems(token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -59,13 +50,14 @@ export const getStaffAccounts = createAsyncThunk(
 );
 
 // Get all staff accounts
-export const getStaffDetails = createAsyncThunk(
-	"staff/getStaffDetails",
-	async (staffId, thunkAPI) => {
+export const getItemDetails = createAsyncThunk(
+	"inventory/getItemDetails",
+	async (itemId, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			const staffData = await staffService.getStaffDetails(staffId, token);
-			return staffData;
+			const itemDetails = await inventoryService.getItemDetails(itemId, token);
+			console.log(itemDetails);
+			return itemDetails;
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -79,12 +71,15 @@ export const getStaffDetails = createAsyncThunk(
 );
 
 // Edit staff account
-export const editStaffAccount = createAsyncThunk(
-	"staff/editStaffAccount",
-	async ({ staffId, staffData }, thunkAPI) => {
+export const editInventoryDetails = createAsyncThunk(
+	"inventory/editInventoryDetails",
+	async ({ itemId, itemDetails }, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await staffService.editStaffAccount({ staffId, staffData }, token);
+			return await inventoryService.editInventoryDetails(
+				{ itemId, itemDetails },
+				token
+			);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -98,12 +93,12 @@ export const editStaffAccount = createAsyncThunk(
 );
 
 // Delete staff account
-export const deleteStaffAccount = createAsyncThunk(
-	"staff/deleteStaffAccount",
-	async (staffId, thunkAPI) => {
+export const deleteInventoryItem = createAsyncThunk(
+	"inventory/deleteInventoryItem",
+	async (itemId, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await staffService.deleteStaffAccount(staffId, token);
+			return await inventoryService.deleteInventoryItem(itemId, token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -116,8 +111,8 @@ export const deleteStaffAccount = createAsyncThunk(
 	}
 );
 
-const staffSlice = createSlice({
-	name: "staff",
+const inventorySlice = createSlice({
+	name: "inventory",
 	initialState,
 	reducers: {
 		reset: (state) => {
@@ -127,83 +122,84 @@ const staffSlice = createSlice({
 			state.message = "";
 		},
 		clear: (state) => {
-			(state.newStaff = null), (state.staffUpdate = null), (state.staff = []);
+			(state.newItem = null), (state.itemUpdate = null), (state.item = []);
 		},
 	},
 	extraReducers: (builder) => {
 		builder
-			.addCase(createStaffAccount.pending, (state) => {
+			.addCase(addNewItem.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(createStaffAccount.fulfilled, (state, action) => {
+			.addCase(addNewItem.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.newStaff = action.payload.data;
+				state.newItem = action.payload.data;
 				state.message = action.payload.message;
 			})
-			.addCase(createStaffAccount.rejected, (state, action) => {
+			.addCase(addNewItem.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.newStaff = null;
+				state.newItem = null;
 			})
-			.addCase(getStaffAccounts.pending, (state) => {
+			.addCase(getInventoryItems.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(getStaffAccounts.fulfilled, (state, action) => {
+			.addCase(getInventoryItems.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.staff = action.payload;
+				state.item = action.payload;
 			})
-			.addCase(getStaffAccounts.rejected, (state, action) => {
+			.addCase(getInventoryItems.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.staff = null;
+				state.item = null;
 			})
-			.addCase(getStaffDetails.pending, (state) => {
+			.addCase(getItemDetails.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(getStaffDetails.fulfilled, (state, action) => {
+			.addCase(getItemDetails.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.staffUpdate = action.payload;
+				state.itemUpdate = action.payload;
 			})
-			.addCase(getStaffDetails.rejected, (state, action) => {
+			.addCase(getItemDetails.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.staffUpdate = null;
+				state.itemUpdate = null;
 			})
-			.addCase(editStaffAccount.pending, (state) => {
+			.addCase(editInventoryDetails.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(editStaffAccount.fulfilled, (state, action) => {
+			.addCase(editInventoryDetails.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.newStaff = action.payload.data;
+				state.newItem = action.payload.data;
 				state.message = action.payload.message;
 			})
-			.addCase(editStaffAccount.rejected, (state, action) => {
+			.addCase(editInventoryDetails.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.isSuccess = false;
 				state.message = action.payload;
-				state.newStaff = null;
+				state.newItem = null;
 			})
-			.addCase(deleteStaffAccount.pending, (state) => {
+			.addCase(deleteInventoryItem.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(deleteStaffAccount.fulfilled, (state, action) => {
+			.addCase(deleteInventoryItem.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.staff = state.staff.filter(
-					(account) => account._id !== action.payload.id
+				state.item = state.item.filter(
+					(piece) => piece._id !== action.payload.id
 				);
 				state.isLoading = false;
+				state.isSuccess = true;
 				state.message = action.payload.message;
 			})
-			.addCase(deleteStaffAccount.rejected, (state, action) => {
+			.addCase(deleteInventoryItem.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.isSuccess = false;
@@ -212,5 +208,5 @@ const staffSlice = createSlice({
 	},
 });
 
-export const { reset, clear } = staffSlice.actions;
-export default staffSlice.reducer;
+export const { reset, clear } = inventorySlice.actions;
+export default inventorySlice.reducer;
