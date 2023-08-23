@@ -89,6 +89,12 @@ const formGroups = [
 					placeholder: "Province",
 					size: "w-3/5",
 				},
+				{
+					label: "Image",
+					type: "image",
+					name: "image",
+					size: "w-full",
+				},
 			],
 		],
 	},
@@ -150,20 +156,19 @@ function AddStaffAccount() {
 	}, [newStaff, isLoading, isError, isSuccess, message, navigate, dispatch]);
 
 	const onSubmit = (formData) => {
-		const userData = {
-			fname: formData.fname,
-			lname: formData.lname,
-			gender: formData.gender,
-			email: formData.email,
-			password: formData.password,
-			conf_pass: formData.conf_pass,
-			contact: formData.contact,
-			address: formData.address,
-			city: formData.city,
-			province: formData.province,
-			role: formData.role.toLowerCase(),
-		};
-
+		const userData = new FormData();
+		userData.append("fname", formData.fname);
+		userData.append("lname", formData.lname);
+		userData.append("gender", formData.gender);
+		userData.append("email", formData.email);
+		userData.append("password", formData.password);
+		userData.append("conf_pass", formData.conf_pass);
+		userData.append("contact", formData.contact);
+		userData.append("address", formData.address);
+		userData.append("city", formData.city);
+		userData.append("province", formData.province);
+		userData.append("role", formData.role.toLowerCase());
+		userData.append("image", formData.image);
 		if (userData.password !== userData.conf_pass) {
 			toast.error("Passwords do not match");
 		} else {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ListBoxInput from "./listboxinput.component";
+import ImageInput from "./imageinput.component";
 
 function ReusableForm({ header, fields, onSubmit }) {
 	const initialFormData = fields.reduce((formData, group) => {
@@ -43,6 +44,13 @@ function ReusableForm({ header, fields, onSubmit }) {
 						className={`${field.placeholdercss} placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500`}
 					/>
 				);
+			case "image":
+				return (
+					<ImageInput
+						value={formData[field.name] || ""}
+						onChange={(value) => handleChange(field.name, value)}
+					/>
+				);
 			case "listbox":
 				return (
 					<ListBoxInput
@@ -69,7 +77,7 @@ function ReusableForm({ header, fields, onSubmit }) {
 	};
 
 	return (
-		<form onSubmit={handleSubmit}>
+		<form encType="multipart/form-data" onSubmit={handleSubmit}>
 			{/* Title with Button */}
 			<div className="w-full bg-white border-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">

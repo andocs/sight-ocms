@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
+const fs = require("fs");
 
 const AuditLog = require("../models/auditLogModel");
 
@@ -19,6 +20,7 @@ const sessionOptions = {
 //@desc REGISTER NEW STAFF ACCOUNT
 //@route POST /api/admin/staff
 //@access private (admin only)
+
 const registerStaff = asyncHandler(async (req, res) => {
 	const {
 		fname,
@@ -45,11 +47,17 @@ const registerStaff = asyncHandler(async (req, res) => {
 		!password ||
 		!role
 	) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
 		return res.status(400).json({ message: "All fields are mandatory!" });
 	}
 
 	const user = await User.findOne({ email });
 	if (user) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
 		return res.status(400).json({ message: "User already exists!" });
 	}
 
@@ -68,7 +76,12 @@ const registerStaff = asyncHandler(async (req, res) => {
 	const session = await User.startSession(sessionOptions);
 	try {
 		session.startTransaction();
-
+		let image;
+		if (req.file) {
+			image = req.file.filename;
+		} else {
+			image = null;
+		}
 		const staff = await User.create(
 			[
 				{
@@ -77,6 +90,7 @@ const registerStaff = asyncHandler(async (req, res) => {
 					role,
 					isPersonalInfoComplete: true,
 					personalInfo,
+					image,
 				},
 			],
 			{ session }
@@ -105,6 +119,9 @@ const registerStaff = asyncHandler(async (req, res) => {
 			message: `${rolestr} ${personalInfo.fname} ${personalInfo.lname}'s account is successfully created!`,
 		});
 	} catch (error) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
 			for (const field in error.errors) {
@@ -120,7 +137,7 @@ const registerStaff = asyncHandler(async (req, res) => {
 			await session.abortTransaction();
 			session.endSession();
 		}
-		throw error;
+		return res.status(400).json({ message: error });
 	}
 	session.endSession();
 });
