@@ -31,7 +31,6 @@ const userSchema = new mongoose.Schema(
 			address: String,
 			city: String,
 			province: String,
-			postal: String,
 		},
 		image: {
 			type: String,

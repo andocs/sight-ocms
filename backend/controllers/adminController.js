@@ -20,7 +20,6 @@ const sessionOptions = {
 //@desc REGISTER NEW STAFF ACCOUNT
 //@route POST /api/admin/staff
 //@access private (admin only)
-
 const registerStaff = asyncHandler(async (req, res) => {
 	const {
 		fname,
@@ -170,7 +169,12 @@ const getStaffDetails = asyncHandler(async (req, res) => {
 //@access private (admin only)
 const updateStaff = asyncHandler(async (req, res) => {
 	const staffId = req.params.id;
-	const updates = req.body;
+	let updates = req.body;
+
+	if (updates.personalInfo) {
+		updates.personalInfo = JSON.parse(updates.personalInfo);
+	}
+	console.log("body", updates);
 
 	const staff = await User.findOne({
 		_id: staffId,
@@ -178,6 +182,9 @@ const updateStaff = asyncHandler(async (req, res) => {
 	});
 
 	if (!staff) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
 		return res
 			.status(404)
 			.json({ message: "Staff account not found or unauthorized!" });
@@ -186,6 +193,13 @@ const updateStaff = asyncHandler(async (req, res) => {
 	const session = await User.startSession(sessionOptions);
 	try {
 		session.startTransaction();
+		let image;
+		if (req.file) {
+			image = req.file.filename;
+			updates.image = image;
+		} else {
+			image = null;
+		}
 
 		const updatedStaff = await User.findByIdAndUpdate(staffId, updates, {
 			new: true,
@@ -216,6 +230,9 @@ const updateStaff = asyncHandler(async (req, res) => {
 			message: `${rolestr} ${updatedStaff.personalInfo.fname} ${updatedStaff.personalInfo.lname}'s account is successfully updated!`,
 		});
 	} catch (error) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
 			for (const field in error.errors) {
@@ -300,12 +317,18 @@ const addInventoryItem = asyncHandler(async (req, res) => {
 	const { itemName, quantity, price, description } = req.body;
 
 	if (!itemName || !quantity || !price || !description) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
 		return res.status(400).json({ message: "All fields are mandatory!" });
 	}
 
 	const existingItem = await Inventory.findOne({ itemName });
 
 	if (existingItem) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
 		return res
 			.status(400)
 			.json({ message: "Item with the same name already exists!" });
@@ -314,6 +337,12 @@ const addInventoryItem = asyncHandler(async (req, res) => {
 	const session = await Inventory.startSession(sessionOptions);
 	try {
 		session.startTransaction();
+		let image;
+		if (req.file) {
+			image = req.file.filename;
+		} else {
+			image = null;
+		}
 
 		const inventoryItem = await Inventory.create(
 			[
@@ -322,6 +351,7 @@ const addInventoryItem = asyncHandler(async (req, res) => {
 					quantity,
 					price,
 					description,
+					image,
 				},
 			],
 			{ session }
@@ -349,6 +379,9 @@ const addInventoryItem = asyncHandler(async (req, res) => {
 			message: `Item ${itemName} succesfully added to inventory!`,
 		});
 	} catch (error) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
 			for (const field in error.errors) {
@@ -357,7 +390,6 @@ const addInventoryItem = asyncHandler(async (req, res) => {
 					message: error.errors[field].message,
 				});
 			}
-			console.log(validationErrors);
 			return res.status(400).json({ message: validationErrors });
 		}
 		if (session) {
@@ -402,13 +434,22 @@ const updateItem = asyncHandler(async (req, res) => {
 	const item = await Inventory.findOne({ _id: itemId });
 
 	if (!item) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
 		return res.status(404).json({ message: "Item not found!" });
 	}
 
 	const session = await Inventory.startSession(sessionOptions);
 	try {
 		session.startTransaction();
-
+		let image;
+		if (req.file) {
+			image = req.file.filename;
+			updatedFields.image = image;
+		} else {
+			image = null;
+		}
 		const updatedItem = await Inventory.findByIdAndUpdate(
 			itemId,
 			updatedFields,
@@ -437,6 +478,9 @@ const updateItem = asyncHandler(async (req, res) => {
 			message: `Item ${item.itemName} succesfully updated!`,
 		});
 	} catch (error) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
 			for (const field in error.errors) {
@@ -601,7 +645,29 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
 //@route GET /api/admin/log
 //@access private (admin only)
 const getAuditLogs = asyncHandler(async (req, res) => {
-	const auditLogs = await AuditLog.find();
+	const auditLogs = await AuditLog.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "userId",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$project: {
+				createdAt: 1,
+				"userDetails.personalInfo.lname": 1, // Include last name
+				"userDetails.personalInfo.fname": 1, // Include first name
+				operation: 1,
+				userIpAddress: 1,
+				entity: 1,
+				entityId: 1,
+				additionalInfo: 1,
+			},
+		},
+	]);
+	// const auditLogs = await AuditLog.find();
 	res.json(auditLogs);
 });
 

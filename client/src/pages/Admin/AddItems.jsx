@@ -1,19 +1,85 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { addNewItem, reset } from "../../features/inventory/inventorySlice";
+import ReusableForm from "../../components/reusableform.component";
+
+const defaultsvg = (
+	<div className="px-4">
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 24 24"
+			fill="currentColor"
+			className="w-full"
+		>
+			<path d="M12.378 1.602a.75.75 0 00-.756 0L3 6.632l9 5.25 9-5.25-8.622-5.03zM21.75 7.93l-9 5.25v9l8.628-5.032a.75.75 0 00.372-.648V7.93zM11.25 22.18v-9l-9-5.25v8.57a.75.75 0 00.372.648l8.628 5.033z" />
+		</svg>
+	</div>
+);
+
+const header = { title: "Add Inventory Items", buttontext: "Add Item" };
+
+const formGroups = [
+	{
+		label: "Item Information",
+		fields: [
+			[
+				{
+					type: "text",
+					label: "ITEM NAME",
+					placeholder: "Item Name",
+					name: "itemName",
+					value: "",
+					size: "w-full",
+				},
+				{
+					type: "number",
+					label: "ITEM QUANTITY",
+					name: "quantity",
+					value: 1,
+					min: 1,
+					size: "w-full",
+				},
+				{
+					type: "number",
+					label: "ITEM PRICE",
+					name: "price",
+					value: 1,
+					min: 1,
+					size: "w-full",
+				},
+			],
+			[
+				{
+					type: "textarea",
+					label: "ITEM DESCRIPTION",
+					placeholder: "Item Description here...",
+					name: "description",
+					value: "",
+					size: "w-full",
+				},
+			],
+		],
+	},
+];
+
+const imageGroup = [
+	{
+		label: "Item Image",
+		fields: [
+			{
+				label: "Image",
+				type: "image",
+				name: "image",
+				size: "w-full",
+			},
+		],
+		placeholder: defaultsvg,
+	},
+];
 
 function AddItems() {
-	const [formData, setFormData] = useState({
-		itemName: "",
-		quantity: 0,
-		price: 0,
-		description: "",
-	});
-
-	const { itemName, quantity, price, description } = formData;
-
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 
@@ -30,7 +96,7 @@ function AddItems() {
 			}
 		}
 
-		if (isSuccess && newItem !== null) {
+		if (isSuccess && newItem !== null && message !== "") {
 			toast.success(message);
 			navigate("/admin");
 		}
@@ -38,128 +104,25 @@ function AddItems() {
 		dispatch(reset());
 	}, [newItem, isLoading, isError, isSuccess, message, navigate, dispatch]);
 
-	const onChange = (e) => {
-		setFormData((prevState) => ({
-			...prevState,
-			[e.target.name]: e.target.value,
-		}));
-	};
+	const onSubmit = (formData) => {
+		const itemData = new FormData();
+		itemData.append("itemName", formData.itemName);
+		itemData.append("quantity", formData.quantity);
+		itemData.append("price", formData.price);
+		itemData.append("description", formData.description);
+		itemData.append("image", formData.image);
 
-	const onSubmit = (e) => {
-		e.preventDefault();
-
-		const itemData = {
-			itemName,
-			quantity,
-			price,
-			description,
-		};
 		dispatch(addNewItem(itemData));
 	};
 
 	return (
 		<>
-			<form onSubmit={onSubmit}>
-				<div className="w-full bg-white border-b">
-					<div className="p-8 flex justify-between items-center xl:w-5/6">
-						<div>
-							<p className="font-medium text-5xl">Add Inventory Item</p>
-						</div>
-						<div>
-							<button
-								type="submit"
-								className="w-52 bg-blue-950 text-white rounded-lg text-base py-2 px-8 hover:bg-blue-900"
-							>
-								Add Item
-							</button>
-						</div>
-					</div>
-				</div>
-
-				<div className="pb-32">
-					<div className="p-8">
-						<p className="text-3xl font-medium">Item Information</p>
-
-						<div className="xl:w-5/6 flex flex-col">
-							<div className="flex flex-row pt-8 justify-evenly">
-								<div className="mb-4 px-8 w-full">
-									<label
-										htmlFor="itemName"
-										className="text-l text-start block w-full mb-4 text-sm font-medium truncate text-sky-800"
-									>
-										ITEM NAME
-									</label>
-									<input
-										type="text"
-										placeholder="Item Name"
-										name="itemName"
-										id="itemName"
-										value={itemName}
-										onChange={onChange}
-										className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
-									/>
-								</div>
-
-								<div className="mb-4 px-8 w-full">
-									<label
-										htmlFor="quantity"
-										className="text-l text-start block w-full mb-4 text-sm font-medium text-sky-800 truncate"
-									>
-										ITEM QUANTITY
-									</label>
-									<input
-										type="number"
-										min="1"
-										name="quantity"
-										id="quantity"
-										value={quantity}
-										onChange={onChange}
-										className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
-									/>
-								</div>
-
-								<div className="mb-4 px-8 w-full">
-									<label
-										htmlFor="price"
-										className="text-l text-start block w-full mb-4 text-sm font-medium text-sky-800 truncate"
-									>
-										ITEM PRICE
-									</label>
-									<input
-										type="number"
-										min="1"
-										name="price"
-										id="price"
-										value={price}
-										onChange={onChange}
-										className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
-									/>
-								</div>
-							</div>
-
-							<div className="flex flex-row pt-4 justify-evenly">
-								<div className="mb-4 px-8 w-full">
-									<label
-										htmlFor="description"
-										className="text-l text-start block w-full mb-4 text-sm font-medium text-sky-800 truncate"
-									>
-										ITEM DESCRIPTION
-									</label>
-									<textarea
-										type="text"
-										placeholder="Item Description here..."
-										name="description"
-										id="description"
-										value={description}
-										onChange={onChange}
-										className="text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
-									/>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</form>
+			<ReusableForm
+				header={header}
+				fields={formGroups}
+				onSubmit={onSubmit}
+				imageGroup={imageGroup}
+			/>
 		</>
 	);
 }

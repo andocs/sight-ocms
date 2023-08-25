@@ -21,7 +21,7 @@ function EditItem() {
 	const { itemUpdate, newItem, isLoading, isError, isSuccess, message } =
 		useSelector((state) => state.inventory);
 
-	const fields = [
+	const formGroups = [
 		{
 			label: "Item Information",
 			fields: [
@@ -65,6 +65,33 @@ function EditItem() {
 		},
 	];
 
+	const defaultsvg = (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 24 24"
+			fill="currentColor"
+			className="w-full"
+		>
+			<path d="M12.378 1.602a.75.75 0 00-.756 0L3 6.632l9 5.25 9-5.25-8.622-5.03zM21.75 7.93l-9 5.25v9l8.628-5.032a.75.75 0 00.372-.648V7.93zM11.25 22.18v-9l-9-5.25v8.57a.75.75 0 00.372.648l8.628 5.033z" />
+		</svg>
+	);
+
+	const imageGroup = [
+		{
+			label: "Item Image",
+			fields: [
+				{
+					label: "Image",
+					type: "image",
+					value: itemUpdate?.image || "",
+					name: "image",
+					size: "w-full",
+				},
+			],
+			placeholder: defaultsvg,
+		},
+	];
+
 	useEffect(() => {
 		if (!itemUpdate) {
 			dispatch(getItemDetails(itemDetails.details._id));
@@ -97,28 +124,33 @@ function EditItem() {
 	}
 
 	const onSubmit = (formData) => {
-		const itemData = {
-			itemName: formData.itemName,
-			quantity: formData.quantity,
-			price: formData.price,
-			description: formData.description,
-		};
+		const updateInfo = {};
 
 		const initialData = {
 			itemName: itemUpdate.itemName,
 			quantity: itemUpdate.quantity,
 			price: itemUpdate.price,
 			description: itemUpdate.description,
+			image: itemUpdate.image !== null ? itemUpdate.image : "",
 		};
 
-		const isDataSame = JSON.stringify(initialData) === JSON.stringify(itemData);
+		for (const key in formData) {
+			if (JSON.stringify(initialData[key]) !== JSON.stringify(formData[key])) {
+				updateInfo[key] = formData[key];
+			}
+			console.log(updateInfo);
+		}
 
-		if (isDataSame) {
+		if (JSON.stringify(updateInfo) === "{}") {
 			navigate("/admin/view-inventory");
 			dispatch(clear());
 			dispatch(reset());
 		} else {
-			const itemDetails = itemData;
+			const itemDetails = new FormData();
+			for (const key in updateInfo) {
+				itemDetails.append(key, updateInfo[key]);
+			}
+
 			dispatch(editInventoryDetails({ itemId, itemDetails }));
 		}
 	};
@@ -131,7 +163,8 @@ function EditItem() {
 					title: "Edit Inventory Item",
 					buttontext: "Update Item",
 				}}
-				fields={fields}
+				fields={formGroups}
+				imageGroup={imageGroup}
 				onSubmit={onSubmit}
 			/>
 		</>

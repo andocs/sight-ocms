@@ -4,6 +4,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+}
+  
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+  
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+  
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
 .sidenav{
     height: calc(100vh - theme('spacing.32'));
 }
@@ -20,4 +41,33 @@ th:last-child{
 tbody{
     top: -3px;
     box-shadow: 0 5px 10px rgb(0 0 0 / 0.1);
+}
+.imagegroup{
+    width: 30%;
+}
+.formgroup{
+    width: 70%;
+}
+.imagepreview{
+    width: 15rem;
+    height: 15rem;
+}
+.imagewrapper{
+    padding-top: 42px;
+    padding-bottom: 36px;
+}
+.svgpreview{
+    width: 295.4px;
+}
+.svgwrapper{
+    padding-top: 15px;
+    padding-bottom: 8px;
+}
+.absolutesvgwrapper{
+    padding-top: 295.38px;
+    width: 240px;
+}
+.absoluteimgwrapper{
+    padding-top: 267px;
+    width: 240px;
 }

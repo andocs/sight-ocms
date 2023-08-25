@@ -48,12 +48,12 @@ router
 	.put(upload, updateStaff)
 	.delete(deleteUser);
 
-router.route("/inventory").post(addInventoryItem).get(getInventoryList);
+router.route("/inventory").post(upload, addInventoryItem).get(getInventoryList);
 
 router
 	.route("/inventory/:id")
 	.get(getItemDetails)
-	.put(updateItem)
+	.put(upload, updateItem)
 	.delete(deleteItem);
 
 router.get("/maintenance", getMaintenanceList);
