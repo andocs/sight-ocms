@@ -657,8 +657,8 @@ const getAuditLogs = asyncHandler(async (req, res) => {
 		{
 			$project: {
 				createdAt: 1,
-				"userDetails.personalInfo.lname": 1, // Include last name
-				"userDetails.personalInfo.fname": 1, // Include first name
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
 				operation: 1,
 				userIpAddress: 1,
 				entity: 1,
@@ -667,7 +667,6 @@ const getAuditLogs = asyncHandler(async (req, res) => {
 			},
 		},
 	]);
-	// const auditLogs = await AuditLog.find();
 	res.json(auditLogs);
 });
 

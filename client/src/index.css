@@ -71,3 +71,7 @@ tbody{
     padding-top: 267px;
     width: 240px;
 }
+
+.menu-active :first-child{
+    color: rgb(255 255 255);
+}

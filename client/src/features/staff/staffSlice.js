@@ -58,7 +58,7 @@ export const getStaffAccounts = createAsyncThunk(
 	}
 );
 
-// Get all staff accounts
+// Get staff details
 export const getStaffDetails = createAsyncThunk(
 	"staff/getStaffDetails",
 	async (staffId, thunkAPI) => {

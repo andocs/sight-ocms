@@ -89,9 +89,6 @@ function ViewStaff() {
 			},
 		},
 	];
-
-	console.log(staff);
-
 	return (
 		<>
 			<DeleteConfirmation
