@@ -44,6 +44,7 @@ export const getStaffAccounts = createAsyncThunk(
 				role: staffArray[key].role,
 				createdAt: staffArray[key].createdAt,
 				updatedAt: staffArray[key].updatedAt,
+				image: staffArray[key].image,
 			}));
 			return staffData;
 		} catch (error) {

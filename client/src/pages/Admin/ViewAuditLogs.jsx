@@ -1,13 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { getAuditLogs, reset } from "../../features/audit/auditSlice";
 import Spinner from "../../components/spinner.component";
 import Table from "../../components/table.component";
+import LogDetails from "../../components/logdetails.component";
 function ViewAuditLogs() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
+	let [isOpen, setIsOpen] = useState(false);
+	const [selectedLogData, setSelectedLogData] = useState(null); // Track selected log data
+
+	function closeModal() {
+		setIsOpen(false);
+	}
+
 	const { audit, isLoading, isSuccess, isError, message } = useSelector(
 		(state) => state.audit
 	);
@@ -44,13 +52,22 @@ function ViewAuditLogs() {
 		{
 			label: "View",
 			handler: (details) => {
-				navigate("/admin/log-details", { state: { details } });
+				setSelectedLogData(details);
+				setIsOpen(true);
+				console.log(details);
 			},
 		},
 	];
 
 	return (
 		<>
+			{isOpen && (
+				<LogDetails
+					isOpen={isOpen}
+					closeModal={closeModal}
+					logData={selectedLogData}
+				/>
+			)}
 			<div className="w-full bg-white border-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>

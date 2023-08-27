@@ -73,7 +73,7 @@ function ViewStaff() {
 		{
 			label: "View",
 			handler: (details) => {
-				navigate("/admin/staff-details", { state: { details } });
+				navigate("/admin/staff-details", { state: details });
 			},
 		},
 		{

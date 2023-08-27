@@ -69,7 +69,7 @@ function ViewInventory() {
 		{
 			label: "View",
 			handler: (details) => {
-				navigate("/admin/item-details", { state: { details } });
+				navigate("/admin/item-details", { state: details });
 			},
 		},
 		{
