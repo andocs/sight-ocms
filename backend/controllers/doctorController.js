@@ -35,32 +35,47 @@ const generateReceipt = (transaction) => {
 };
 
 /**
-##### TRANSACTIONS (CRUD) #####
+##### ORDER (CRUD) #####
 **/
 
-//@desc ADDS A NEW TRANSACTION
-//@route POST /api/doctor/transactions
+//@desc ADDS A NEW ORDER
+//@route POST /api/doctor/order
 //@access private (doctor only)
-const createTransaction = asyncHandler(async (req, res) => {
-	const { patientId, typeOfLens, typeOfFrame, amount } = req.body;
+const createOrder = asyncHandler(async (req, res) => {
+	const doctorId = req.user.id;
+	const {
+		patient,
+		orderTime,
+		status,
+		frame,
+		lens,
+		frameQuantity,
+		lensQuantity,
+		otherItems,
+		amount,
+	} = req.body;
 
-	const patient = await User.findById(patientId);
+	const existingPatient = await User.findById(patient);
 
-	if (!patient) {
+	if (!existingPatient) {
 		return res.status(404).json({ message: "Patient not found!" });
 	}
 
-	const session = await Transaction.startSession(sessionOptions);
+	const session = await Order.startSession(sessionOptions);
 	try {
 		session.startTransaction();
-
-		const transaction = await Transaction.create(
+		const order = await Order.create(
 			[
 				{
-					doctor: req.user.id,
-					patient: patient._id,
-					typeOfLens,
-					typeOfFrame,
+					doctor: doctorId,
+					patient: patient,
+					orderTime,
+					status,
+					frame,
+					lens,
+					frameQuantity,
+					lensQuantity,
+					otherItems,
 					amount,
 				},
 			],
@@ -70,27 +85,24 @@ const createTransaction = asyncHandler(async (req, res) => {
 		await AuditLog.create(
 			[
 				{
-					userId: req.user.id,
+					userId: doctorId,
 					operation: "create",
-					entity: "Transaction",
-					entityId: transaction[0]._id,
+					entity: "Order",
+					entityId: order[0]._id,
 					oldValues: null,
-					newValues: transaction[0],
+					newValues: order[0],
 					userIpAddress: req.ip,
 					userAgent: req.get("user-agent"),
-					additionalInfo: "New transaction added",
+					additionalInfo: "New order added",
 				},
 			],
 			{ session }
 		);
 		await session.commitTransaction();
-		// const receipt = generateReceipt(transaction);
-		res
-			.status(201)
-			.json({
-				data: transaction,
-				message: `Transaction with id ${transaction._id} is successfully created!`,
-			});
+		res.status(201).json({
+			data: order,
+			message: `Order with id ${order._id} is successfully created!`,
+		});
 	} catch (error) {
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
@@ -107,92 +119,89 @@ const createTransaction = asyncHandler(async (req, res) => {
 			await session.abortTransaction();
 			session.endSession();
 		}
-		throw error;
+		return res.status(400).json({ message: error });
 	}
 	session.endSession();
 });
 
-//@desc GET THE LIST OF THE DOCTOR'S TRANSACTION
-//@route GET /api/doctor/transactions
+//@desc GET ALL THE ORDERS MADE BY THE DOCTOR
+//@route GET /api/doctor/order
 //@access private (doctor only)
-const getAllTransactions = asyncHandler(async (req, res) => {
-	const transactions = await Transaction.find({ doctor: req.user.id });
-	if (transactions == {}) {
-		res.json({ message: "No transactions currently recorded." });
+const getAllOrders = asyncHandler(async (req, res) => {
+	const orders = await Order.find({ doctor: req.user.id });
+	if (orders == {}) {
+		res.json({ message: "No orders for doctor is currently saved." });
 	}
-	res.json(transactions);
+	res.json(orders);
 });
 
-//@desc GET TRANSACTION DETAILS
-//@route GET /api/doctor/transactions/:id
+//@desc GET DETAILS OF ORDER
+//@route GET /api/doctor/order/:id
 //@access private (doctor only)
-const getTransactionDetails = asyncHandler(async (req, res) => {
-	const transactionId = req.params.id;
+const getOrderDetails = asyncHandler(async (req, res) => {
+	const orderId = req.params.id;
 	const doctorId = req.user.id;
 
-	const transaction = await Transaction.findOne({
-		_id: transactionId,
+	const order = await Order.findOne({
+		_id: orderId,
 		doctor: doctorId,
 	});
 
-	if (!transaction) {
-		return res.status(404).json({ message: "Transaction not found!" });
+	if (!order) {
+		return res.status(404).json({ message: "Order not found!" });
 	}
-	res.json(transaction);
+	res.json(order);
 });
 
-//@desc UPDATES EXISTING TRANSACTION
-//@route PUT /api/doctor/transactions/:id
+//@desc UPDATES AN ORDER
+//@route PUT /api/doctor/order/:id
 //@access private (doctor only)
-const updateTransaction = asyncHandler(async (req, res) => {
+const updateOrder = asyncHandler(async (req, res) => {
 	const doctorId = req.user.id;
-	const transactionId = req.params.id;
-	const updatedFields = req.body;
+	const orderId = req.params.id;
+	const updates = req.body;
 
-	const transaction = await Transaction.findOne({
-		_id: transactionId,
+	const order = await Order.findOne({
+		_id: orderId,
 		doctor: doctorId,
 	});
 
-	if (!transaction) {
+	if (!order) {
 		return res
 			.status(404)
-			.json({ message: "Record not found or unauthorized!" });
+			.json({ message: "Order not found or unauthorized!" });
 	}
 
-	const session = await Transaction.startSession(sessionOptions);
+	const session = await Order.startSession(sessionOptions);
 	try {
 		session.startTransaction();
-
-		const updatedTransaction = await Transaction.findByIdAndUpdate(
-			transactionId,
-			updatedFields,
-			{ new: true, runValidators: true, session }
-		);
+		const updatedOrder = await Order.findByIdAndUpdate(doctorId, updates, {
+			new: true,
+			runValidators: true,
+			session,
+		});
 
 		await AuditLog.create(
 			[
 				{
-					userId: req.user.id,
+					userId: doctorId,
 					operation: "update",
-					entity: "Transaction",
-					entityId: transactionId,
-					oldValues: transaction,
-					newValues: updatedTransaction,
+					entity: "Order",
+					entityId: orderId,
+					oldValues: order,
+					newValues: updatedOrder,
 					userIpAddress: req.ip,
 					userAgent: req.get("user-agent"),
-					additionalInfo: "Transaction updated",
+					additionalInfo: "Order updated",
 				},
 			],
 			{ session }
 		);
 		await session.commitTransaction();
-		res
-			.status(201)
-			.json({
-				data: updatedTransaction,
-				message: `Transaction with id ${transactionId} successfully updated!`,
-			});
+		res.status(201).json({
+			data: updatedOrder,
+			message: `Order with id ${orderId} is successfully updated!`,
+		});
 	} catch (error) {
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
@@ -209,59 +218,57 @@ const updateTransaction = asyncHandler(async (req, res) => {
 			await session.abortTransaction();
 			session.endSession();
 		}
-		throw error;
+		return res.status(400).json({ message: error });
 	}
 	session.endSession();
 });
 
-//@desc DELETES TRANSACTION
-//@route DELETE /api/doctor/transactions/:id
+//@desc DELETES AN ORDER
+//@route DELETE /api/doctor/order/:id
 //@access private (doctor only)
-const deleteTransaction = asyncHandler(async (req, res) => {
+const deleteOrder = asyncHandler(async (req, res) => {
 	const doctorId = req.user.id;
-	const transactionId = req.params.id;
+	const orderId = req.params.id;
 
-	const session = await Transaction.startSession(sessionOptions);
+	const session = await Order.startSession(sessionOptions);
 	try {
 		session.startTransaction();
 
-		const transaction = await Transaction.findOneAndDelete(
+		const order = await Order.findOneAndDelete(
 			{
-				_id: transactionId,
+				_id: orderId,
 				doctor: doctorId,
 			},
 			{ session }
 		);
 
-		if (!transaction) {
+		if (!order) {
 			return res
 				.status(404)
-				.json({ message: "Record not found or unauthorized!" });
+				.json({ message: "Order not found or unauthorized!" });
 		}
 
 		await AuditLog.create(
 			[
 				{
-					userId: req.user.id,
+					userId: doctorId,
 					operation: "delete",
-					entity: "Transaction",
-					entityId: transactionId,
-					oldValues: transaction,
+					entity: "Order",
+					entityId: orderId,
+					oldValues: order,
 					newValues: null,
 					userIpAddress: req.ip,
 					userAgent: req.get("user-agent"),
-					additionalInfo: "Transaction deleted",
+					additionalInfo: "Order deleted",
 				},
 			],
 			{ session }
 		);
 		await session.commitTransaction();
-		res
-			.status(201)
-			.json({
-				id: transactionId,
-				message: `Transaction with id ${transactionId} successfully deleted!`,
-			});
+		res.status(201).json({
+			id: orderId,
+			message: `Order with id ${orderId} successfully deleted!`,
+		});
 	} catch (error) {
 		await session.abortTransaction();
 		throw error;
@@ -319,12 +326,10 @@ const addRecord = asyncHandler(async (req, res) => {
 			{ session }
 		);
 		await session.commitTransaction();
-		res
-			.status(201)
-			.json({
-				data: eyeRecord,
-				message: `Patient ${patient.personalInfo.fname} ${patient.personalInfo.lname} eye record successfully added!`,
-			});
+		res.status(201).json({
+			data: eyeRecord,
+			message: `Patient ${patient.personalInfo.fname} ${patient.personalInfo.lname} eye record successfully added!`,
+		});
 	} catch (error) {
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
@@ -420,12 +425,10 @@ const updateRecord = asyncHandler(async (req, res) => {
 			{ session }
 		);
 		await session.commitTransaction();
-		res
-			.status(201)
-			.json({
-				data: updatedRecord,
-				message: `Eye Record with id ${record._id} successfully updated!`,
-			});
+		res.status(201).json({
+			data: updatedRecord,
+			message: `Eye Record with id ${record._id} successfully updated!`,
+		});
 	} catch (error) {
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
@@ -551,12 +554,10 @@ const createAppointment = async (req, res) => {
 			{ session }
 		);
 		await session.commitTransaction();
-		res
-			.status(201)
-			.json({
-				data: appointment,
-				message: `Appointment with id ${appointment._id} at ${appointment.date} successfully added!`,
-			});
+		res.status(201).json({
+			data: appointment,
+			message: `Appointment with id ${appointment._id} at ${appointment.date} successfully added!`,
+		});
 	} catch (error) {
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
@@ -652,12 +653,10 @@ const updateAppointment = async (req, res) => {
 			{ session }
 		);
 		await session.commitTransaction();
-		res
-			.status(201)
-			.json({
-				data: updatedAppointment,
-				message: `Appointment with id ${appointmentId} at ${appointment.date} successfully updated!`,
-			});
+		res.status(201).json({
+			data: updatedAppointment,
+			message: `Appointment with id ${appointmentId} at ${appointment.date} successfully updated!`,
+		});
 	} catch (error) {
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
@@ -785,12 +784,10 @@ const addDoctorSchedule = asyncHandler(async (req, res) => {
 			{ session }
 		);
 		await session.commitTransaction();
-		res
-			.status(201)
-			.json({
-				data: doctorSchedule,
-				message: `Schedule for ${dayOfWeek} successfully added!.`,
-			});
+		res.status(201).json({
+			data: doctorSchedule,
+			message: `Schedule for ${dayOfWeek} successfully added!.`,
+		});
 	} catch (error) {
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
@@ -955,63 +952,10 @@ const deleteDoctorSchedule = asyncHandler(async (req, res) => {
 			{ session }
 		);
 		await session.commitTransaction();
-		res
-			.status(201)
-			.json({
-				id: scheduleId,
-				message: "Doctor appointment deleted successfully",
-			});
-	} catch (error) {
-		await session.abortTransaction();
-		throw error;
-	}
-	session.endSession();
-});
-
-/**
-##### ORDERS (CRUD) INCOMPLETE #####
-**/
-
-//@desc CREATE ORDER FOR GLASSES/LENSES
-//@route POST /api/doctor/order/:id
-//@access private (doctor only)
-const createOrder = asyncHandler(async (req, res) => {
-	const { dayOfWeek, startTime, endTime } = req.body;
-	const doctorId = req.user.id;
-	const patientId = req.params.id;
-	const session = await Order.startSession(sessionOptions);
-	try {
-		session.startTransaction();
-		const orderDetails = await Order.create(
-			[
-				{
-					doctor: doctorId,
-					dayOfWeek,
-					startTime,
-					endTime,
-				},
-			],
-			{ session }
-		);
-
-		await AuditLog.create(
-			[
-				{
-					userId: doctorId,
-					operation: "create",
-					entity: "Schedule",
-					entityId: doctorSchedule[0]._id,
-					oldValues: null,
-					newValues: doctorSchedule[0],
-					userIpAddress: req.ip,
-					userAgent: req.get("user-agent"),
-					additionalInfo: "New doctor schedule added",
-				},
-			],
-			{ session }
-		);
-		await session.commitTransaction();
-		res.status(201).json(doctorSchedule);
+		res.status(201).json({
+			id: scheduleId,
+			message: "Doctor appointment deleted successfully",
+		});
 	} catch (error) {
 		await session.abortTransaction();
 		throw error;
@@ -1020,11 +964,11 @@ const createOrder = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-	createTransaction,
-	getAllTransactions,
-	getTransactionDetails,
-	updateTransaction,
-	deleteTransaction,
+	createOrder,
+	getAllOrders,
+	getOrderDetails,
+	updateOrder,
+	deleteOrder,
 
 	addRecord,
 	getAllRecords,
