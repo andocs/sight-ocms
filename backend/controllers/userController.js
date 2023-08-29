@@ -3,6 +3,11 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 
+const sessionOptions = {
+	readConcern: { level: "snapshot" },
+	writeConcern: { w: "majority" },
+};
+
 //@desc Register User
 //@route POST /api/users/register
 //@access public
@@ -14,17 +19,95 @@ const registerUser = asyncHandler(async (req, res) => {
 	}
 	const userExists = await User.findOne({ email });
 	if (userExists) {
-		return res.status(400).json({ message: "User already exists!" });
+		if (userExists.password && userExists.isRegistered === true) {
+			return res.status(400).json({ message: "User already exists!" });
+		} else {
+			const hashedPassword = await bcrypt.hash(password, 10);
+			const updates = {
+				password: hashedPassword,
+				isRegistered: true,
+			};
+			const session = await User.startSession(sessionOptions);
+			try {
+				session.startTransaction();
+				const updatedUser = await User.findByIdAndUpdate(
+					userExists._id,
+					updates,
+					{
+						new: true,
+						runValidators: true,
+						session,
+					}
+				);
+
+				await AuditLog.create(
+					[
+						{
+							userId: userExists[0]._id,
+							operation: "update",
+							entity: "User",
+							entityId: userExists[0]._id,
+							oldValues: userExists,
+							newValues: updatedUser,
+							userIpAddress: req.ip,
+							userAgent: req.get("user-agent"),
+							additionalInfo: "User Account registered",
+						},
+					],
+					{ session }
+				);
+				await session.commitTransaction();
+				res.status(201).json({
+					data: updatedUser,
+					message: "Account successfully registered!",
+				});
+			} catch (error) {
+				if (error.name === "ValidationError") {
+					const validationErrors = [];
+					for (const field in error.errors) {
+						validationErrors.push({
+							fieldName: field,
+							message: error.errors[field].message,
+						});
+					}
+					return res.status(400).json({ message: validationErrors });
+				}
+				if (session) {
+					await session.abortTransaction();
+					session.endSession();
+				}
+				return res.status(400).json({ message: error });
+			}
+			session.endSession();
+		}
 	}
 	//Hash password function
 	const hashedPassword = await bcrypt.hash(password, 10);
-
+	const session = await User.startSession(sessionOptions);
 	try {
+		session.startTransaction();
 		const user = await User.create({
 			email,
 			password: hashedPassword,
 			role: "patient",
 		});
+		await AuditLog.create(
+			[
+				{
+					userId: user[0]._id,
+					operation: "create",
+					entity: "User",
+					entityId: user[0]._id,
+					oldValues: null,
+					newValues: user[0],
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "New staff account added",
+				},
+			],
+			{ session }
+		);
+		await session.commitTransaction();
 		res
 			.status(201)
 			.json({ data: user, message: `Account successfully created!` });
@@ -39,7 +122,13 @@ const registerUser = asyncHandler(async (req, res) => {
 			}
 			return res.status(400).json({ message: validationErrors });
 		}
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		return res.status(400).json({ message: error });
 	}
+	session.endSession();
 });
 
 //@desc Login User
@@ -51,34 +140,42 @@ const loginUser = asyncHandler(async (req, res) => {
 		return res.status(400).json({ message: "All fields are mandatory!" });
 	}
 	const user = await User.findOne({ email });
+	if (!user) {
+		return res.status(401).json({ message: "User not found!" });
+	}
 
-	//compare password with hashedPassword
-	if (user && (await bcrypt.compare(password, user.password))) {
-		const token = jwt.sign(
-			{
-				user: {
-					name: user.personalInfo.fname + " " + user.personalInfo.lname,
-					role: user.role,
-					id: user.id,
+	if (user.password) {
+		if (await bcrypt.compare(password, user.password)) {
+			const token = jwt.sign(
+				{
+					user: {
+						name: user.personalInfo.fname + " " + user.personalInfo.lname,
+						role: user.role,
+						id: user.id,
+					},
 				},
-			},
-			process.env.ACCESS_TOKEN_SECRET,
-			{ expiresIn: "1w" }
-		);
-		if (user.role !== "patient") {
-			const rolestr = user.role.charAt(0).toUpperCase() + user.role.slice(1);
-			res.status(200).json({
-				data: token,
-				message: `You have successfully logged in ${rolestr} ${user.personalInfo.fname} ${user.personalInfo.lname}`,
-			});
+				process.env.ACCESS_TOKEN_SECRET,
+				{ expiresIn: "1w" }
+			);
+			if (user.role !== "patient") {
+				const rolestr = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+				res.status(200).json({
+					data: token,
+					message: `You have successfully logged in ${rolestr} ${user.personalInfo.fname} ${user.personalInfo.lname}`,
+				});
+			} else {
+				res.status(200).json({
+					data: token,
+					message: `You have successfully logged in ${user.personalInfo.fname} ${user.personalInfo.lname}`,
+				});
+			}
 		} else {
-			res.status(200).json({
-				data: token,
-				message: `You have successfully logged in ${user.personalInfo.fname} ${user.personalInfo.lname}`,
-			});
+			return res.status(401).json({ message: "Wrong email or password!" });
 		}
 	} else {
-		return res.status(401).json({ message: "Wrong email or password!" });
+		return res.status(200).json({
+			message: "Please set a password to complete your registration.",
+		});
 	}
 });
 
@@ -121,7 +218,7 @@ const addInfo = asyncHandler(async (req, res) => {
 		return res.status(404).json({ message: "User not found!" });
 	}
 
-	user.personalInfo = {
+	personalInfo = {
 		fname,
 		lname,
 		contact,
@@ -130,10 +227,62 @@ const addInfo = asyncHandler(async (req, res) => {
 		province,
 		postal,
 	};
-	user.isPersonalInfoComplete = true;
-	await user.save();
 
-	res.json(user);
+	const updates = {
+		personalInfo,
+		isPersonalInfoComplete: true,
+	};
+
+	const session = await User.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+
+		const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+			new: true,
+			runValidators: true,
+			session,
+		});
+
+		await AuditLog.create(
+			[
+				{
+					userId: userId,
+					operation: "update",
+					entity: "User",
+					entityId: userId,
+					oldValues: user,
+					newValues: updatedUser,
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "User Information added",
+				},
+			],
+			{ session }
+		);
+		await session.commitTransaction();
+		res.status(201).json({
+			data: updatedStaff,
+			message: `${fname} ${lname}'s account is successfully updated!`,
+		});
+	} catch (error) {
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
+
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		return res.status(400).json({ message: error });
+	}
+	session.endSession();
 });
 
 //@desc Update User Info
@@ -141,49 +290,84 @@ const addInfo = asyncHandler(async (req, res) => {
 //@access private (user with the same ID only)
 const updateInfo = asyncHandler(async (req, res) => {
 	const userId = req.user.id;
+	let updates = req.body;
 
-	const { fname, lname, contact, address, city, province, postal } = req.body;
+	if (updates.personalInfo) {
+		updates.personalInfo = JSON.parse(updates.personalInfo);
+	}
 
-	const updatedFields = {};
-	if (fname) updatedFields["personalInfo.fname"] = fname;
-	if (lname) updatedFields["personalInfo.lname"] = lname;
-	if (contact) updatedFields["personalInfo.contact"] = contact;
-	if (address) updatedFields["personalInfo.address"] = address;
-	if (city) updatedFields["personalInfo.city"] = city;
-	if (province) updatedFields["personalInfo.province"] = province;
-	if (postal) updatedFields["personalInfo.postal"] = postal;
-
-	const user = await User.findByIdAndUpdate(userId, updatedFields, {
-		new: true,
-		runValidators: true,
+	const user = await User.findOne({
+		_id: userId,
 	});
 
 	if (!user) {
-		res.status(404);
-		throw new Error("User not found!");
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
+		return res
+			.status(404)
+			.json({ message: "User account not found or unauthorized!" });
 	}
 
-	res.json(user);
-});
+	const session = await User.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+		let image;
+		if (req.file) {
+			image = req.file.filename;
+			updates.image = image;
+		} else {
+			image = null;
+		}
 
-//@desc Change User Email
-//@route PUT /api/users/change-email
-//@access private (user with the same ID only)
-const changeEmail = asyncHandler(async (req, res) => {
-	const userId = req.user.id;
-	const newEmail = req.body;
+		const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+			new: true,
+			runValidators: true,
+			session,
+		});
+		await AuditLog.create(
+			[
+				{
+					userId: userId,
+					operation: "update",
+					entity: "User",
+					entityId: userId,
+					oldValues: user,
+					newValues: updatedUser,
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "User Account updated",
+				},
+			],
+			{ session }
+		);
+		await session.commitTransaction();
+		res.status(201).json({
+			data: updatedStaff,
+			message: "Your account has successfully been updated!",
+		});
+	} catch (error) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
 
-	const user = await User.findByIdAndUpdate(userId, newEmail, {
-		new: true,
-		runValidators: true,
-	});
-
-	if (!user) {
-		res.status(404);
-		throw new Error("User not found!");
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		return res.status(400).json({ message: error });
 	}
-
-	res.json(user);
+	session.endSession();
 });
 
 //@desc Change User Password
@@ -191,20 +375,79 @@ const changeEmail = asyncHandler(async (req, res) => {
 //@access private (user with the same ID only)
 const changePassword = asyncHandler(async (req, res) => {
 	const userId = req.user.id;
-	const { password } = req.body;
+	const { oldPassword, newPassword, confPassword } = req.body;
 
 	const user = await User.findById(userId);
 
 	if (!user) {
-		res.status(404);
-		throw new Error("User not found!");
+		return res.status(404).json({ message: "User not found!" });
 	}
 
-	const hashedPassword = await bcrypt.hash(password, 10);
-	user.password = hashedPassword;
-	await user.save();
+	if (await bcrypt.compare(oldPassword, user.password)) {
+		if (newPassword === confPassword) {
+			const hashedPassword = await bcrypt.hash(newPassword, 10);
+			const updates = {
+				password: hashedPassword,
+			};
 
-	res.json(user);
+			const session = await User.startSession(sessionOptions);
+			try {
+				session.startTransaction();
+
+				const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+					new: true,
+					runValidators: true,
+					session,
+				});
+
+				await AuditLog.create(
+					[
+						{
+							userId: userId,
+							operation: "update",
+							entity: "User",
+							entityId: userId,
+							oldValues: user,
+							newValues: updatedUser,
+							userIpAddress: req.ip,
+							userAgent: req.get("user-agent"),
+							additionalInfo: "User Information added",
+						},
+					],
+					{ session }
+				);
+				await session.commitTransaction();
+				res.status(201).json({
+					data: updatedStaff,
+					message: `${user.fname} ${user.lname}'s password is successfully updated!`,
+				});
+			} catch (error) {
+				if (error.name === "ValidationError") {
+					const validationErrors = [];
+					for (const field in error.errors) {
+						validationErrors.push({
+							fieldName: field,
+							message: error.errors[field].message,
+						});
+					}
+					return res.status(400).json({ message: validationErrors });
+				}
+
+				if (session) {
+					await session.abortTransaction();
+					session.endSession();
+				}
+				return res.status(400).json({ message: error });
+			}
+			session.endSession();
+		} else {
+			return res.status(404).json({ message: "New passwords do not match!" });
+		}
+	} else if (await bcrypt.compare(newPassword, user.password)) {
+		return res.status(404).json({ message: "You are using an old password!" });
+	} else {
+		return res.status(404).json({ message: "You entered the wrong password!" });
+	}
 });
 
 module.exports = {
@@ -213,6 +456,5 @@ module.exports = {
 	addInfo,
 	updateInfo,
 	getUserById,
-	changeEmail,
 	changePassword,
 };

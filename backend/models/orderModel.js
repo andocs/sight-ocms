@@ -1,47 +1,75 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const orderSchema = new mongoose.Schema({
-  doctor: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  technician: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
-  patient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  orderTime: {
-    type: Date,
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: ['Pending', 'In Progress', 'Completed'],
-    required: true,
-  },
-  prescription: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Prescription',
-  },
-  frameType: {
-    type: String,
-    required: true,
-  },
-  lensType: {
-    type: String,
-    required: true,
-  },
-},
-  {
-    timestamps: true,
-  }
+const orderSchema = new mongoose.Schema(
+	{
+		doctor: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
+		technician: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
+		},
+		patient: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
+		orderTime: {
+			type: Date,
+			required: true,
+		},
+		status: {
+			type: String,
+			enum: ["Pending", "In Progress", "Completed"],
+			required: true,
+		},
+		// prescription: {
+		//   type: mongoose.Schema.Types.ObjectId,
+		//   ref: 'Prescription',
+		// },
+		frame: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Inventory",
+			required: true,
+		},
+		lens: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Inventory",
+			required: true,
+		},
+		frameQuantity: {
+			type: Number,
+			required: true,
+		},
+		lensQuantity: {
+			type: Number,
+			required: true,
+		},
+		otherItems: [
+			{
+				item: {
+					type: mongoose.Schema.Types.ObjectId,
+					ref: "Inventory",
+					required: true,
+				},
+				quantity: {
+					type: Number,
+					required: true,
+				},
+			},
+		],
+		amount: {
+			type: Number,
+			required: true,
+		},
+	},
+	{
+		timestamps: true,
+	}
 );
 
-const Order = mongoose.model('Order', orderSchema, "orderDetails");
+const Order = mongoose.model("Order", orderSchema, "orderDetails");
 
 module.exports = Order;

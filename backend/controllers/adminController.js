@@ -174,7 +174,6 @@ const updateStaff = asyncHandler(async (req, res) => {
 	if (updates.personalInfo) {
 		updates.personalInfo = JSON.parse(updates.personalInfo);
 	}
-	console.log("body", updates);
 
 	const staff = await User.findOne({
 		_id: staffId,
@@ -248,7 +247,7 @@ const updateStaff = asyncHandler(async (req, res) => {
 			await session.abortTransaction();
 			session.endSession();
 		}
-		throw error;
+		return res.status(400).json({ message: error });
 	}
 	session.endSession();
 });
@@ -301,7 +300,8 @@ const deleteUser = asyncHandler(async (req, res) => {
 		});
 	} catch (error) {
 		await session.abortTransaction();
-		throw error;
+		session.endSession();
+		return res.status(400).json({ message: error });
 	}
 	session.endSession();
 });

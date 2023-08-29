@@ -54,7 +54,6 @@ function ViewAuditLogs() {
 			handler: (details) => {
 				setSelectedLogData(details);
 				setIsOpen(true);
-				console.log(details);
 			},
 		},
 	];

@@ -12,7 +12,13 @@ const userSchema = new mongoose.Schema(
 		},
 		password: {
 			type: String,
-			required: true,
+			required: function () {
+				return this.isRegistered;
+			},
+		},
+		isRegistered: {
+			type: Boolean,
+			default: false,
 		},
 		role: {
 			type: String,
