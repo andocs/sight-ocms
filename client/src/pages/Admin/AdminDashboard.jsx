@@ -9,6 +9,8 @@ import AdminHome from "./AdminHome";
 function AdminDashboard() {
 	const location = useLocation();
 	const navigate = useNavigate();
+	const errors = [];
+	let pushed = 0;
 
 	const token = localStorage.getItem("user");
 

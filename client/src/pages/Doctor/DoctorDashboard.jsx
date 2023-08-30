@@ -10,9 +10,9 @@ function DoctorDashboard() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const errors = [];
+	let pushed = 0;
 
 	const token = localStorage.getItem("user");
-	let pushed = 0;
 
 	useEffect(() => {
 		if (token) {

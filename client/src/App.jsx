@@ -41,6 +41,18 @@ import GeneratePrescription from "./pages/Doctor/GeneratePrescription";
 import UpdateRecords from "./pages/Doctor/UpdateRecords";
 
 import Navbar from "./components/navbar.component";
+import WalkInConsult from "./pages/Doctor/WalkInConsult";
+import RegisteredConsult from "./pages/Doctor/RegisteredConsult";
+import ViewEyeRecords from "./pages/Doctor/ViewRecords";
+import ViewAppointments from "./pages/Doctor/ViewAppointments";
+import AddAppointments from "./pages/Doctor/AddAppointments";
+import ViewOrders from "./pages/Doctor/ViewOrders";
+import AddOrders from "./pages/Doctor/AddOrders";
+import AddPatient from "./pages/Doctor/AddPatient";
+import ViewVisits from "./pages/Doctor/ViewVisits";
+import AddVisit from "./pages/Doctor/AddVisit";
+import ViewSchedule from "./pages/Doctor/ViewSchedule";
+import AddSchedule from "./pages/Doctor/AddSchedule";
 
 function App() {
 	return (
@@ -77,11 +89,19 @@ function App() {
 					</Route>
 
 					<Route path="/doctor" element={<DoctorDashboard />}>
-						<Route path="add-transaction" element={<AddTransaction />} />
+						<Route path="walk-in" element={<WalkInConsult />} />
+						<Route path="registered" element={<RegisteredConsult />} />
+						<Route path="view-visit" element={<ViewVisits />} />
+						<Route path="add-visit" element={<AddVisit />} />
+						<Route path="view-records" element={<ViewEyeRecords />} />
 						<Route path="add-records" element={<AddRecords />} />
-						<Route path="delete-records" element={<DeleteRecords />} />
-						<Route path="update-records" element={<UpdateRecords />} />
-						<Route path="gen-prescription" element={<GeneratePrescription />} />
+						<Route path="view-appointments" element={<ViewAppointments />} />
+						<Route path="add-appointment" element={<AddAppointments />} />
+						<Route path="view-orders" element={<ViewOrders />} />
+						<Route path="add-order" element={<AddOrders />} />
+						<Route path="view-schedule" element={<ViewSchedule />} />
+						<Route path="add-schedule" element={<AddSchedule />} />
+						<Route path="add-patient" element={<AddPatient />} />
 					</Route>
 
 					<Route path="/technician" element={<TechnicianDashboard />} />

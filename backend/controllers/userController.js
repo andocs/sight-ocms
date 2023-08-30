@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
+const AuditLog = require("../models/auditLogModel");
 
 const sessionOptions = {
 	readConcern: { level: "snapshot" },
@@ -12,16 +13,21 @@ const sessionOptions = {
 //@route POST /api/users/register
 //@access public
 const registerUser = asyncHandler(async (req, res) => {
-	const { email, password } = req.body;
+	const { email, password, conf_pass } = req.body;
 
-	if (!email || !password) {
+	if (!email || !password || !conf_pass) {
 		return res.status(400).json({ message: "All fields are mandatory!" });
 	}
+
 	const userExists = await User.findOne({ email });
 	if (userExists) {
+		console.log(userExists);
 		if (userExists.password && userExists.isRegistered === true) {
 			return res.status(400).json({ message: "User already exists!" });
 		} else {
+			if (password !== conf_pass) {
+				return res.status(400).json({ message: "Passwords do not match!" });
+			}
 			const hashedPassword = await bcrypt.hash(password, 10);
 			const updates = {
 				password: hashedPassword,
@@ -57,7 +63,7 @@ const registerUser = asyncHandler(async (req, res) => {
 					{ session }
 				);
 				await session.commitTransaction();
-				res.status(201).json({
+				return res.status(201).json({
 					data: updatedUser,
 					message: "Account successfully registered!",
 				});
@@ -82,15 +88,25 @@ const registerUser = asyncHandler(async (req, res) => {
 		}
 	}
 	//Hash password function
+	if (password !== conf_pass) {
+		return res.status(400).json({ message: "Passwords do not match!" });
+	}
+
 	const hashedPassword = await bcrypt.hash(password, 10);
 	const session = await User.startSession(sessionOptions);
 	try {
 		session.startTransaction();
-		const user = await User.create({
-			email,
-			password: hashedPassword,
-			role: "patient",
-		});
+		const user = await User.create(
+			[
+				{
+					email,
+					password: hashedPassword,
+					role: "patient",
+					isRegistered: true,
+				},
+			],
+			{ session }
+		);
 		await AuditLog.create(
 			[
 				{
@@ -109,7 +125,7 @@ const registerUser = asyncHandler(async (req, res) => {
 		);
 		await session.commitTransaction();
 		res
-			.status(201)
+			.status(200)
 			.json({ data: user, message: `Account successfully created!` });
 	} catch (error) {
 		if (error.name === "ValidationError") {

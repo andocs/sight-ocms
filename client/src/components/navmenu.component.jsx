@@ -26,7 +26,7 @@ function SubMenu({ submenus }) {
 			>
 				<div className="text-start flex ml-8 items-center font-medium">
 					{submenus.svg}
-					<span className="ml-3">{submenus.label}</span>
+					<span className="w-[109px] truncate ml-3">{submenus.label}</span>
 				</div>
 				<ChevronUpIcon
 					className={`mr-4 h-5 w-5 text-sky-800 ${
@@ -48,7 +48,9 @@ function SubMenu({ submenus }) {
 							>
 								<div className="flex ml-8 items-center font-medium">
 									{submenu.svg}
-									<span className="ml-3">{submenu.label}</span>
+									<span className="w-[109px] truncate ml-3">
+										{submenu.label}
+									</span>
 								</div>
 							</a>
 						</Menu.Item>

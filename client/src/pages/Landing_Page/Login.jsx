@@ -37,7 +37,6 @@ function Login() {
 
 		if (!isSuccess && token) {
 			const decodedToken = decode(token);
-			console.log(decodedToken);
 			const role = decodedToken.user.role;
 			navigate(`/${role}`);
 		}

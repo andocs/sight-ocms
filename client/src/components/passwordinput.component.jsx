@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 
-const PasswordInput = ({ value, onChange }) => {
+const PasswordInput = ({ value, onChange, text }) => {
 	const [showPassword, setShowPassword] = useState(false);
+
+	const handleChange = (e) => {
+		const value = e.target.value;
+		onChange(value);
+	};
 
 	const hiddensvg = (
 		<svg
@@ -44,8 +49,8 @@ const PasswordInput = ({ value, onChange }) => {
 				placeholder={showPassword ? "" : "••••••••"}
 				name={value}
 				value={value}
-				onChange={onChange}
-				className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
+				onChange={handleChange}
+				className={`placeholder:text-slate-500 text-${text} font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500`}
 			/>
 			<button
 				onClick={handleTogglePassword}

@@ -85,8 +85,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 			case "password":
 				return (
 					<PasswordInput
+						text={"start"}
 						value={formData[field.name] || ""}
-						onChange={(e) => handleChange(field.name, e.target.value)}
+						onChange={(value) => handleChange(field.name, value)}
 					/>
 				);
 			case "image":
