@@ -630,10 +630,11 @@ const deleteOrder = asyncHandler(async (req, res) => {
 **/
 
 //@desc ADDS A NEW EYE RECORD FOR THE PATIENT
-//@route POST /api/doctor/records
+//@route POST /api/doctor/records/:id
 //@access private (doctor only)
 const addRecord = asyncHandler(async (req, res) => {
-	const { patientId, rightEye, leftEye, additionalNotes } = req.body;
+	const patientId = req.params.id;
+	const { rightEye, leftEye, additionalNotes } = req.body;
 
 	const patient = await User.findById(patientId);
 
@@ -649,7 +650,7 @@ const addRecord = asyncHandler(async (req, res) => {
 			[
 				{
 					doctor: req.user.id,
-					patientId: patient._id,
+					patientId: patientId,
 					rightEye,
 					leftEye,
 					additionalNotes,
@@ -855,10 +856,11 @@ const deleteRecord = asyncHandler(async (req, res) => {
 **/
 
 //@desc ADDS APPOINTMENT (MAINLY FOLLOW UPS)
-//@route POST /api/doctor/appointments
+//@route POST /api/doctor/appointments/:id
 //@access private (doctor only)
 const createAppointment = async (req, res) => {
-	const { patientId, date, startTime, endTime, notes } = req.body;
+	const patientId = req.params.id;
+	const { date, startTime, endTime, notes } = req.body;
 
 	const doctorId = req.user.id;
 
