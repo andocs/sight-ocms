@@ -22,7 +22,7 @@ const orderSchema = new mongoose.Schema(
 		},
 		status: {
 			type: String,
-			enum: ["Pending", "In Progress", "Completed"],
+			enum: ["Pending", "In Progress", "Completed", "Cancelled"],
 			required: true,
 		},
 		// prescription: {
@@ -52,11 +52,9 @@ const orderSchema = new mongoose.Schema(
 				item: {
 					type: mongoose.Schema.Types.ObjectId,
 					ref: "Inventory",
-					required: true,
 				},
 				quantity: {
 					type: Number,
-					required: true,
 				},
 			},
 		],

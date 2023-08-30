@@ -2,11 +2,11 @@ const asyncHandler = require("express-async-handler");
 const AuditLog = require("../models/auditLogModel");
 
 const User = require("../models/userModel");
-const Transaction = require("../models/transactionModel");
 const EyeRecord = require("../models/eyeRecordsModel");
 const Appointment = require("../models/appointmentModel");
 const Schedule = require("../models/scheduleModel");
 const Order = require("../models/orderModel");
+const Visit = require("../models/visitModel");
 
 const sessionOptions = {
 	readConcern: { level: "snapshot" },
@@ -35,27 +35,376 @@ const generateReceipt = (transaction) => {
 };
 
 /**
+##### PATIENT (CREATE & READ) #####
+**/
+
+//@desc ADDS A NEW PATIENT
+//@route POST /api/doctor/patient
+//@access private (doctor only)
+
+const createPatient = asyncHandler(async (req, res) => {
+	const { fname, lname, gender, email, contact, address, city, province } =
+		req.body;
+
+	if (!email || !contact) {
+		return res.status(404).json({ message: "Email or Contact required!" });
+	}
+
+	const existingPatient = await User.find({
+		$or: [{ email: email }, { "personalInfo.contact": contact }],
+	});
+
+	if (existingPatient) {
+		return res.status(404).json({ message: "Patient already exists!" });
+	}
+
+	const personalInfo = {
+		fname,
+		lname,
+		gender,
+		contact,
+		address,
+		city,
+		province,
+	};
+
+	const isComplete =
+		personalInfo.fname &&
+		personalInfo.lname &&
+		personalInfo.gender &&
+		personalInfo.contact &&
+		personalInfo.address &&
+		personalInfo.city &&
+		personalInfo.province;
+
+	const session = await User.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+		const patient = await User.create(
+			[
+				{
+					email,
+					isRegistered: false,
+					role: "patient",
+					isPersonalInfoComplete: isComplete,
+					personalInfo,
+				},
+			],
+			{ session }
+		);
+
+		await AuditLog.create(
+			[
+				{
+					userId: req.user.id,
+					operation: "create",
+					entity: "User",
+					entityId: patient[0]._id,
+					oldValues: null,
+					newValues: patient[0],
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "New patient added",
+				},
+			],
+			{ session }
+		);
+		await session.commitTransaction();
+		res.status(201).json({
+			data: patient,
+			message: `Patient ${fname} ${lname} is successfully added!`,
+		});
+	} catch (error) {
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
+
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		return res.status(400).json({ message: error });
+	}
+	session.endSession();
+});
+
+//@desc GET ALL THE PATIENTS
+//@route GET /api/doctor/patient
+//@access private (doctor only)
+const getAllPatients = asyncHandler(async (req, res) => {
+	const patients = await User.find({ role: "patient" });
+	if (patients == {}) {
+		res.json({ message: "No patients currently saved in the system." });
+	}
+	res.json(patients);
+});
+
+//@desc GET PATIENT DETAILS
+//@route GET /api/doctor/patient/:id
+//@access Private (doctor only)
+const getPatientDetails = asyncHandler(async (req, res) => {
+	const patientId = req.params.id;
+	const patient = await User.findById(patientId);
+	if (!patient) {
+		return res.status(404).json({ message: "User not found." });
+	}
+	res.json(patient);
+});
+
+/**
+##### VISIT (CRUD) #####
+**/
+
+//@desc ADD NEW VISIT RECORD
+//@route POST /api/doctor/visit/:id
+//@access Private (doctor only)
+const createVisit = asyncHandler(async (req, res) => {
+	const doctorId = req.user.id;
+	const patientId = req.params.id;
+	const { patientType, visitType, reason, medicalHistory, additionalInfo } =
+		req.body;
+
+	const existingPatient = await User.findById(patientId);
+
+	if (!existingPatient) {
+		return res.status(404).json({ message: "Patient not found!" });
+	}
+
+	if (!patientType || !visitType || !reason) {
+		return res
+			.status(404)
+			.json({ message: "Please fill in all the required fields!" });
+	}
+
+	const session = await Visit.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+		const visit = await Visit.create(
+			[
+				{
+					doctor: doctorId,
+					patient: patientId,
+					patientType,
+					visitDate: new Date(),
+					visitType,
+					reason,
+					medicalHistory,
+					additionalInfo,
+				},
+			],
+			{ session }
+		);
+
+		await AuditLog.create(
+			[
+				{
+					userId: doctorId,
+					operation: "create",
+					entity: "Visit",
+					entityId: visit[0]._id,
+					oldValues: null,
+					newValues: visit[0],
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "New visit record added",
+				},
+			],
+			{ session }
+		);
+		await session.commitTransaction();
+		res.status(201).json({
+			data: visit,
+			message: `Patient ${existingPatient.personalInfo.fname} ${existingPatient.personalInfo.lname}'s visit record is successfully created!`,
+		});
+	} catch (error) {
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
+
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		return res.status(400).json({ message: error });
+	}
+	session.endSession();
+});
+
+//@desc GET LIST OF ALL VISITS WITH DOCTOR
+//@route GET /api/doctor/visit
+//@access private (doctor only)
+const getVisitList = asyncHandler(async (req, res) => {
+	const doctorId = req.user.id;
+	const visits = await Visit.find({ doctor: doctorId });
+	if (visits == {}) {
+		res.json({ message: "No visits to doctor in the system." });
+	}
+	res.json(visits);
+});
+
+//@desc GET VISIT RECORD DETAILS
+//@route GET /api/doctor/visit/:id
+//@access private (doctor only)
+const getVisitDetails = asyncHandler(async (req, res) => {
+	const visitId = req.params.id;
+	const visit = await Visit.findById(visitId);
+	if (!visit) {
+		return res.status(404).json({ message: "Visit Record not found!" });
+	}
+	res.json(visit);
+});
+
+//@desc UPDATES A VISIT RECORD
+//@route PUT /api/doctor/visit/:id
+//@access private (doctor only)
+const updateVisit = asyncHandler(async (req, res) => {
+	const doctorId = req.user.id;
+	const visitId = req.params.id;
+	const updates = req.body;
+
+	const visit = await Visit.findOne({
+		_id: visitId,
+		doctor: doctorId,
+	});
+
+	if (!visit) {
+		return res
+			.status(404)
+			.json({ message: "Visit not found or unauthorized!" });
+	}
+
+	const session = await Visit.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+		const updatedVisit = await Visit.findByIdAndUpdate(visitId, updates, {
+			new: true,
+			runValidators: true,
+			session,
+		});
+
+		await AuditLog.create(
+			[
+				{
+					userId: doctorId,
+					operation: "update",
+					entity: "Visit",
+					entityId: visitId,
+					oldValues: visit,
+					newValues: updatedVisit,
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "Visit record updated",
+				},
+			],
+			{ session }
+		);
+		await session.commitTransaction();
+		res.status(201).json({
+			data: updatedVisit,
+			message: `Visit with id ${visitId} is successfully updated!`,
+		});
+	} catch (error) {
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
+
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		return res.status(400).json({ message: error });
+	}
+	session.endSession();
+});
+
+//@desc DELETE VISIT RECORD
+//@route DELETE /api/doctor/visit/:id
+//@access private (doctor only)
+const deleteVisit = asyncHandler(async (req, res) => {
+	const visitId = req.params.id;
+	const doctorId = req.user.id;
+
+	const session = await Visit.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+
+		const visit = await Visit.findOneAndDelete(
+			{ _id: visitId, doctor: doctorId },
+			{ session }
+		);
+
+		if (!visit) {
+			return res.status(404).json({ message: "Visit Record not found!" });
+		}
+
+		await AuditLog.create(
+			[
+				{
+					userId: doctorId,
+					operation: "delete",
+					entity: "Visit",
+					entityId: visitId,
+					oldValues: visit,
+					newValues: null,
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "Visit Record deleted",
+				},
+			],
+			{ session }
+		);
+		await session.commitTransaction();
+		res
+			.status(201)
+			.json({ id: visitId, message: "Visit Record deleted successfully" });
+	} catch (error) {
+		await session.abortTransaction();
+		throw error;
+	}
+	session.endSession();
+});
+
+/**
 ##### ORDER (CRUD) #####
 **/
 
 //@desc ADDS A NEW ORDER
-//@route POST /api/doctor/order
+//@route POST /api/doctor/order/:id
 //@access private (doctor only)
 const createOrder = asyncHandler(async (req, res) => {
 	const doctorId = req.user.id;
-	const {
-		patient,
-		orderTime,
-		status,
-		frame,
-		lens,
-		frameQuantity,
-		lensQuantity,
-		otherItems,
-		amount,
-	} = req.body;
+	const patientId = req.params.id;
+	const { frame, lens, frameQuantity, lensQuantity, otherItems, amount } =
+		req.body;
 
-	const existingPatient = await User.findById(patient);
+	if (!frame || !lens || !frameQuantity || !lensQuantity || !amount) {
+		return res
+			.status(404)
+			.json({ message: "Please fill in all the required fields!" });
+	}
+
+	const existingPatient = await User.findById(patientId);
 
 	if (!existingPatient) {
 		return res.status(404).json({ message: "Patient not found!" });
@@ -68,9 +417,9 @@ const createOrder = asyncHandler(async (req, res) => {
 			[
 				{
 					doctor: doctorId,
-					patient: patient,
-					orderTime,
-					status,
+					patient: patientId,
+					orderTime: new Date(),
+					status: "Pending",
 					frame,
 					lens,
 					frameQuantity,
@@ -101,7 +450,7 @@ const createOrder = asyncHandler(async (req, res) => {
 		await session.commitTransaction();
 		res.status(201).json({
 			data: order,
-			message: `Order with id ${order._id} is successfully created!`,
+			message: `Patient ${existingPatient.personalInfo.fname} ${existingPatient.personalInfo.lname}'s order is successfully created!`,
 		});
 	} catch (error) {
 		if (error.name === "ValidationError") {
@@ -175,7 +524,7 @@ const updateOrder = asyncHandler(async (req, res) => {
 	const session = await Order.startSession(sessionOptions);
 	try {
 		session.startTransaction();
-		const updatedOrder = await Order.findByIdAndUpdate(doctorId, updates, {
+		const updatedOrder = await Order.findByIdAndUpdate(orderId, updates, {
 			new: true,
 			runValidators: true,
 			session,
@@ -964,6 +1313,16 @@ const deleteDoctorSchedule = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+	createPatient,
+	getAllPatients,
+	getPatientDetails,
+
+	createVisit,
+	getVisitList,
+	getVisitDetails,
+	updateVisit,
+	deleteVisit,
+
 	createOrder,
 	getAllOrders,
 	getOrderDetails,

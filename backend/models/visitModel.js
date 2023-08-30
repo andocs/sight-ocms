@@ -2,6 +2,16 @@ const mongoose = require("mongoose");
 
 const visitSchema = new mongoose.Schema(
 	{
+		doctor: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
+		patient: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
 		patientType: {
 			type: String,
 			enum: ["Walk-In", "Registered"],
@@ -15,14 +25,6 @@ const visitSchema = new mongoose.Schema(
 			type: String,
 			enum: ["Appointment", "First Visit", "Follow-Up"],
 			required: true,
-		},
-		doctor: {
-			type: mongoose.Schema.Types.ObjectId,
-			ref: "User",
-		},
-		patient: {
-			type: mongoose.Schema.Types.ObjectId,
-			ref: "User",
 		},
 		reason: {
 			type: String,
