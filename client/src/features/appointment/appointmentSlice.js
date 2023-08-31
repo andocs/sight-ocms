@@ -1,24 +1,24 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import recordService from "./recordService";
+import appointmentService from "./appointmentService";
 
 const initialState = {
-	newRecord: null,
-	recordUpdate: null,
-	record: [],
+	newAppointment: null,
+	appointmentUpdate: null,
+	appointment: [],
 	isLoading: false,
 	isError: false,
 	isSuccess: false,
 	message: "",
 };
 
-// Create new record
-export const createEyeRecord = createAsyncThunk(
-	"record/createEyeRecord",
-	async ({ patientId, recordData }, thunkAPI) => {
+// Create appointment record
+export const createAppointment = createAsyncThunk(
+	"appointment/createAppointment",
+	async ({ patientId, appointmentData }, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.createEyeRecord(
-				{ patientId, recordData },
+			return await appointmentService.createAppointment(
+				{ patientId, appointmentData },
 				token
 			);
 		} catch (error) {
@@ -33,13 +33,13 @@ export const createEyeRecord = createAsyncThunk(
 	}
 );
 
-// Get all eye record
-export const getEyeRecords = createAsyncThunk(
-	"record/getEyeRecords",
+// Get all appointment records
+export const getAppointmentList = createAsyncThunk(
+	"appointment/getAppointmentList",
 	async (_, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.getEyeRecords(token);
+			return await appointmentService.getAppointmentList(token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -52,13 +52,16 @@ export const getEyeRecords = createAsyncThunk(
 	}
 );
 
-// Get record details
-export const getRecordDetails = createAsyncThunk(
-	"record/getRecordDetails",
-	async (recordId, thunkAPI) => {
+// Get appointment details
+export const getAppointmentDetails = createAsyncThunk(
+	"appointment/getAppointmentDetails",
+	async (appointmentId, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.getRecordDetails(recordId, token);
+			return await appointmentService.getAppointmentDetails(
+				appointmentId,
+				token
+			);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -71,13 +74,16 @@ export const getRecordDetails = createAsyncThunk(
 	}
 );
 
-// Edit eye record
-export const editEyeRecord = createAsyncThunk(
-	"record/editEyeRecord",
-	async ({ recordId, recordData }, thunkAPI) => {
+// Edit appointment record
+export const editAppointment = createAsyncThunk(
+	"appointment/editAppointment",
+	async ({ appointmentId, appointmentData }, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.editEyeRecord({ recordId, recordData }, token);
+			return await appointmentService.editAppointment(
+				{ appointmentId, appointmentData },
+				token
+			);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -90,13 +96,13 @@ export const editEyeRecord = createAsyncThunk(
 	}
 );
 
-// Delete eye record
-export const deleteEyeRecord = createAsyncThunk(
-	"record/deleteEyeRecord",
-	async (recordId, thunkAPI) => {
+// Delete appointment record
+export const deleteAppointment = createAsyncThunk(
+	"appointment/deleteAppointment",
+	async (appointmentId, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.deleteEyeRecord(recordId, token);
+			return await appointmentService.deleteAppointment(appointmentId, token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -109,8 +115,8 @@ export const deleteEyeRecord = createAsyncThunk(
 	}
 );
 
-const recordSlice = createSlice({
-	name: "record",
+const appointmentSlice = createSlice({
+	name: "appointment",
 	initialState,
 	reducers: {
 		reset: (state) => {
@@ -122,78 +128,78 @@ const recordSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
-			.addCase(createEyeRecord.pending, (state) => {
+			.addCase(createAppointment.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(createEyeRecord.fulfilled, (state, action) => {
+			.addCase(createAppointment.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.newRecord = action.payload.data;
+				state.newAppointment = action.payload.data;
 				state.message = action.payload.message;
 			})
-			.addCase(createEyeRecord.rejected, (state, action) => {
+			.addCase(createAppointment.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.newRecord = null;
+				state.newAppointment = null;
 			})
-			.addCase(getEyeRecords.pending, (state) => {
+			.addCase(getAppointmentList.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(getEyeRecords.fulfilled, (state, action) => {
+			.addCase(getAppointmentList.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.record = action.payload;
+				state.appointment = action.payload;
 			})
-			.addCase(getEyeRecords.rejected, (state, action) => {
+			.addCase(getAppointmentList.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.record = null;
+				state.appointment = null;
 			})
-			.addCase(getRecordDetails.pending, (state) => {
+			.addCase(getAppointmentDetails.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(getRecordDetails.fulfilled, (state, action) => {
+			.addCase(getAppointmentDetails.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.recordUpdate = action.payload;
+				state.appointmentUpdate = action.payload;
 			})
-			.addCase(getRecordDetails.rejected, (state, action) => {
+			.addCase(getAppointmentDetails.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.recordUpdate = null;
+				state.appointmentUpdate = null;
 			})
-			.addCase(editEyeRecord.pending, (state) => {
+			.addCase(editAppointment.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(editEyeRecord.fulfilled, (state, action) => {
+			.addCase(editAppointment.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.newRecord = action.payload.data;
+				state.newAppointment = action.payload.data;
 				state.message = action.payload.message;
 			})
-			.addCase(editEyeRecord.rejected, (state, action) => {
+			.addCase(editAppointment.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.isSuccess = false;
 				state.message = action.payload;
-				state.newRecord = null;
+				state.newAppointment = null;
 			})
-			.addCase(deleteEyeRecord.pending, (state) => {
+			.addCase(deleteAppointment.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(deleteEyeRecord.fulfilled, (state, action) => {
+			.addCase(deleteAppointment.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.record = state.record.filter(
+				state.appointment = state.appointment.filter(
 					(record) => record._id !== action.payload.id
 				);
 				state.isLoading = false;
 				state.message = action.payload.message;
 			})
-			.addCase(deleteEyeRecord.rejected, (state, action) => {
+			.addCase(deleteAppointment.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.isSuccess = false;
@@ -202,5 +208,5 @@ const recordSlice = createSlice({
 	},
 });
 
-export const { reset } = recordSlice.actions;
-export default recordSlice.reducer;
+export const { reset } = appointmentSlice.actions;
+export default appointmentSlice.reducer;

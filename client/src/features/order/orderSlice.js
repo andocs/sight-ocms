@@ -1,26 +1,23 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import recordService from "./recordService";
+import orderService from "./orderService";
 
 const initialState = {
-	newRecord: null,
-	recordUpdate: null,
-	record: [],
+	newOrder: null,
+	orderUpdate: null,
+	order: [],
 	isLoading: false,
 	isError: false,
 	isSuccess: false,
 	message: "",
 };
 
-// Create new record
-export const createEyeRecord = createAsyncThunk(
-	"record/createEyeRecord",
-	async ({ patientId, recordData }, thunkAPI) => {
+// Create order record
+export const createOrder = createAsyncThunk(
+	"order/createOrder",
+	async ({ patientId, orderData }, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.createEyeRecord(
-				{ patientId, recordData },
-				token
-			);
+			return await orderService.createOrder({ patientId, orderData }, token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -33,13 +30,13 @@ export const createEyeRecord = createAsyncThunk(
 	}
 );
 
-// Get all eye record
-export const getEyeRecords = createAsyncThunk(
-	"record/getEyeRecords",
+// Get all order records
+export const getOrderList = createAsyncThunk(
+	"order/getOrderList",
 	async (_, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.getEyeRecords(token);
+			return await orderService.getOrderList(token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -52,13 +49,13 @@ export const getEyeRecords = createAsyncThunk(
 	}
 );
 
-// Get record details
-export const getRecordDetails = createAsyncThunk(
-	"record/getRecordDetails",
-	async (recordId, thunkAPI) => {
+// Get order record details
+export const getOrderDetails = createAsyncThunk(
+	"order/getOrderDetails",
+	async (orderId, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.getRecordDetails(recordId, token);
+			return await orderService.getOrderDetails(orderId, token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -71,13 +68,13 @@ export const getRecordDetails = createAsyncThunk(
 	}
 );
 
-// Edit eye record
-export const editEyeRecord = createAsyncThunk(
-	"record/editEyeRecord",
-	async ({ recordId, recordData }, thunkAPI) => {
+// Edit order record
+export const editOrder = createAsyncThunk(
+	"order/editOrder",
+	async ({ orderId, orderData }, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.editEyeRecord({ recordId, recordData }, token);
+			return await orderService.editOrder({ orderId, orderData }, token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -90,13 +87,13 @@ export const editEyeRecord = createAsyncThunk(
 	}
 );
 
-// Delete eye record
-export const deleteEyeRecord = createAsyncThunk(
-	"record/deleteEyeRecord",
-	async (recordId, thunkAPI) => {
+// Delete order record
+export const deleteOrder = createAsyncThunk(
+	"order/deleteOrder",
+	async (orderId, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.deleteEyeRecord(recordId, token);
+			return await orderService.deleteOrder(orderId, token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -109,8 +106,8 @@ export const deleteEyeRecord = createAsyncThunk(
 	}
 );
 
-const recordSlice = createSlice({
-	name: "record",
+const orderSlice = createSlice({
+	name: "order",
 	initialState,
 	reducers: {
 		reset: (state) => {
@@ -122,78 +119,78 @@ const recordSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
-			.addCase(createEyeRecord.pending, (state) => {
+			.addCase(createOrder.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(createEyeRecord.fulfilled, (state, action) => {
+			.addCase(createOrder.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.newRecord = action.payload.data;
+				state.newOrder = action.payload.data;
 				state.message = action.payload.message;
 			})
-			.addCase(createEyeRecord.rejected, (state, action) => {
+			.addCase(createOrder.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.newRecord = null;
+				state.newOrder = null;
 			})
-			.addCase(getEyeRecords.pending, (state) => {
+			.addCase(getOrderList.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(getEyeRecords.fulfilled, (state, action) => {
+			.addCase(getOrderList.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.record = action.payload;
+				state.order = action.payload;
 			})
-			.addCase(getEyeRecords.rejected, (state, action) => {
+			.addCase(getOrderList.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.record = null;
+				state.order = null;
 			})
-			.addCase(getRecordDetails.pending, (state) => {
+			.addCase(getOrderDetails.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(getRecordDetails.fulfilled, (state, action) => {
+			.addCase(getOrderDetails.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.recordUpdate = action.payload;
+				state.orderUpdate = action.payload;
 			})
-			.addCase(getRecordDetails.rejected, (state, action) => {
+			.addCase(getOrderDetails.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.recordUpdate = null;
+				state.orderUpdate = null;
 			})
-			.addCase(editEyeRecord.pending, (state) => {
+			.addCase(editOrder.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(editEyeRecord.fulfilled, (state, action) => {
+			.addCase(editOrder.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.newRecord = action.payload.data;
+				state.newOrder = action.payload.data;
 				state.message = action.payload.message;
 			})
-			.addCase(editEyeRecord.rejected, (state, action) => {
+			.addCase(editOrder.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.isSuccess = false;
 				state.message = action.payload;
-				state.newRecord = null;
+				state.newOrder = null;
 			})
-			.addCase(deleteEyeRecord.pending, (state) => {
+			.addCase(deleteOrder.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(deleteEyeRecord.fulfilled, (state, action) => {
+			.addCase(deleteOrder.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.record = state.record.filter(
+				state.order = state.order.filter(
 					(record) => record._id !== action.payload.id
 				);
 				state.isLoading = false;
 				state.message = action.payload.message;
 			})
-			.addCase(deleteEyeRecord.rejected, (state, action) => {
+			.addCase(deleteOrder.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.isSuccess = false;
@@ -202,5 +199,5 @@ const recordSlice = createSlice({
 	},
 });
 
-export const { reset } = recordSlice.actions;
-export default recordSlice.reducer;
+export const { reset } = orderSlice.actions;
+export default orderSlice.reducer;

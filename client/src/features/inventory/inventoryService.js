@@ -1,5 +1,6 @@
 import axios from "axios";
-const BASE_URL = "http://localhost:5001/api/admin";
+import jwt_decode from "jwt-decode";
+const BASE_URL = "http://localhost:5001/api";
 
 // Add new item
 const addNewItem = async (itemDetails, token) => {
@@ -8,7 +9,8 @@ const addNewItem = async (itemDetails, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const res = await axios.post(`${BASE_URL}/inventory`, itemDetails, config);
+	const url = `${BASE_URL}/${getUserRole(token)}/inventory`;
+	const res = await axios.post(url, itemDetails, config);
 	return res.data;
 };
 
@@ -19,7 +21,8 @@ const getInventoryItems = async (token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const res = await axios.get(`${BASE_URL}/inventory`, config);
+	const url = `${BASE_URL}/${getUserRole(token)}/inventory`;
+	const res = await axios.get(url, config);
 	return res.data;
 };
 
@@ -30,7 +33,8 @@ const getItemDetails = async (itemId, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const res = await axios.get(`${BASE_URL}/inventory/${itemId}`, config);
+	const url = `${BASE_URL}/${getUserRole(token)}/inventory/${itemId}`;
+	const res = await axios.get(url, config);
 	return res.data;
 };
 
@@ -41,11 +45,8 @@ const editInventoryDetails = async ({ itemId, itemDetails }, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const res = await axios.put(
-		`${BASE_URL}/inventory/${itemId}`,
-		itemDetails,
-		config
-	);
+	const url = `${BASE_URL}/${getUserRole(token)}/inventory/${itemId}`;
+	const res = await axios.put(url, itemDetails, config);
 	return res.data;
 };
 
@@ -56,8 +57,15 @@ const deleteInventoryItem = async (itemId, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const res = await axios.delete(`${BASE_URL}/inventory/${itemId}`, config);
+	const url = `${BASE_URL}/${getUserRole(token)}/inventory/${itemId}`;
+	const res = await axios.delete(url, config);
 	return res.data;
+};
+
+const getUserRole = (token) => {
+	const decodedToken = jwt_decode(token);
+	const userRole = decodedToken.user.role;
+	return userRole;
 };
 
 const inventoryService = {

@@ -1,5 +1,5 @@
 import axios from "axios";
-const BASE_URL = "http://localhost:5001/api/admin";
+const BASE_URL = "http://localhost:5001/api/admin/staff";
 
 // Create staff account
 const createStaffAccount = async (staffData, token) => {
@@ -8,7 +8,7 @@ const createStaffAccount = async (staffData, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const res = await axios.post(`${BASE_URL}/staff`, staffData, config);
+	const res = await axios.post(`${BASE_URL}`, staffData, config);
 	return res.data;
 };
 
@@ -19,7 +19,7 @@ const getStaffAccounts = async (token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const res = await axios.get(`${BASE_URL}/staff`, config);
+	const res = await axios.get(`${BASE_URL}`, config);
 	return res.data;
 };
 
@@ -30,7 +30,7 @@ const getStaffDetails = async (staffId, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const res = await axios.get(`${BASE_URL}/staff/${staffId}`, config);
+	const res = await axios.get(`${BASE_URL}/${staffId}`, config);
 	return res.data;
 };
 
@@ -41,11 +41,7 @@ const editStaffAccount = async ({ staffId, staffData }, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const res = await axios.put(
-		`${BASE_URL}/staff/${staffId}`,
-		staffData,
-		config
-	);
+	const res = await axios.put(`${BASE_URL}/${staffId}`, staffData, config);
 	return res.data;
 };
 
@@ -56,7 +52,7 @@ const deleteStaffAccount = async (staffId, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const res = await axios.delete(`${BASE_URL}/staff/${staffId}`, config);
+	const res = await axios.delete(`${BASE_URL}/${staffId}`, config);
 	return res.data;
 };
 

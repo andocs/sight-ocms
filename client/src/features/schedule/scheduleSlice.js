@@ -1,24 +1,24 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import recordService from "./recordService";
+import scheduleService from "./scheduleService";
 
 const initialState = {
-	newRecord: null,
-	recordUpdate: null,
-	record: [],
+	newSchedule: null,
+	scheduleUpdate: null,
+	schedule: [],
 	isLoading: false,
 	isError: false,
 	isSuccess: false,
 	message: "",
 };
 
-// Create new record
-export const createEyeRecord = createAsyncThunk(
-	"record/createEyeRecord",
-	async ({ patientId, recordData }, thunkAPI) => {
+// Create schedule record
+export const createSchedule = createAsyncThunk(
+	"schedule/createSchedule",
+	async ({ patientId, scheduleData }, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.createEyeRecord(
-				{ patientId, recordData },
+			return await scheduleService.createSchedule(
+				{ patientId, scheduleData },
 				token
 			);
 		} catch (error) {
@@ -33,13 +33,13 @@ export const createEyeRecord = createAsyncThunk(
 	}
 );
 
-// Get all eye record
-export const getEyeRecords = createAsyncThunk(
-	"record/getEyeRecords",
+// Get all schedule records
+export const getScheduleList = createAsyncThunk(
+	"schedule/getScheduleList",
 	async (_, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.getEyeRecords(token);
+			return await scheduleService.getScheduleList(token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -52,13 +52,13 @@ export const getEyeRecords = createAsyncThunk(
 	}
 );
 
-// Get record details
-export const getRecordDetails = createAsyncThunk(
-	"record/getRecordDetails",
-	async (recordId, thunkAPI) => {
+// Get schedule record details
+export const getScheduleDetails = createAsyncThunk(
+	"schedule/getScheduleDetails",
+	async (scheduleId, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.getRecordDetails(recordId, token);
+			return await scheduleService.getScheduleDetails(scheduleId, token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -71,13 +71,16 @@ export const getRecordDetails = createAsyncThunk(
 	}
 );
 
-// Edit eye record
-export const editEyeRecord = createAsyncThunk(
-	"record/editEyeRecord",
-	async ({ recordId, recordData }, thunkAPI) => {
+// Edit schedule record
+export const editSchedule = createAsyncThunk(
+	"schedule/editSchedule",
+	async ({ scheduleId, scheduleData }, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.editEyeRecord({ recordId, recordData }, token);
+			return await scheduleService.editSchedule(
+				{ scheduleId, scheduleData },
+				token
+			);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -90,13 +93,13 @@ export const editEyeRecord = createAsyncThunk(
 	}
 );
 
-// Delete eye record
-export const deleteEyeRecord = createAsyncThunk(
-	"record/deleteEyeRecord",
-	async (recordId, thunkAPI) => {
+// Delete schedule record
+export const deleteSchedule = createAsyncThunk(
+	"schedule/deleteSchedule",
+	async (scheduleId, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await recordService.deleteEyeRecord(recordId, token);
+			return await scheduleService.deleteSchedule(scheduleId, token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -109,8 +112,8 @@ export const deleteEyeRecord = createAsyncThunk(
 	}
 );
 
-const recordSlice = createSlice({
-	name: "record",
+const scheduleSlice = createSlice({
+	name: "schedule",
 	initialState,
 	reducers: {
 		reset: (state) => {
@@ -122,78 +125,78 @@ const recordSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
-			.addCase(createEyeRecord.pending, (state) => {
+			.addCase(createSchedule.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(createEyeRecord.fulfilled, (state, action) => {
+			.addCase(createSchedule.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.newRecord = action.payload.data;
+				state.newSchedule = action.payload.data;
 				state.message = action.payload.message;
 			})
-			.addCase(createEyeRecord.rejected, (state, action) => {
+			.addCase(createSchedule.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.newRecord = null;
+				state.newSchedule = null;
 			})
-			.addCase(getEyeRecords.pending, (state) => {
+			.addCase(getScheduleList.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(getEyeRecords.fulfilled, (state, action) => {
+			.addCase(getScheduleList.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.record = action.payload;
+				state.schedule = action.payload;
 			})
-			.addCase(getEyeRecords.rejected, (state, action) => {
+			.addCase(getScheduleList.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.record = null;
+				state.schedule = null;
 			})
-			.addCase(getRecordDetails.pending, (state) => {
+			.addCase(getScheduleDetails.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(getRecordDetails.fulfilled, (state, action) => {
+			.addCase(getScheduleDetails.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.recordUpdate = action.payload;
+				state.scheduleUpdate = action.payload;
 			})
-			.addCase(getRecordDetails.rejected, (state, action) => {
+			.addCase(getScheduleDetails.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.recordUpdate = null;
+				state.scheduleUpdate = null;
 			})
-			.addCase(editEyeRecord.pending, (state) => {
+			.addCase(editSchedule.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(editEyeRecord.fulfilled, (state, action) => {
+			.addCase(editSchedule.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.newRecord = action.payload.data;
+				state.newSchedule = action.payload.data;
 				state.message = action.payload.message;
 			})
-			.addCase(editEyeRecord.rejected, (state, action) => {
+			.addCase(editSchedule.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.isSuccess = false;
 				state.message = action.payload;
-				state.newRecord = null;
+				state.newSchedule = null;
 			})
-			.addCase(deleteEyeRecord.pending, (state) => {
+			.addCase(deleteSchedule.pending, (state) => {
 				state.isLoading = true;
 			})
-			.addCase(deleteEyeRecord.fulfilled, (state, action) => {
+			.addCase(deleteSchedule.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.record = state.record.filter(
+				state.schedule = state.schedule.filter(
 					(record) => record._id !== action.payload.id
 				);
 				state.isLoading = false;
 				state.message = action.payload.message;
 			})
-			.addCase(deleteEyeRecord.rejected, (state, action) => {
+			.addCase(deleteSchedule.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.isSuccess = false;
@@ -202,5 +205,5 @@ const recordSlice = createSlice({
 	},
 });
 
-export const { reset } = recordSlice.actions;
-export default recordSlice.reducer;
+export const { reset } = scheduleSlice.actions;
+export default scheduleSlice.reducer;
