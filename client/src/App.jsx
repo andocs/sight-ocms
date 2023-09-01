@@ -92,13 +92,13 @@ function App() {
 						<Route path="walk-in" element={<WalkInConsult />} />
 						<Route path="registered" element={<RegisteredConsult />} />
 						<Route path="view-visit" element={<ViewVisits />} />
-						<Route path="add-visit" element={<AddVisit />} />
+						<Route path="add-visit/:id" element={<AddVisit />} />
 						<Route path="view-records" element={<ViewEyeRecords />} />
-						<Route path="add-records" element={<AddRecords />} />
+						<Route path="add-records/:id" element={<AddRecords />} />
 						<Route path="view-appointments" element={<ViewAppointments />} />
-						<Route path="add-appointment" element={<AddAppointments />} />
+						<Route path="add-appointment/:id" element={<AddAppointments />} />
 						<Route path="view-orders" element={<ViewOrders />} />
-						<Route path="add-order" element={<AddOrders />} />
+						<Route path="add-order/:id" element={<AddOrders />} />
 						<Route path="view-schedule" element={<ViewSchedule />} />
 						<Route path="add-schedule" element={<AddSchedule />} />
 						<Route path="add-patient" element={<AddPatient />} />

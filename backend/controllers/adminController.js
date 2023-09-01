@@ -171,7 +171,7 @@ const updateStaff = asyncHandler(async (req, res) => {
 	const staffId = req.params.id;
 	let updates = req.body;
 
-	if (updates.personalInfo) {
+	if (updates.personalInfo && req.file) {
 		updates.personalInfo = JSON.parse(updates.personalInfo);
 	}
 

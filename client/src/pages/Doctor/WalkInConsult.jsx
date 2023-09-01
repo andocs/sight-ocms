@@ -121,16 +121,7 @@ function WalkInConsult() {
 	}, [newPatient, isLoading, isError, isSuccess, message, navigate, dispatch]);
 
 	const onSubmit = (formData) => {
-		const patientData = new FormData();
-		patientData.append("fname", formData.fname);
-		patientData.append("lname", formData.lname);
-		patientData.append("gender", formData.gender);
-		patientData.append("email", formData.email);
-		patientData.append("contact", formData.contact);
-		patientData.append("address", formData.address);
-		patientData.append("city", formData.city);
-		patientData.append("province", formData.province);
-		dispatch(createPatientRecord(patientData));
+		dispatch(createPatientRecord(formData));
 	};
 
 	return (

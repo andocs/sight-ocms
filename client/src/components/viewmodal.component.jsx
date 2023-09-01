@@ -1,7 +1,13 @@
 import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function LogDetails({ isOpen, closeModal, logData }) {
+function ViewModal({
+	isOpen,
+	closeModal,
+	dataFields,
+	columnHeaders,
+	modalTitle,
+}) {
 	const formatDate = (dateString) => {
 		const options = { year: "numeric", month: "long", day: "numeric" };
 		return new Date(dateString).toLocaleDateString(undefined, options);
@@ -38,31 +44,18 @@ function LogDetails({ isOpen, closeModal, logData }) {
 									as="h3"
 									className="text-lg font-medium leading-6 text-gray-900"
 								>
-									Log Details
+									{modalTitle}
 								</Dialog.Title>
 								<div className="mt-4 space-y-4">
-									<p className="text-sm text-gray-500">
-										<strong>Operation:</strong> {logData.operation}
-									</p>
-									<p className="text-sm text-gray-500">
-										<strong>Entity:</strong> {logData.entity}
-									</p>
-									<p className="text-sm text-gray-500">
-										<strong>Entity ID:</strong> {logData.entityId}
-									</p>
-									<p className="text-sm text-gray-500">
-										<strong>User:</strong> {logData.userFirstName}{" "}
-										{logData.userLastName}
-									</p>
-									<p className="text-sm text-gray-500">
-										<strong>User IP Address:</strong> {logData.userIpAddress}
-									</p>
-									<p className="text-sm text-gray-500">
-										<strong>Created At:</strong> {formatDate(logData.createdAt)}
-									</p>
-									<p className="text-sm text-gray-500">
-										<strong>Additional Info:</strong> {logData.additionalInfo}
-									</p>
+									{columnHeaders.map((title, index) => (
+										<p key={index} className="text-sm text-gray-500">
+											<strong>{title.header}</strong>
+											{": "}
+											{title.field === "createdAt"
+												? formatDate(dataFields[title.field])
+												: dataFields[title.field]}
+										</p>
+									))}
 								</div>
 
 								<div className="mt-4 space-x-4 flex justify-end">
@@ -83,4 +76,4 @@ function LogDetails({ isOpen, closeModal, logData }) {
 	);
 }
 
-export default LogDetails;
+export default ViewModal;

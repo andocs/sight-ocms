@@ -152,12 +152,24 @@ const registerUser = asyncHandler(async (req, res) => {
 //@access public
 const loginUser = asyncHandler(async (req, res) => {
 	const { email, password } = req.body;
-	if (!email || !password) {
-		return res.status(400).json({ message: "All fields are mandatory!" });
+
+	if (!email) {
+		return res.status(400).json({ message: "Please enter an email!" });
 	}
+
 	const user = await User.findOne({ email });
 	if (!user) {
 		return res.status(401).json({ message: "User not found!" });
+	}
+
+	if (user && !user.password) {
+		return res.status(200).json({
+			message: "Please set a password to complete your registration.",
+		});
+	}
+
+	if (!password) {
+		return res.status(400).json({ message: "All fields are mandatory!" });
 	}
 
 	if (user.password) {
@@ -182,16 +194,12 @@ const loginUser = asyncHandler(async (req, res) => {
 			} else {
 				res.status(200).json({
 					data: token,
-					message: `You have successfully logged in ${user.personalInfo.fname} ${user.personalInfo.lname}`,
+					message: `You have successfully logged in ${user.email}`,
 				});
 			}
 		} else {
 			return res.status(401).json({ message: "Wrong email or password!" });
 		}
-	} else {
-		return res.status(200).json({
-			message: "Please set a password to complete your registration.",
-		});
 	}
 });
 

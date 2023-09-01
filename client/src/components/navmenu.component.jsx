@@ -6,8 +6,8 @@ import { useLocation } from "react-router-dom";
 function SubMenu({ submenus }) {
 	const [isMenuOpen, setMenuOpen] = useState(false);
 	const location = useLocation();
-	const isRouteActive = submenus.submenus.some(
-		(submenu) => location.pathname === submenu.href
+	const isRouteActive = submenus.submenus.some((submenu) =>
+		location.pathname.startsWith(submenu.href)
 	);
 
 	useEffect(() => {
@@ -41,7 +41,7 @@ function SubMenu({ submenus }) {
 							<a
 								href={submenu.href}
 								className={`flex items-center p-2 ${
-									location.pathname === submenu.href
+									location.pathname.startsWith(submenu.href)
 										? "text-white bg-sky-800 hover:bg-sky-700"
 										: "text-gray-900 hover:bg-gray-100"
 								}`}

@@ -45,14 +45,17 @@ const generateReceipt = (transaction) => {
 const createPatient = asyncHandler(async (req, res) => {
 	const { fname, lname, gender, email, contact, address, city, province } =
 		req.body;
+	console.log(req.body);
 
 	if (!email || !contact) {
 		return res.status(404).json({ message: "Email or Contact required!" });
 	}
 
-	const existingPatient = await User.find({
-		$or: [{ email: email }, { "personalInfo.contact": contact }],
-	});
+	// const existingPatient = await User.find({
+	// 	$or: [{ email: email }, { "personalInfo.contact": contact }],
+	// });
+
+	const existingPatient = await User.findOne({ email });
 
 	if (existingPatient) {
 		return res.status(404).json({ message: "Patient already exists!" });
@@ -68,14 +71,18 @@ const createPatient = asyncHandler(async (req, res) => {
 		province,
 	};
 
-	const isComplete =
+	let isComplete = false;
+	if (
 		personalInfo.fname &&
 		personalInfo.lname &&
 		personalInfo.gender &&
 		personalInfo.contact &&
 		personalInfo.address &&
 		personalInfo.city &&
-		personalInfo.province;
+		personalInfo.province
+	) {
+		isComplete = true;
+	}
 
 	const session = await User.startSession(sessionOptions);
 	try {

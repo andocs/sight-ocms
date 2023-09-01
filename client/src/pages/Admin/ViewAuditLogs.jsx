@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { getAuditLogs, reset } from "../../features/audit/auditSlice";
 import Spinner from "../../components/spinner.component";
 import Table from "../../components/table.component";
-import LogDetails from "../../components/logdetails.component";
+import ViewModal from "../../components/viewmodal.component";
 function ViewAuditLogs() {
-	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	let [isOpen, setIsOpen] = useState(false);
-	const [selectedLogData, setSelectedLogData] = useState(null); // Track selected log data
+	const [selectedLogData, setSelectedLogData] = useState(null);
 
 	function closeModal() {
 		setIsOpen(false);
@@ -43,7 +41,7 @@ function ViewAuditLogs() {
 		{ header: "First Name", field: "userFirstName" },
 		{ header: "Operation", field: "operation" },
 		{ header: "IP Address", field: "userIpAddress" },
-		{ header: "entity", field: "entity" },
+		{ header: "Entity", field: "entity" },
 		{ header: "Entity ID", field: "entityId" },
 		{ header: "Info", field: "additionalInfo" },
 	];
@@ -61,10 +59,12 @@ function ViewAuditLogs() {
 	return (
 		<>
 			{isOpen && (
-				<LogDetails
+				<ViewModal
 					isOpen={isOpen}
 					closeModal={closeModal}
-					logData={selectedLogData}
+					dataFields={selectedLogData}
+					columnHeaders={columns}
+					modalTitle="Log Details"
 				/>
 			)}
 			<div className="w-full bg-white border-b">

@@ -10,7 +10,6 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 				formData[field.name] = field.value || "";
 			});
 		});
-		console.log(formData);
 		return formData;
 	}, {});
 
@@ -124,7 +123,14 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 	};
 
 	return (
-		<form encType="multipart/form-data" onSubmit={handleSubmit}>
+		<form
+			encType={
+				formData["image"] !== ""
+					? "multipart/form-data"
+					: "application/x-www-form-urlencoded"
+			}
+			onSubmit={handleSubmit}
+		>
 			{/* Title with Button */}
 			<div className="w-full bg-white border-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">

@@ -36,7 +36,17 @@ export const getPatientList = createAsyncThunk(
 	async (_, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await patientService.getPatientList(token);
+			const patientArray = await patientService.getPatientList(token);
+			const patientData = Object.keys(patientArray).map((key) => ({
+				...patientArray[key].personalInfo,
+				_id: patientArray[key]._id,
+				email: patientArray[key].email,
+				role: patientArray[key].role,
+				createdAt: patientArray[key].createdAt,
+				updatedAt: patientArray[key].updatedAt,
+				image: patientArray[key].image,
+			}));
+			return patientData;
 		} catch (error) {
 			const message =
 				(error.response &&
