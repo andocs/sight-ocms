@@ -204,10 +204,12 @@ function EditStaffAccount() {
 
 		for (const key in formData) {
 			if (JSON.stringify(initialData[key]) !== JSON.stringify(formData[key])) {
-				if (key === "role") {
-					updateInfo[key] = formData[key].toLowerCase();
-				} else {
-					updateInfo[key] = formData[key];
+				if (formData[key] !== "") {
+					if (key === "role") {
+						updateInfo[key] = formData[key].toLowerCase();
+					} else {
+						updateInfo[key] = formData[key];
+					}
 				}
 			}
 		}
@@ -218,7 +220,6 @@ function EditStaffAccount() {
 			dispatch(reset());
 		} else {
 			const newInfo = {};
-			const staffData = new FormData();
 			const personalInfo = {
 				fname: "",
 				lname: "",
@@ -233,17 +234,30 @@ function EditStaffAccount() {
 					newInfo[key] = updateInfo[key];
 				}
 			}
+			if (updateInfo.image) {
+				const staffData = new FormData();
 
-			for (const key in newInfo) {
-				staffData.append(`personalInfo.${key}`, newInfo[key]);
-			}
-			for (const key in updateInfo) {
-				if (!personalInfo.hasOwnProperty(key)) {
-					staffData.append(key, updateInfo[key]);
+				for (const key in newInfo) {
+					staffData.append(`personalInfo.${key}`, newInfo[key]);
 				}
-			}
+				for (const key in updateInfo) {
+					if (!personalInfo.hasOwnProperty(key)) {
+						staffData.append(key, updateInfo[key]);
+					}
+				}
 
-			dispatch(editStaffAccount({ staffId, staffData }));
+				dispatch(editStaffAccount({ staffId, staffData }));
+			} else {
+				let staffData = {};
+				for (const key in updateInfo) {
+					if (!personalInfo.hasOwnProperty(key)) {
+						staffData[key] = updateInfo[key];
+					} else {
+						staffData[`personalInfo.${key}`] = newInfo[key];
+					}
+				}
+				dispatch(editStaffAccount({ staffId, staffData }));
+			}
 		}
 	};
 
