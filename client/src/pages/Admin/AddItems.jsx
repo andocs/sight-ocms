@@ -105,14 +105,17 @@ function AddItems() {
 	}, [newItem, isLoading, isError, isSuccess, message, navigate, dispatch]);
 
 	const onSubmit = (formData) => {
-		const itemData = new FormData();
-		itemData.append("itemName", formData.itemName);
-		itemData.append("quantity", formData.quantity);
-		itemData.append("price", formData.price);
-		itemData.append("description", formData.description);
-		itemData.append("image", formData.image);
-
-		dispatch(addNewItem(itemData));
+		if (formData.image !== "") {
+			const itemData = new FormData();
+			itemData.append("itemName", formData.itemName);
+			itemData.append("quantity", formData.quantity);
+			itemData.append("price", formData.price);
+			itemData.append("description", formData.description);
+			itemData.append("image", formData.image);
+			dispatch(addNewItem(itemData));
+		} else {
+			dispatch(addNewItem(formData));
+		}
 	};
 
 	return (

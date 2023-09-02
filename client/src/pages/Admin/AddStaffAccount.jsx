@@ -182,7 +182,6 @@ function AddStaffAccount() {
 	}, [newStaff, isLoading, isError, isSuccess, message, navigate, dispatch]);
 
 	const onSubmit = (formData) => {
-		console.log(formData);
 		if (formData.image !== "") {
 			const userData = new FormData();
 			userData.append("fname", formData.fname);

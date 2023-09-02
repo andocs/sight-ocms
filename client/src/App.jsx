@@ -31,7 +31,6 @@ import ItemDetails from "./pages/Admin/ItemDetails";
 import EditItem from "./pages/Admin/EditItem";
 import RemoveItems from "./pages/Admin/RemoveItems";
 import ViewAuditLogs from "./pages/Admin/ViewAuditLogs";
-import LogDetails from "./pages/Admin/LogDetails";
 
 //DOCTOR
 import AddRecords from "./pages/Doctor/AddRecords";
@@ -53,6 +52,7 @@ import ViewVisits from "./pages/Doctor/ViewVisits";
 import AddVisit from "./pages/Doctor/AddVisit";
 import ViewSchedule from "./pages/Doctor/ViewSchedule";
 import AddSchedule from "./pages/Doctor/AddSchedule";
+import EditVisit from "./pages/Doctor/EditVisit";
 
 function App() {
 	return (
@@ -79,7 +79,6 @@ function App() {
 						<Route path="edit-item/:id" element={<EditItem />} />
 						<Route path="remove-item" element={<RemoveItems />} />
 						<Route path="view-logs" element={<ViewAuditLogs />} />
-						<Route path="log-details" element={<LogDetails />} />
 					</Route>
 
 					<Route path="/patient" element={<PatientDashboard />}>
@@ -91,8 +90,10 @@ function App() {
 					<Route path="/doctor" element={<DoctorDashboard />}>
 						<Route path="walk-in" element={<WalkInConsult />} />
 						<Route path="registered" element={<RegisteredConsult />} />
-						<Route path="view-visit" element={<ViewVisits />} />
+						<Route path="add-visit" element={<AddVisit />} />
 						<Route path="add-visit/:id" element={<AddVisit />} />
+						<Route path="view-visit" element={<ViewVisits />} />
+						<Route path="edit-visit/:id" element={<EditVisit />} />
 						<Route path="view-records" element={<ViewEyeRecords />} />
 						<Route path="add-records/:id" element={<AddRecords />} />
 						<Route path="view-appointments" element={<ViewAppointments />} />

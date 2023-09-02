@@ -119,6 +119,11 @@ const visitSlice = createSlice({
 			state.isSuccess = false;
 			state.message = "";
 		},
+		clear: (state) => {
+			state.newVisit = null;
+			state.visitUpdate = null;
+			state.visit = [];
+		},
 	},
 	extraReducers: (builder) => {
 		builder
@@ -202,5 +207,5 @@ const visitSlice = createSlice({
 	},
 });
 
-export const { reset } = visitSlice.actions;
+export const { reset, clear } = visitSlice.actions;
 export default visitSlice.reducer;

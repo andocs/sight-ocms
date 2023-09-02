@@ -1,4 +1,5 @@
 const asyncHandler = require("express-async-handler");
+
 const AuditLog = require("../models/auditLogModel");
 
 const User = require("../models/userModel");
@@ -7,6 +8,8 @@ const Appointment = require("../models/appointmentModel");
 const Schedule = require("../models/scheduleModel");
 const Order = require("../models/orderModel");
 const Visit = require("../models/visitModel");
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 
 const sessionOptions = {
 	readConcern: { level: "snapshot" },
@@ -255,11 +258,34 @@ const createVisit = asyncHandler(async (req, res) => {
 //@route GET /api/doctor/visit
 //@access private (doctor only)
 const getVisitList = asyncHandler(async (req, res) => {
-	const doctorId = req.user.id;
-	const visits = await Visit.find({ doctor: doctorId });
-	if (visits == {}) {
-		res.json({ message: "No visits to doctor in the system." });
-	}
+	const doctorId = new ObjectId(req.user.id);
+
+	const visits = await Visit.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				doctor: doctorId,
+			},
+		},
+		{
+			$project: {
+				visitDate: 1,
+				patientType: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				visitType: 1,
+				reason: 1,
+				additionalInfo: 1,
+			},
+		},
+	]);
 	res.json(visits);
 });
 

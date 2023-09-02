@@ -57,7 +57,9 @@ function RegisteredConsult() {
 		{
 			label: "Confirm",
 			handler: (details) => {
-				navigate(`/doctor/add-visit/${details._id}`, { state: { details } });
+				navigate(`/doctor/add-visit/${details._id}`, {
+					state: { details, patientType: "Registered" },
+				});
 			},
 		},
 	];

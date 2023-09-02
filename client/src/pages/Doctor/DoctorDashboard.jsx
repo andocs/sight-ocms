@@ -49,7 +49,7 @@ function DoctorDashboard() {
 		<>
 			<div className="flex flex-row overflow-hidden">
 				<Sidenav />
-				<div className="w-full flex flex-col overflow-auto">
+				<div className="bg-slate-50 w-full flex flex-col overflow-auto">
 					{isDoctorHome()}
 				</div>
 			</div>

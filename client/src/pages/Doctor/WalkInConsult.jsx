@@ -113,8 +113,10 @@ function WalkInConsult() {
 		}
 
 		if (isSuccess && newPatient !== null && message !== "") {
+			const patientId = newPatient[0]._id;
+			const details = newPatient[0];
 			toast.success(message);
-			navigate("/doctor");
+			navigate(`/doctor/add-records/${patientId}`, { state: { details } });
 		}
 
 		dispatch(reset());
