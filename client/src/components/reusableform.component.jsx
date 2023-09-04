@@ -20,7 +20,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 			});
 		});
 	}
-
+	const [otherItemsList, setOtherItemsList] = useState([]);
 	const [formData, setFormData] = useState(initialFormData);
 	const [selectedImage, setSelectedImage] = useState(null);
 	const [divHeight, setDivHeight] = useState(0);
@@ -31,6 +31,26 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 	const handleImageClick = (e) => {
 		e.preventDefault();
 		imageInputRef.current.click();
+	};
+
+	const handleAddItemClick = () => {
+		const itemName = formData["otherItems.item"];
+		const quantity = formData["otherItems.quantity"];
+
+		if (itemName && quantity) {
+			const newItem = {
+				itemName,
+				quantity: parseInt(quantity),
+			};
+			setOtherItemsList((prevList) => [...prevList, newItem]);
+
+			setFormData((prevData) => ({
+				...prevData,
+				"otherItems.item": "",
+				"otherItems.quantity": 1,
+			}));
+			console.log(formData);
+		}
 	};
 
 	useEffect(() => {
@@ -117,6 +137,20 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 						className="text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
 					/>
 				);
+			case "button":
+				return (
+					<div className="h-[52px] flex items-center justify-center">
+						<button
+							type="button"
+							onClick={handleAddItemClick}
+							className={`${
+								field.size ? `${field.size}` : ""
+							} bg-sky-800 text-l rounded-full w-fit uppercase text-center text-sm font-medium truncate text-white`}
+						>
+							{field.icon}
+						</button>
+					</div>
+				);
 			default:
 				return null;
 		}
@@ -168,6 +202,28 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 									<hr />
 									<div className={`${imageGroup ? "" : "flex flex-col"}`}>
 										<div className="pt-2">
+											{group.label === "Other Items" &&
+												otherItemsList &&
+												otherItemsList.map((item, index) => (
+													<div
+														key={index}
+														className="flex px-8 py-4 justify-start space-x-8"
+													>
+														<div className="flex flex-row space-x-2 w-[332px]">
+															<p className="text-l uppercase font-medium">
+																Item {index + 1}:
+															</p>
+															<p className="text-l">{item.itemName}</p>
+														</div>
+
+														<div className="flex flex-row space-x-2 w-[332px]">
+															<p className="text-l uppercase font-medium">
+																Quantity
+															</p>
+															<p className="text-l">{item.quantity}</p>
+														</div>
+													</div>
+												))}
 											{group.fields.map((subFields, subFieldsIndex) => (
 												<div
 													className="flex flex-row pt-4 justify-evenly"
@@ -184,6 +240,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 															>
 																{field.label}
 															</label>
+
 															{renderInput(field)}
 														</div>
 													))}

@@ -9,7 +9,7 @@ const createEyeRecord = async ({ patientId, recordData }, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/record/${patientId}`;
+	const url = `${BASE_URL}/${getUserRole(token)}/records/${patientId}`;
 	const res = await axios.post(url, recordData, config);
 	return res.data;
 };
@@ -21,7 +21,7 @@ const getEyeRecords = async (token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/record`;
+	const url = `${BASE_URL}/${getUserRole(token)}/records`;
 	const res = await axios.get(url, config);
 	return res.data;
 };
@@ -33,7 +33,7 @@ const getRecordDetails = async (recordId, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/record/${recordId}`;
+	const url = `${BASE_URL}/${getUserRole(token)}/records/${recordId}`;
 	const res = await axios.get(url, config);
 	return res.data;
 };
@@ -45,7 +45,7 @@ const editEyeRecord = async ({ recordId, recordData }, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/record/${recordId}`;
+	const url = `${BASE_URL}/${getUserRole(token)}/records/${recordId}`;
 	const res = await axios.put(url, recordData, config);
 	return res.data;
 };
@@ -57,7 +57,7 @@ const deleteEyeRecord = async (recordId, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/record/${recordId}`;
+	const url = `${BASE_URL}/${getUserRole(token)}/records/${recordId}`;
 	const res = await axios.delete(url, config);
 	return res.data;
 };

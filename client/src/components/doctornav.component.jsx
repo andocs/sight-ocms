@@ -181,44 +181,12 @@ const mainMenu = [
 		submenus: [
 			{
 				label: "View Visit Records",
-				href: "/doctor/view-visit",
+				href: "/doctor/view-visits",
 				svg: submenusvg,
 			},
 			{
 				label: "Add Visit Record",
 				href: "/doctor/add-visit",
-				svg: submenusvg,
-			},
-		],
-	},
-	{
-		label: "Eye Records Management",
-		svg: eyerecordmgtsvg,
-		submenus: [
-			{
-				label: "View Records",
-				href: "/doctor/view-records",
-				svg: submenusvg,
-			},
-			{
-				label: "Add Record",
-				href: "/doctor/add-records",
-				svg: submenusvg,
-			},
-		],
-	},
-	{
-		label: "Appointment Management",
-		svg: appointmentsvg,
-		submenus: [
-			{
-				label: "View Appointments",
-				href: "/doctor/view-appointments",
-				svg: submenusvg,
-			},
-			{
-				label: "Add Appointment",
-				href: "/doctor/add-appointment",
 				svg: submenusvg,
 			},
 		],
@@ -235,6 +203,38 @@ const mainMenu = [
 			{
 				label: "Add Order",
 				href: "/doctor/add-order",
+				svg: submenusvg,
+			},
+		],
+	},
+	{
+		label: "Eye Records Management",
+		svg: eyerecordmgtsvg,
+		submenus: [
+			{
+				label: "View Records",
+				href: "/doctor/view-records",
+				svg: submenusvg,
+			},
+			{
+				label: "Add Record",
+				href: "/doctor/add-record",
+				svg: submenusvg,
+			},
+		],
+	},
+	{
+		label: "Appointment Management",
+		svg: appointmentsvg,
+		submenus: [
+			{
+				label: "View Appointments",
+				href: "/doctor/view-appointments",
+				svg: submenusvg,
+			},
+			{
+				label: "Add Appointment",
+				href: "/doctor/add-appointment",
 				svg: submenusvg,
 			},
 		],

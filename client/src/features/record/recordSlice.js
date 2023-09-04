@@ -119,6 +119,11 @@ const recordSlice = createSlice({
 			state.isSuccess = false;
 			state.message = "";
 		},
+		clear: (state) => {
+			state.newRecord = null;
+			state.recordUpdate = null;
+			state.record = [];
+		},
 	},
 	extraReducers: (builder) => {
 		builder
@@ -202,5 +207,5 @@ const recordSlice = createSlice({
 	},
 });
 
-export const { reset } = recordSlice.actions;
+export const { reset, clear } = recordSlice.actions;
 export default recordSlice.reducer;

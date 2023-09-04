@@ -667,7 +667,30 @@ const deleteOrder = asyncHandler(async (req, res) => {
 //@access private (doctor only)
 const addRecord = asyncHandler(async (req, res) => {
 	const patientId = req.params.id;
-	const { rightEye, leftEye, additionalNotes } = req.body;
+	const {
+		"rightEye.sphere": rightEyeSphere,
+		"rightEye.cylinder": rightEyeCylinder,
+		"rightEye.axis": rightEyeAxis,
+		"leftEye.sphere": leftEyeSphere,
+		"leftEye.cylinder": leftEyeCylinder,
+		"leftEye.axis": leftEyeAxis,
+		additionalNotes,
+	} = req.body;
+
+	console.log(req.body);
+
+	if (
+		rightEyeSphere == "0.00" ||
+		rightEyeCylinder == "0.00" ||
+		rightEyeAxis == "0" ||
+		leftEyeSphere == "0.00" ||
+		leftEyeCylinder == "0.00" ||
+		leftEyeAxis == "0"
+	) {
+		return res
+			.status(404)
+			.json({ message: "Please fill in all the required fields!" });
+	}
 
 	const patient = await User.findById(patientId);
 
@@ -679,11 +702,22 @@ const addRecord = asyncHandler(async (req, res) => {
 	try {
 		session.startTransaction();
 
+		const rightEye = {
+			sphere: rightEyeSphere,
+			cylinder: rightEyeCylinder,
+			axis: rightEyeAxis,
+		};
+		const leftEye = {
+			sphere: leftEyeSphere,
+			cylinder: leftEyeCylinder,
+			axis: leftEyeAxis,
+		};
+
 		const eyeRecord = await EyeRecord.create(
 			[
 				{
 					doctor: req.user.id,
-					patientId: patientId,
+					patient: patientId,
 					rightEye,
 					leftEye,
 					additionalNotes,
@@ -737,10 +771,31 @@ const addRecord = asyncHandler(async (req, res) => {
 //@route GET /api/doctor/records
 //@access private (doctor only)
 const getAllRecords = asyncHandler(async (req, res) => {
-	const records = await EyeRecord.find({ doctor: req.user.id });
-	if (records == {}) {
-		res.json({ message: "No eye records for doctor is currently saved." });
-	}
+	const doctorId = new ObjectId(req.user.id);
+	const records = await EyeRecord.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				doctor: doctorId,
+			},
+		},
+		{
+			$project: {
+				createdAt: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				rightEye: 1,
+				leftEye: 1,
+			},
+		},
+	]);
 	res.json(records);
 });
 

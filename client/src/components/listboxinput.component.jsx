@@ -33,7 +33,7 @@ function ListBoxInput({ options, initialValue, onChange }) {
 						leaveFrom="opacity-100"
 						leaveTo="opacity-0"
 					>
-						<Listbox.Options className="absolute bg-white w-full shadow-lg">
+						<Listbox.Options className="absolute bg-white w-full shadow-lg h-60 z-50 overflow-auto rounded-b-xl">
 							{options.map((option, i) => (
 								<Listbox.Option
 									key={i}

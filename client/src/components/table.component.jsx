@@ -8,9 +8,26 @@ const ReusableTable = ({ data, columns, actions }) => {
 	const startIndex = (currentPage - 1) * rowsPerPage;
 	const endIndex = startIndex + rowsPerPage;
 
+	function getItemFieldValue(item, field) {
+		if (field.includes(".")) {
+			const parts = field.split(".");
+			let value = item;
+			for (const part of parts) {
+				if (value.hasOwnProperty(part)) {
+					value = value[part];
+				} else {
+					return "N/A";
+				}
+			}
+			return value;
+		} else {
+			return item[field];
+		}
+	}
+
 	const filteredData = data.filter((item) => {
 		const itemValues = columns.map((column) => {
-			const fieldValue = item[column.field];
+			const fieldValue = getItemFieldValue(item, column.field);
 			return fieldValue ? fieldValue.toString().toLowerCase() : "";
 		});
 
@@ -74,6 +91,10 @@ const ReusableTable = ({ data, columns, actions }) => {
 												<div className="w-24 truncate">
 													{item[column.field]}
 												</div>
+											) : column.field.includes(".") ? (
+												column.field
+													.split(".")
+													.reduce((obj, key) => obj[key], item)
 											) : (
 												item[column.field]
 											)}

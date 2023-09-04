@@ -30,7 +30,6 @@ function AddVisit() {
 	const [isConfirmed, setConfirmation] = useState(false);
 	const [isRejected, setRejection] = useState(false);
 	const [patientData, setPatientData] = useState(null);
-	const [formData, setFormData] = useState(null);
 
 	function closeModal() {
 		setIsOpen(false);
@@ -39,22 +38,15 @@ function AddVisit() {
 		setIsConfirmationOpen(false);
 	}
 
-	function openModal(details) {
+	function openModal() {
 		setIsConfirmationOpen(true);
-		setFormData(details);
 	}
 
 	function checkConfirmation() {
 		setConfirmation(true);
-		const visitData = formData;
-		const patientId = patientDetails.details._id;
-		dispatch(createVisitRecord({ patientId, visitData }));
 	}
 	function checkRejection() {
 		setRejection(true);
-		const visitData = formData;
-		const patientId = patientDetails.details._id;
-		dispatch(createVisitRecord({ patientId, visitData }));
 	}
 
 	const patientDetails = location.state;
@@ -163,29 +155,34 @@ function AddVisit() {
 			}
 		}
 
-		if (
-			isSuccess &&
-			newVisit !== null &&
-			message !== "" &&
-			isConfirmed === true
-		) {
+		if (isSuccess && newVisit !== null && message !== "") {
 			toast.success(message);
+			openModal();
+		}
+		if (isConfirmed === true) {
 			navigate(`/doctor/add-records/`, { state: { patientDetails } });
-		} else if (
-			isSuccess &&
-			newVisit !== null &&
-			message !== "" &&
-			isRejected === true
-		) {
-			toast.success(message);
+		}
+		if (isRejected === true) {
 			navigate("/doctor");
 		}
 
 		dispatch(reset());
-	}, [newVisit, isLoading, isError, isSuccess, message, navigate, dispatch]);
+	}, [
+		newVisit,
+		isConfirmed,
+		isRejected,
+		isLoading,
+		isError,
+		isSuccess,
+		message,
+		navigate,
+		dispatch,
+	]);
 
 	const onSubmit = (formData) => {
-		openModal(formData);
+		const visitData = formData;
+		const patientId = patientDetails.details._id;
+		dispatch(createVisitRecord({ patientId, visitData }));
 	};
 
 	return (

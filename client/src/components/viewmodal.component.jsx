@@ -1,6 +1,23 @@
 import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
+function getItemFieldValue(item, field) {
+	if (field.includes(".")) {
+		const parts = field.split(".");
+		let value = item;
+		for (const part of parts) {
+			if (value.hasOwnProperty(part)) {
+				value = value[part];
+			} else {
+				return "N/A";
+			}
+		}
+		return value;
+	} else {
+		return item[field];
+	}
+}
+
 function ViewModal({
 	isOpen,
 	closeModal,
@@ -53,7 +70,7 @@ function ViewModal({
 											{": "}
 											{title.field === "createdAt"
 												? formatDate(dataFields[title.field])
-												: dataFields[title.field]}
+												: getItemFieldValue(dataFields, title.field)}
 										</p>
 									))}
 								</div>
