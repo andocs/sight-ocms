@@ -63,6 +63,17 @@ const deleteOrder = async (orderId, token) => {
 	return res.data;
 };
 
+const getInventory = async (token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/inventory`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
 const getUserRole = (token) => {
 	const decodedToken = jwt_decode(token);
 	const userRole = decodedToken.user.role;
@@ -75,6 +86,7 @@ const orderService = {
 	getOrderDetails,
 	editOrder,
 	deleteOrder,
+	getInventory,
 };
 
 export default orderService;

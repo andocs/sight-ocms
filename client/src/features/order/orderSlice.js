@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import orderService from "./orderService";
 
 const initialState = {
+	item: null,
 	newOrder: null,
 	orderUpdate: null,
 	order: [],
@@ -106,6 +107,24 @@ export const deleteOrder = createAsyncThunk(
 	}
 );
 
+export const getInventory = createAsyncThunk(
+	"order/getInventory",
+	async (_, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			return await orderService.getInventory(token);
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
 const orderSlice = createSlice({
 	name: "order",
 	initialState,
@@ -115,6 +134,14 @@ const orderSlice = createSlice({
 			state.isError = false;
 			state.isSuccess = false;
 			state.message = "";
+		},
+		clearItem: (state) => {
+			state.item = "";
+		},
+		clear: (state) => {
+			state.newOrder = null;
+			state.orderUpdate = null;
+			state.order = [];
 		},
 	},
 	extraReducers: (builder) => {
@@ -195,9 +222,23 @@ const orderSlice = createSlice({
 				state.isError = true;
 				state.isSuccess = false;
 				state.message = action.payload;
+			})
+			.addCase(getInventory.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(getInventory.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.item = action.payload;
+			})
+			.addCase(getInventory.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.message = action.payload;
+				state.order = null;
 			});
 	},
 });
 
-export const { reset } = orderSlice.actions;
+export const { reset, clearItem, clear } = orderSlice.actions;
 export default orderSlice.reducer;

@@ -1,7 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, createRef, useEffect } from "react";
 import ListBoxInput from "./listboxinput.component";
 import ImageInput from "./imageinput.component";
 import PasswordInput from "./passwordinput.component";
+import CustomSearchInput from "./customsearch.component";
+import { toast } from "react-toastify";
 
 function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 	const initialFormData = fields.reduce((formData, group) => {
@@ -22,11 +24,42 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 	}
 	const [otherItemsList, setOtherItemsList] = useState([]);
 	const [formData, setFormData] = useState(initialFormData);
+	const [inputValue, setInputValue] = useState("");
+	const [editedQuantity, setEditedQuantity] = useState("");
 	const [selectedImage, setSelectedImage] = useState(null);
 	const [divHeight, setDivHeight] = useState(0);
+	const [itemName, setItemName] = useState("");
+	const [itemPrice, setItemPrice] = useState("");
+	const [itemID, setItemID] = useState("");
+	const [isItemSelected, setIsItemSelected] = useState(true);
+	const [searchValue, setSearchValue] = useState("");
 
 	const imageInputRef = useRef(null);
 	const formGroupRef = useRef(null);
+	const customSearchInputRef = createRef();
+
+	useEffect(() => {
+		if (formGroupRef.current) {
+			const height = formGroupRef.current.offsetHeight;
+			setDivHeight(height);
+		}
+	}, []);
+
+	const handleInputChange = (value) => {
+		if (value !== itemName) {
+			setItemID("");
+			setIsItemSelected(false);
+		}
+		setSearchValue(value);
+	};
+
+	const handleSelect = (item) => {
+		setItemName(item.itemName);
+		setSearchValue(item.itemName);
+		setIsItemSelected(true);
+		setItemID(item._id);
+		setItemPrice(item.price);
+	};
 
 	const handleImageClick = (e) => {
 		e.preventDefault();
@@ -34,33 +67,84 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 	};
 
 	const handleAddItemClick = () => {
+		const itemID = formData["otherItems.itemID"];
 		const itemName = formData["otherItems.item"];
 		const quantity = formData["otherItems.quantity"];
-
+		const price = formData["otherItems.itemSRP"];
 		if (itemName && quantity) {
 			const newItem = {
+				itemID,
+				item: itemID,
 				itemName,
 				quantity: parseInt(quantity),
+				price: parseInt(price),
+				total: price * quantity,
 			};
+			console.log(newItem);
 			setOtherItemsList((prevList) => [...prevList, newItem]);
 
 			setFormData((prevData) => ({
 				...prevData,
+				"otherItems.itemID": "",
 				"otherItems.item": "",
 				"otherItems.quantity": 1,
+				"otherItems.itemSRP": "",
 			}));
-			console.log(formData);
+			setInputValue("");
+			customSearchInputRef.current.clearInputValue();
+		}
+		console.log(otherItemsList);
+	};
+
+	const toggleEdit = (item) => {
+		const updatedOtherItemsList = otherItemsList.map((i) =>
+			i === item ? { ...i, isEditing: !i.isEditing } : i
+		);
+		setItemID(item.itemID);
+		setOtherItemsList(updatedOtherItemsList);
+		setSearchValue(item.itemName);
+		setItemName(item.itemName);
+		setItemPrice(item.price);
+		setEditedQuantity(item.quantity);
+	};
+
+	const handleSaveEditedItem = (editedItem) => {
+		if (!itemID) {
+			toast.error("No valid item selected");
+		} else {
+			const updatedOtherItemsList = otherItemsList.map((item) =>
+				item === editedItem ? editedItem : item
+			);
+			const previousAmount = editedItem.total;
+			editedItem.itemID = itemID;
+			editedItem.itemName = searchValue;
+			editedItem.price = itemPrice;
+			const totalAmount = editedItem.price * parseInt(editedQuantity);
+			editedItem.quantity = editedQuantity;
+			editedItem.total = totalAmount;
+
+			setOtherItemsList(updatedOtherItemsList);
+			setFormData((prevData) => ({
+				...prevData,
+				amount:
+					prevData.amount && prevData.amount - previousAmount != 0
+						? prevData.amount - previousAmount + totalAmount
+						: totalAmount,
+			}));
+
+			console.log(otherItemsList);
+
+			editedItem.isEditing = false;
+			setItemID("");
+			setItemName("");
+			setItemPrice("");
+			setEditedQuantity("");
+			setSearchValue("");
+			setIsItemSelected(false);
 		}
 	};
 
-	useEffect(() => {
-		if (formGroupRef.current) {
-			const height = formGroupRef.current.offsetHeight; // includes padding and border
-			setDivHeight(height);
-		}
-	}, []);
-
-	const handleChange = (field, value) => {
+	const handleChange = (field, value, itemSelected) => {
 		if (field === "image") {
 			setFormData((prevData) => ({
 				...prevData,
@@ -72,6 +156,68 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 				...prevData,
 				[field]: value.toLowerCase(),
 			}));
+		} else if (field === "frameQuantity") {
+			if (formData.frameSRP) {
+				const totalAmount = formData.frameSRP * value;
+				const previousAmount = formData.frameSRP * formData[field];
+				setFormData((prevData) => ({
+					...prevData,
+					amount:
+						prevData.amount && prevData.amount - previousAmount != 0
+							? prevData.amount - previousAmount + totalAmount
+							: totalAmount,
+				}));
+			}
+		} else if (field === "lensQuantity") {
+			if (formData.lensSRP) {
+				const totalAmount = formData.lensSRP * value;
+				const previousAmount = formData.lensSRP * formData[field];
+				setFormData((prevData) => ({
+					...prevData,
+					amount:
+						prevData.amount && prevData.amount - previousAmount != 0
+							? prevData.amount - previousAmount + totalAmount
+							: totalAmount,
+				}));
+			}
+		} else if (field === "otherItems.quantity") {
+			if (formData["otherItems.itemSRP"]) {
+				const totalAmount = formData["otherItems.itemSRP"] * value;
+
+				const previousAmount = formData["otherItems.itemSRP"] * formData[field];
+				console.log(totalAmount, previousAmount);
+				setFormData((prevData) => ({
+					...prevData,
+					amount:
+						prevData.amount && prevData.amount - previousAmount != 0
+							? prevData.amount - previousAmount + totalAmount
+							: totalAmount,
+				}));
+			}
+		} else if (field === "lens" || field === "frame") {
+			if (!itemSelected) {
+				const totalAmount =
+					formData[field + "Quantity"] * formData[field + "SRP"];
+				setFormData((prevData) => ({
+					...prevData,
+					[field]: "",
+					[field + "ID"]: "",
+					[field + "SRP"]: "",
+					amount: prevData.amount ? prevData.amount - totalAmount : 0,
+				}));
+			}
+		} else if (field === "otherItems.item") {
+			if (!itemSelected) {
+				const totalAmount =
+					formData["otherItems.quantity"] * formData[field + "SRP"];
+				setFormData((prevData) => ({
+					...prevData,
+					[field]: "",
+					[field + "ID"]: "",
+					[field + "SRP"]: "",
+					amount: prevData.amount ? prevData.amount - totalAmount : 0,
+				}));
+			}
 		}
 		setFormData((prevData) => ({
 			...prevData,
@@ -79,9 +225,71 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 		}));
 	};
 
+	const handleCustomSearchSelect = (field, value) => {
+		console.log(value);
+		if (value.price) {
+			if (field === "otherItems.item") {
+				setFormData((prevData) => ({
+					...prevData,
+					[field]: value.itemName,
+					[field + "ID"]: value._id,
+					[field + "SRP"]: value.price,
+					amount: prevData.amount
+						? prevData.amount + value.price * prevData["otherItems.quantity"]
+						: value.price * formData["otherItems.quantity"],
+				}));
+			} else {
+				setFormData((prevData) => ({
+					...prevData,
+					[field]: value.itemName,
+					[field + "ID"]: value._id,
+					[field + "SRP"]: value.price,
+					amount: prevData.amount
+						? prevData.amount + value.price * prevData[field + "Quantity"]
+						: value.price * prevData[field + "Quantity"],
+				}));
+			}
+		}
+	};
+
+	const handleRemoveItem = (index) => {
+		const updatedOtherItemsList = [...otherItemsList];
+		const removedItemTotal = updatedOtherItemsList[index].total;
+
+		setFormData((prevData) => ({
+			...prevData,
+			amount: prevData.amount - removedItemTotal,
+		}));
+		updatedOtherItemsList.splice(index, 1);
+
+		setOtherItemsList(updatedOtherItemsList);
+	};
+
 	const handleSubmit = (e) => {
 		e.preventDefault();
+		console.log(otherItemsList);
+		if (otherItemsList.length > 0) {
+			formData.otherItems = otherItemsList;
+		}
 		onSubmit(formData);
+	};
+
+	const handleOnSearchRemove = () => {
+		setItemID("");
+	};
+
+	const handleOnRemove = (field) => {
+		setFormData((prevData) => ({
+			...prevData,
+			[field]: "",
+			[field + "Quantity"]: 1,
+			[field + "SRP"]: "",
+			[field + "ID"]: "",
+			amount: prevData.amount
+				? prevData.amount -
+				  prevData[field + "Quantity"] * prevData[field + "SRP"]
+				: 0,
+		}));
 	};
 
 	const renderInput = (field) => {
@@ -151,6 +359,22 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 						</button>
 					</div>
 				);
+			case "customsearch":
+				return (
+					<CustomSearchInput
+						ref={customSearchInputRef}
+						onInputChange={(value, itemSelected) =>
+							handleChange(field.name, value, itemSelected)
+						}
+						onSelect={(selectedItem) =>
+							handleCustomSearchSelect(field.name, selectedItem)
+						}
+						onRemove={(e) => handleOnRemove(field.name)}
+						value={inputValue}
+						placeholder={field.placeholder}
+						initialValue={searchValue}
+					/>
+				);
 			default:
 				return null;
 		}
@@ -207,21 +431,86 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 												otherItemsList.map((item, index) => (
 													<div
 														key={index}
-														className="flex px-8 py-4 justify-start space-x-8"
+														className="flex flex-row py-4 justify-evenly"
 													>
-														<div className="flex flex-row space-x-2 w-[332px]">
-															<p className="text-l uppercase font-medium">
-																Item {index + 1}:
-															</p>
-															<p className="text-l">{item.itemName}</p>
-														</div>
+														{item.isEditing ? (
+															<>
+																<div className="mb-4 px-8 w-full">
+																	<label className="text-l uppercase text-start block w-full mb-4 text-sm font-medium truncate text-sky-800">
+																		Item {index + 1}:{" "}
+																	</label>
 
-														<div className="flex flex-row space-x-2 w-[332px]">
-															<p className="text-l uppercase font-medium">
-																Quantity
-															</p>
-															<p className="text-l">{item.quantity}</p>
-														</div>
+																	<CustomSearchInput
+																		ref={customSearchInputRef}
+																		onInputChange={handleInputChange}
+																		onSelect={handleSelect}
+																		value={searchValue}
+																		onRemove={handleOnSearchRemove}
+																	/>
+																</div>
+
+																<div className="mb-4 px-8 w-full">
+																	<label className="text-l uppercase text-start block w-full mb-4 text-sm font-medium truncate text-sky-800">
+																		Quantity:{" "}
+																	</label>
+
+																	<input
+																		type="number"
+																		value={editedQuantity}
+																		onChange={(e) =>
+																			setEditedQuantity(e.target.value)
+																		}
+																		className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
+																	/>
+																</div>
+																<div className="flex flex-row space-x-8 align-middle mt-4 px-8 w-fit">
+																	<button
+																		type="button"
+																		onClick={() => handleSaveEditedItem(item)}
+																	>
+																		Save
+																	</button>
+																	<button
+																		type="button"
+																		onClick={() => toggleEdit(item)}
+																	>
+																		Cancel
+																	</button>
+																</div>
+															</>
+														) : (
+															<>
+																<div className="px-8 flex flex-row w-full">
+																	<p className="text-l uppercase font-medium">
+																		Item {index + 1}:
+																	</p>
+																	<p className="text-l">{item.itemName}</p>
+																</div>
+
+																<div className="px-8 flex flex-row w-full">
+																	<p className="text-l uppercase font-medium">
+																		Quantity:
+																	</p>
+																	<p className="text-l">{item.quantity}</p>
+																</div>
+																<div className="px-8 space-x-8 flex flex-row w-fit">
+																	<button
+																		type="button"
+																		onClick={() => toggleEdit(item)}
+																		className="text-blue-600 hover:text-blue-800"
+																	>
+																		Edit
+																	</button>
+																	<button
+																		type="button"
+																		onClick={() => handleRemoveItem(index)}
+																		className="text-red-600 hover:text-red-800"
+																	>
+																		Remove
+																	</button>
+																</div>
+															</>
+														)}
 													</div>
 												))}
 											{group.fields.map((subFields, subFieldsIndex) => (

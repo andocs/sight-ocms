@@ -192,22 +192,6 @@ const mainMenu = [
 		],
 	},
 	{
-		label: "Order Management",
-		svg: ordermgtsvg,
-		submenus: [
-			{
-				label: "View Orders",
-				href: "/doctor/view-orders",
-				svg: submenusvg,
-			},
-			{
-				label: "Add Order",
-				href: "/doctor/add-order",
-				svg: submenusvg,
-			},
-		],
-	},
-	{
 		label: "Eye Records Management",
 		svg: eyerecordmgtsvg,
 		submenus: [
@@ -219,6 +203,22 @@ const mainMenu = [
 			{
 				label: "Add Record",
 				href: "/doctor/add-record",
+				svg: submenusvg,
+			},
+		],
+	},
+	{
+		label: "Order Management",
+		svg: ordermgtsvg,
+		submenus: [
+			{
+				label: "View Orders",
+				href: "/doctor/view-orders",
+				svg: submenusvg,
+			},
+			{
+				label: "Add Order",
+				href: "/doctor/add-order",
 				svg: submenusvg,
 			},
 		],

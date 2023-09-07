@@ -50,6 +50,7 @@ const {
 	getScheduleDetails,
 	updateDoctorSchedule,
 	deleteDoctorSchedule,
+	getInventoryList,
 } = require("../controllers/doctorController");
 
 const validateToken = require("../middleware/validateTokenHandler");
@@ -104,5 +105,7 @@ router
 	.get(getScheduleDetails)
 	.put(updateDoctorSchedule)
 	.delete(deleteDoctorSchedule);
+
+router.route("/inventory").get(getInventoryList);
 
 module.exports = router;

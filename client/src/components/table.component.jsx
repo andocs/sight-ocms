@@ -20,6 +20,8 @@ const ReusableTable = ({ data, columns, actions }) => {
 				}
 			}
 			return value;
+		} else if (field === "otherItems") {
+			return item[field].length === 1 ? item[field][0].name : "...";
 		} else {
 			return item[field];
 		}
@@ -95,6 +97,14 @@ const ReusableTable = ({ data, columns, actions }) => {
 												column.field
 													.split(".")
 													.reduce((obj, key) => obj[key], item)
+											) : column.field === "otherItems" ? (
+												<div>
+													{
+														item.otherItems.length === 1
+															? `${item.otherItems[0].name}`
+															: "..." // You can adjust this part as needed
+													}
+												</div>
 											) : (
 												item[column.field]
 											)}

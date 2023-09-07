@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { createOrder, reset } from "../../features/order/orderSlice";
-import { getInventoryItems } from "../../features/inventory/inventorySlice";
 import { getPatientList } from "../../features/patient/patientSlice";
 
 import ReusableForm from "../../components/reusableform.component";
@@ -53,7 +52,7 @@ function AddOrders() {
 				[
 					{
 						label: "Frame *",
-						type: "text",
+						type: "customsearch",
 						placeholder: "Frame",
 						value: "",
 						name: "frame",
@@ -78,7 +77,7 @@ function AddOrders() {
 					{
 						label: "Lens *",
 						placeholder: "Lens",
-						type: "text",
+						type: "customsearch",
 						value: "",
 						name: "lens",
 						size: "w-full",
@@ -101,11 +100,12 @@ function AddOrders() {
 				[
 					{
 						label: "Item Name",
-						type: "text",
+						type: "customsearch",
 						placeholder: "Item Name",
 						value: "",
 						name: "otherItems.item",
 						size: "w-full",
+						clearOnAdd: true,
 					},
 					{
 						label: "Quantity",
@@ -174,6 +174,7 @@ function AddOrders() {
 		}
 
 		if (isSuccess && newOrder !== null && message !== "") {
+			navigate("/doctor");
 			toast.success(message);
 		}
 
@@ -181,7 +182,12 @@ function AddOrders() {
 	}, [newOrder, isLoading, isError, isSuccess, message, navigate, dispatch]);
 
 	const onSubmit = (formData) => {
-		const orderData = formData;
+		const orderData = {
+			...formData,
+			frame: formData.frameID,
+			lens: formData.lensID,
+		};
+		console.log(orderData);
 		const patientId = patientDetails.details._id;
 		dispatch(createOrder({ patientId, orderData }));
 	};

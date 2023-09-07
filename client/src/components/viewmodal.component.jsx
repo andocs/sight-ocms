@@ -13,6 +13,8 @@ function getItemFieldValue(item, field) {
 			}
 		}
 		return value;
+	} else if (field === "otherItems") {
+		return item[field].length > 0 ? item[field][0]._id : "N/A";
 	} else {
 		return item[field];
 	}
@@ -71,6 +73,29 @@ function ViewModal({
 											{title.field === "createdAt"
 												? formatDate(dataFields[title.field])
 												: getItemFieldValue(dataFields, title.field)}
+
+											{title.field === "otherItems" ? (
+												<>
+													<hr className="mt-4" />
+													{dataFields.otherItems?.length > 0
+														? dataFields.otherItems.map((item, index) => (
+																<div
+																	key={index}
+																	className="flex flex-row space-x-2 mt-4"
+																>
+																	<p>
+																		<strong>Item {index + 1}: </strong>
+																		{item.name}
+																	</p>
+																	<p>
+																		<strong>Quantity: </strong>
+																		{item.quantity}
+																	</p>
+																</div>
+														  ))
+														: "N/A"}
+												</>
+											) : null}
 										</p>
 									))}
 								</div>

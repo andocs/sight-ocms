@@ -10,6 +10,7 @@ const Order = require("../models/orderModel");
 const Visit = require("../models/visitModel");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
+const Inventory = require("../models/inventoryModel");
 
 const sessionOptions = {
 	readConcern: { level: "snapshot" },
@@ -428,6 +429,7 @@ const deleteVisit = asyncHandler(async (req, res) => {
 const createOrder = asyncHandler(async (req, res) => {
 	const doctorId = req.user.id;
 	const patientId = req.params.id;
+	console.log(req.body);
 	const { frame, lens, frameQuantity, lensQuantity, otherItems, amount } =
 		req.body;
 
@@ -510,10 +512,69 @@ const createOrder = asyncHandler(async (req, res) => {
 //@route GET /api/doctor/order
 //@access private (doctor only)
 const getAllOrders = asyncHandler(async (req, res) => {
-	const orders = await Order.find({ doctor: req.user.id });
-	if (orders == {}) {
-		res.json({ message: "No orders for doctor is currently saved." });
-	}
+	const doctorId = new ObjectId(req.user.id);
+	const orders = await Order.aggregate([
+		{
+			$match: {
+				doctor: doctorId,
+			},
+		},
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "lens",
+				foreignField: "_id",
+				as: "lensDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "frame",
+				foreignField: "_id",
+				as: "frameDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "otherItems.item",
+				foreignField: "_id",
+				as: "itemDetails",
+			},
+		},
+
+		{
+			$project: {
+				status: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				lensDetails: { $arrayElemAt: ["$lensDetails.itemName", 0] },
+				amount: 1,
+				lensQuantity: 1,
+				frameDetails: { $arrayElemAt: ["$frameDetails.itemName", 0] },
+				frameQuantity: 1,
+				otherItems: {
+					$map: {
+						input: "$otherItems",
+						as: "item",
+						in: {
+							name: { $arrayElemAt: ["$itemDetails.itemName", 0] },
+							quantity: { $arrayElemAt: ["$otherItems.quantity", 0] },
+						},
+					},
+				},
+			},
+		},
+	]);
 	res.json(orders);
 });
 
@@ -1402,6 +1463,14 @@ const deleteDoctorSchedule = asyncHandler(async (req, res) => {
 	session.endSession();
 });
 
+const getInventoryList = asyncHandler(async (req, res) => {
+	const inventoryList = await Inventory.find();
+	if (inventoryList == {}) {
+		res.json({ message: "No items currently in inventory." });
+	}
+	res.json(inventoryList);
+});
+
 module.exports = {
 	createPatient,
 	getAllPatients,
@@ -1436,4 +1505,6 @@ module.exports = {
 	getScheduleDetails,
 	updateDoctorSchedule,
 	deleteDoctorSchedule,
+
+	getInventoryList,
 };
