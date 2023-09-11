@@ -54,6 +54,8 @@ import ViewSchedule from "./pages/Doctor/ViewSchedule";
 import AddSchedule from "./pages/Doctor/AddSchedule";
 import EditVisit from "./pages/Doctor/EditVisit";
 import EditRecord from "./pages/Doctor/EditRecord";
+import EditOrders from "./pages/Doctor/EditOrders";
+import EditAppointment from "./pages/Doctor/EditAppointment";
 
 function App() {
 	return (
@@ -102,10 +104,12 @@ function App() {
 						<Route path="add-appointment" element={<AddAppointments />} />
 						<Route path="add-appointment/:id" element={<AddAppointments />} />
 						<Route path="view-appointments" element={<ViewAppointments />} />
+						<Route path="edit-appointment/:id" element={<EditAppointment />} />
 						<Route path="add-order" element={<AddOrders />} />
 						<Route path="add-order/:id" element={<AddOrders />} />
 						<Route path="view-orders" element={<ViewOrders />} />
-						<Route path="add-schedule/:id" element={<AddSchedule />} />
+						<Route path="edit-order/:id" element={<EditOrders />} />
+						<Route path="add-schedule" element={<AddSchedule />} />
 						<Route path="view-schedule" element={<ViewSchedule />} />
 						<Route path="add-patient" element={<AddPatient />} />
 					</Route>

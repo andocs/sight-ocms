@@ -430,10 +430,26 @@ const createOrder = asyncHandler(async (req, res) => {
 	const doctorId = req.user.id;
 	const patientId = req.params.id;
 	console.log(req.body);
-	const { frame, lens, frameQuantity, lensQuantity, otherItems, amount } =
-		req.body;
+	const {
+		frame,
+		lens,
+		framePrice,
+		frameQuantity,
+		lensPrice,
+		lensQuantity,
+		otherItems,
+		amount,
+	} = req.body;
 
-	if (!frame || !lens || !frameQuantity || !lensQuantity || !amount) {
+	if (
+		!frame ||
+		!lens ||
+		!framePrice ||
+		!frameQuantity ||
+		!lensPrice ||
+		!lensQuantity ||
+		!amount
+	) {
 		return res
 			.status(404)
 			.json({ message: "Please fill in all the required fields!" });
@@ -457,8 +473,10 @@ const createOrder = asyncHandler(async (req, res) => {
 					status: "Pending",
 					frame,
 					lens,
+					framePrice,
 					frameQuantity,
 					lensQuantity,
+					lensPrice,
 					otherItems,
 					amount,
 				},
@@ -554,24 +572,20 @@ const getAllOrders = asyncHandler(async (req, res) => {
 
 		{
 			$project: {
+				orderTime: 1,
 				status: 1,
+				amount: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
-				lensDetails: { $arrayElemAt: ["$lensDetails.itemName", 0] },
-				amount: 1,
+				lens: 1,
+				lensName: { $arrayElemAt: ["$lensDetails.itemName", 0] },
+				lensPrice: 1,
 				lensQuantity: 1,
-				frameDetails: { $arrayElemAt: ["$frameDetails.itemName", 0] },
+				frame: 1,
+				frameName: { $arrayElemAt: ["$frameDetails.itemName", 0] },
+				framePrice: 1,
 				frameQuantity: 1,
-				otherItems: {
-					$map: {
-						input: "$otherItems",
-						as: "item",
-						in: {
-							name: { $arrayElemAt: ["$itemDetails.itemName", 0] },
-							quantity: { $arrayElemAt: ["$otherItems.quantity", 0] },
-						},
-					},
-				},
+				otherItems: 1,
 			},
 		},
 	]);
@@ -582,18 +596,64 @@ const getAllOrders = asyncHandler(async (req, res) => {
 //@route GET /api/doctor/order/:id
 //@access private (doctor only)
 const getOrderDetails = asyncHandler(async (req, res) => {
-	const orderId = req.params.id;
-	const doctorId = req.user.id;
+	const orderId = new ObjectId(req.params.id);
+	const doctorId = new ObjectId(req.user.id);
 
-	const order = await Order.findOne({
-		_id: orderId,
-		doctor: doctorId,
-	});
+	const order = await Order.aggregate([
+		{
+			$match: {
+				doctor: doctorId,
+				_id: orderId,
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "lens",
+				foreignField: "_id",
+				as: "lensDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "frame",
+				foreignField: "_id",
+				as: "frameDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "otherItems.item",
+				foreignField: "_id",
+				as: "itemDetails",
+			},
+		},
+		{
+			$project: {
+				orderTime: 1,
+				status: 1,
+				amount: 1,
+				lens: 1,
+				lensName: { $arrayElemAt: ["$lensDetails.itemName", 0] },
+				lensPrice: 1,
+				lensQuantity: 1,
+				frame: 1,
+				frameName: { $arrayElemAt: ["$frameDetails.itemName", 0] },
+				framePrice: 1,
+				frameQuantity: 1,
+				otherItems: 1,
+			},
+		},
+	]);
 
 	if (!order) {
 		return res.status(404).json({ message: "Order not found!" });
 	}
-	res.json(order);
+	if (order) {
+		res.json(order[0]);
+	}
 });
 
 //@desc UPDATES AN ORDER
@@ -603,6 +663,8 @@ const updateOrder = asyncHandler(async (req, res) => {
 	const doctorId = req.user.id;
 	const orderId = req.params.id;
 	const updates = req.body;
+
+	console.log(updates);
 
 	const order = await Order.findOne({
 		_id: orderId,
@@ -1009,9 +1071,14 @@ const deleteRecord = asyncHandler(async (req, res) => {
 //@access private (doctor only)
 const createAppointment = async (req, res) => {
 	const patientId = req.params.id;
+	const doctorId = req.user.id;
 	const { date, startTime, endTime, notes } = req.body;
 
-	const doctorId = req.user.id;
+	if (!date || !startTime || !endTime) {
+		return res
+			.status(404)
+			.json({ message: "Please fill in all the required fields!" });
+	}
 
 	const patient = await User.findById(patientId);
 
@@ -1056,7 +1123,7 @@ const createAppointment = async (req, res) => {
 		await session.commitTransaction();
 		res.status(201).json({
 			data: appointment,
-			message: `Appointment with id ${appointment._id} at ${appointment.date} successfully added!`,
+			message: `Appointment with ${patient.personalInfo.fname} ${patient.personalInfo.lname} at ${date} successfully added!`,
 		});
 	} catch (error) {
 		if (error.name === "ValidationError") {
@@ -1082,10 +1149,33 @@ const createAppointment = async (req, res) => {
 //@route GET /api/doctor/appointments
 //@access private (doctor only)
 const getAllAppointments = asyncHandler(async (req, res) => {
-	const appointment = await Appointment.find({ doctor: req.user.id });
-	if (appointment == {}) {
-		res.json({ message: "No appointments currently scheduled." });
-	}
+	const doctorId = new ObjectId(req.user.id);
+	const appointment = await Appointment.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				doctor: doctorId,
+			},
+		},
+		{
+			$project: {
+				date: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				startTime: 1,
+				endTime: 1,
+				notes: 1,
+				status: 1,
+			},
+		},
+	]);
 	res.json(appointment);
 });
 
@@ -1237,20 +1327,39 @@ const deleteAppointment = async (req, res) => {
 //@route POST /api/doctor/schedule
 //@access private (doctor only)
 const addDoctorSchedule = asyncHandler(async (req, res) => {
-	const { dayOfWeek, startTime, endTime } = req.body;
+	console.log(req.body);
+	const {
+		dayOfWeek,
+		startTime,
+		endTime,
+		lunchBreakStart,
+		lunchBreakEnd,
+		isLeave,
+		isEmergencyBreak,
+	} = req.body;
+
 	const doctorId = req.user.id;
 
-	if (!dayOfWeek || !startTime || endTime) {
+	if (
+		!dayOfWeek ||
+		!startTime ||
+		!endTime ||
+		!lunchBreakStart ||
+		!lunchBreakEnd
+	) {
 		return res.status(400).json({ message: "All fields are mandatory!" });
 	}
 
 	const schedule = await Schedule.findOne({
 		doctor: doctorId,
-		dayOfWeek: dayOfWeek,
+		dayOfWeek,
 	});
 	if (schedule) {
 		return res.status(400).json({ message: "Schedule already exists!" });
 	}
+
+	const isLeaveBool = isLeave === "No" ? false : true;
+	const isEmergencyBreakBool = isEmergencyBreak === "No" ? false : true;
 
 	const session = await Schedule.startSession(sessionOptions);
 	try {
@@ -1262,6 +1371,10 @@ const addDoctorSchedule = asyncHandler(async (req, res) => {
 					dayOfWeek,
 					startTime,
 					endTime,
+					lunchBreakStart,
+					lunchBreakEnd,
+					isLeave: isLeaveBool,
+					isEmergencyBreak: isEmergencyBreakBool,
 				},
 			],
 			{ session }

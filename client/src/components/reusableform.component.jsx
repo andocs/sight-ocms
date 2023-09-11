@@ -3,9 +3,12 @@ import ListBoxInput from "./listboxinput.component";
 import ImageInput from "./imageinput.component";
 import PasswordInput from "./passwordinput.component";
 import CustomSearchInput from "./customsearch.component";
+
+import DateInput from "./datetimeinput.component";
+
 import { toast } from "react-toastify";
 
-function ReusableForm({ header, fields, onSubmit, imageGroup }) {
+function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	const initialFormData = fields.reduce((formData, group) => {
 		group.fields.forEach((subFields) => {
 			subFields.forEach((field) => {
@@ -45,6 +48,12 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 		}
 	}, []);
 
+	useEffect(() => {
+		if (otherItems) {
+			setOtherItemsList(otherItems);
+		}
+	}, [otherItems]);
+
 	const handleInputChange = (value) => {
 		if (value !== itemName) {
 			setItemID("");
@@ -67,14 +76,14 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 	};
 
 	const handleAddItemClick = () => {
-		const itemID = formData["otherItems.itemID"];
-		const itemName = formData["otherItems.item"];
+		console.log("click");
+		const _id = formData["otherItems._id"];
+		const itemName = formData["otherItems.itemName"];
 		const quantity = formData["otherItems.quantity"];
-		const price = formData["otherItems.itemSRP"];
+		const price = formData["otherItems.price"];
 		if (itemName && quantity) {
 			const newItem = {
-				itemID,
-				item: itemID,
+				_id,
 				itemName,
 				quantity: parseInt(quantity),
 				price: parseInt(price),
@@ -85,10 +94,10 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 
 			setFormData((prevData) => ({
 				...prevData,
-				"otherItems.itemID": "",
-				"otherItems.item": "",
+				"otherItems._id": "",
+				"otherItems.itemName": "",
 				"otherItems.quantity": 1,
-				"otherItems.itemSRP": "",
+				"otherItems.price": "",
 			}));
 			setInputValue("");
 			customSearchInputRef.current.clearInputValue();
@@ -97,10 +106,11 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 	};
 
 	const toggleEdit = (item) => {
+		console.log(item);
 		const updatedOtherItemsList = otherItemsList.map((i) =>
 			i === item ? { ...i, isEditing: !i.isEditing } : i
 		);
-		setItemID(item.itemID);
+		setItemID(item._id ? item._id : item.itemID);
 		setOtherItemsList(updatedOtherItemsList);
 		setSearchValue(item.itemName);
 		setItemName(item.itemName);
@@ -115,7 +125,6 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 			const updatedOtherItemsList = otherItemsList.map((item) =>
 				item === editedItem ? editedItem : item
 			);
-			const previousAmount = editedItem.total;
 			editedItem.itemID = itemID;
 			editedItem.itemName = searchValue;
 			editedItem.price = itemPrice;
@@ -124,14 +133,6 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 			editedItem.total = totalAmount;
 
 			setOtherItemsList(updatedOtherItemsList);
-			setFormData((prevData) => ({
-				...prevData,
-				amount:
-					prevData.amount && prevData.amount - previousAmount != 0
-						? prevData.amount - previousAmount + totalAmount
-						: totalAmount,
-			}));
-
 			console.log(otherItemsList);
 
 			editedItem.isEditing = false;
@@ -156,66 +157,22 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 				...prevData,
 				[field]: value.toLowerCase(),
 			}));
-		} else if (field === "frameQuantity") {
-			if (formData.frameSRP) {
-				const totalAmount = formData.frameSRP * value;
-				const previousAmount = formData.frameSRP * formData[field];
-				setFormData((prevData) => ({
-					...prevData,
-					amount:
-						prevData.amount && prevData.amount - previousAmount != 0
-							? prevData.amount - previousAmount + totalAmount
-							: totalAmount,
-				}));
-			}
-		} else if (field === "lensQuantity") {
-			if (formData.lensSRP) {
-				const totalAmount = formData.lensSRP * value;
-				const previousAmount = formData.lensSRP * formData[field];
-				setFormData((prevData) => ({
-					...prevData,
-					amount:
-						prevData.amount && prevData.amount - previousAmount != 0
-							? prevData.amount - previousAmount + totalAmount
-							: totalAmount,
-				}));
-			}
-		} else if (field === "otherItems.quantity") {
-			if (formData["otherItems.itemSRP"]) {
-				const totalAmount = formData["otherItems.itemSRP"] * value;
-
-				const previousAmount = formData["otherItems.itemSRP"] * formData[field];
-				console.log(totalAmount, previousAmount);
-				setFormData((prevData) => ({
-					...prevData,
-					amount:
-						prevData.amount && prevData.amount - previousAmount != 0
-							? prevData.amount - previousAmount + totalAmount
-							: totalAmount,
-				}));
-			}
 		} else if (field === "lens" || field === "frame") {
 			if (!itemSelected) {
-				const totalAmount =
-					formData[field + "Quantity"] * formData[field + "SRP"];
 				setFormData((prevData) => ({
 					...prevData,
 					[field]: "",
 					[field + "ID"]: "",
-					[field + "SRP"]: "",
-					amount: prevData.amount ? prevData.amount - totalAmount : 0,
+					[field + "Price"]: "",
 				}));
 			}
-		} else if (field === "otherItems.item") {
+		} else if (field === "otherItems.itemName") {
 			if (!itemSelected) {
-				const totalAmount =
-					formData["otherItems.quantity"] * formData[field + "SRP"];
 				setFormData((prevData) => ({
 					...prevData,
 					[field]: "",
-					[field + "ID"]: "",
-					[field + "SRP"]: "",
-					amount: prevData.amount ? prevData.amount - totalAmount : 0,
+					["otherItems._id"]: "",
+					["otherItems.price"]: "",
 				}));
 			}
 		}
@@ -226,27 +183,20 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 	};
 
 	const handleCustomSearchSelect = (field, value) => {
-		console.log(value);
 		if (value.price) {
-			if (field === "otherItems.item") {
+			if (field === "otherItems.itemName") {
 				setFormData((prevData) => ({
 					...prevData,
 					[field]: value.itemName,
-					[field + "ID"]: value._id,
-					[field + "SRP"]: value.price,
-					amount: prevData.amount
-						? prevData.amount + value.price * prevData["otherItems.quantity"]
-						: value.price * formData["otherItems.quantity"],
+					["otherItems._id"]: value._id,
+					["otherItems.price"]: value.price,
 				}));
 			} else {
 				setFormData((prevData) => ({
 					...prevData,
 					[field]: value.itemName,
 					[field + "ID"]: value._id,
-					[field + "SRP"]: value.price,
-					amount: prevData.amount
-						? prevData.amount + value.price * prevData[field + "Quantity"]
-						: value.price * prevData[field + "Quantity"],
+					[field + "Price"]: value.price,
 				}));
 			}
 		}
@@ -267,11 +217,33 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		console.log(otherItemsList);
-		if (otherItemsList.length > 0) {
-			formData.otherItems = otherItemsList;
+		if (formData.lens && formData.frame) {
+			if (!formData.lensID || !formData.frameID) {
+				toast.error("Please select a valid item.");
+			} else {
+				const totalPrice =
+					formData.lensPrice * formData.lensQuantity +
+					formData.framePrice * formData.frameQuantity;
+				delete formData["addItem"];
+				delete formData["otherItems.itemName"];
+				delete formData["otherItems.quantity"];
+				delete formData["otherItems._id"];
+				delete formData["otherItems.price"];
+				if (otherItemsList.length > 0) {
+					formData.otherItems = otherItemsList;
+					const otherItemSum = formData.otherItems.reduce(
+						(sum, item) => sum + item.total,
+						0
+					);
+					formData.amount = totalPrice + otherItemSum;
+				} else {
+					formData.amount = totalPrice;
+				}
+				onSubmit(formData);
+			}
+		} else {
+			onSubmit(formData);
 		}
-		onSubmit(formData);
 	};
 
 	const handleOnSearchRemove = () => {
@@ -370,9 +342,16 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 							handleCustomSearchSelect(field.name, selectedItem)
 						}
 						onRemove={(e) => handleOnRemove(field.name)}
-						value={inputValue}
+						value={formData[field.name] || inputValue}
 						placeholder={field.placeholder}
 						initialValue={searchValue}
+					/>
+				);
+			case "date":
+				return (
+					<DateInput
+						value={formData[field.name] || ""}
+						onChange={(value) => handleChange(field.name, value)}
 					/>
 				);
 			default:
@@ -484,7 +463,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup }) {
 																	<p className="text-l uppercase font-medium">
 																		Item {index + 1}:
 																	</p>
-																	<p className="text-l">{item.itemName}</p>
+																	<p className="text-l">
+																		{item.name ? item.name : item.itemName}
+																	</p>
 																</div>
 
 																<div className="px-8 flex flex-row w-full">

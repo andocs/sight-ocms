@@ -14,9 +14,9 @@ function getItemFieldValue(item, field) {
 		}
 		return value;
 	} else if (field === "otherItems") {
-		return item[field].length > 0 ? item[field][0]._id : "N/A";
+		return item[field].length > 0 ? "" : "N/A";
 	} else {
-		return item[field];
+		return item[field] === "" ? "N/A" : item[field];
 	}
 }
 
@@ -67,36 +67,41 @@ function ViewModal({
 								</Dialog.Title>
 								<div className="mt-4 space-y-4">
 									{columnHeaders.map((title, index) => (
-										<p key={index} className="text-sm text-gray-500">
-											<strong>{title.header}</strong>
-											{": "}
-											{title.field === "createdAt"
-												? formatDate(dataFields[title.field])
-												: getItemFieldValue(dataFields, title.field)}
-
-											{title.field === "otherItems" ? (
-												<>
+										<div key={index}>
+											<div>
+												<p className="text-sm text-gray-500">
+													<strong>{title.header}</strong>
+													{": "}
+													{title.field === "createdAt"
+														? formatDate(dataFields[title.field])
+														: getItemFieldValue(dataFields, title.field)}
+												</p>
+											</div>
+											{title.field === "otherItems" && (
+												<div>
 													<hr className="mt-4" />
-													{dataFields.otherItems?.length > 0
-														? dataFields.otherItems.map((item, index) => (
-																<div
-																	key={index}
-																	className="flex flex-row space-x-2 mt-4"
-																>
-																	<p>
+													{dataFields.otherItems?.length > 0 &&
+														dataFields.otherItems.map((item, index) => (
+															<div key={index}>
+																<div className="flex flex-row space-x-2 mt-4">
+																	<p className="text-sm text-gray-500">
 																		<strong>Item {index + 1}: </strong>
-																		{item.name}
+																		{item.itemName}
 																	</p>
-																	<p>
+																	<p className="text-sm text-gray-500">
 																		<strong>Quantity: </strong>
 																		{item.quantity}
 																	</p>
+																	<p className="text-sm text-gray-500">
+																		<strong>Price: </strong>
+																		{item.price}
+																	</p>
 																</div>
-														  ))
-														: "N/A"}
-												</>
-											) : null}
-										</p>
+															</div>
+														))}
+												</div>
+											)}
+										</div>
 									))}
 								</div>
 

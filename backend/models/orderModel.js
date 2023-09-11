@@ -34,26 +34,43 @@ const orderSchema = new mongoose.Schema(
 			ref: "Inventory",
 			required: true,
 		},
+		frameQuantity: {
+			type: Number,
+			required: true,
+		},
+		framePrice: {
+			type: Number,
+			required: true,
+		},
 		lens: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "Inventory",
-			required: true,
-		},
-		frameQuantity: {
-			type: Number,
 			required: true,
 		},
 		lensQuantity: {
 			type: Number,
 			required: true,
 		},
+		lensPrice: {
+			type: Number,
+			required: true,
+		},
 		otherItems: [
 			{
-				item: {
+				_id: {
 					type: mongoose.Schema.Types.ObjectId,
 					ref: "Inventory",
 				},
+				itemName: {
+					type: String,
+				},
+				price: {
+					type: Number,
+				},
 				quantity: {
+					type: Number,
+				},
+				total: {
 					type: Number,
 				},
 			},

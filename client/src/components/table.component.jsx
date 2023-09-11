@@ -20,8 +20,6 @@ const ReusableTable = ({ data, columns, actions }) => {
 				}
 			}
 			return value;
-		} else if (field === "otherItems") {
-			return item[field].length === 1 ? item[field][0].name : "...";
 		} else {
 			return item[field];
 		}
@@ -99,12 +97,45 @@ const ReusableTable = ({ data, columns, actions }) => {
 													.reduce((obj, key) => obj[key], item)
 											) : column.field === "otherItems" ? (
 												<div>
-													{
-														item.otherItems.length === 1
-															? `${item.otherItems[0].name}`
-															: "..." // You can adjust this part as needed
-													}
+													{item.otherItems.length > 0
+														? item.otherItems.length === 1
+															? `${item.otherItems[0].itemName}`
+															: "..."
+														: "N/A"}
 												</div>
+											) : column.field === "visitDate" ||
+											  column.field === "orderTime" ||
+											  column.field === "createdAt" ? (
+												<div>
+													{item[column.field]
+														? new Date(item[column.field]).toLocaleString(
+																"en-US",
+																{
+																	month: "short",
+																	day: "numeric",
+																	year: "numeric",
+																	hour: "numeric",
+																	minute: "numeric",
+																	hour12: true,
+																}
+														  )
+														: "N/A"}
+												</div>
+											) : column.field === "date" ? (
+												<div>
+													{item[column.field]
+														? new Date(item[column.field]).toLocaleString(
+																"en-US",
+																{
+																	month: "long",
+																	day: "numeric",
+																	year: "numeric",
+																}
+														  )
+														: "N/A"}
+												</div>
+											) : item[column.field] == "" ? (
+												"N/A"
 											) : (
 												item[column.field]
 											)}

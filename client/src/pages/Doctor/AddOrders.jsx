@@ -103,7 +103,7 @@ function AddOrders() {
 						type: "customsearch",
 						placeholder: "Item Name",
 						value: "",
-						name: "otherItems.item",
+						name: "otherItems.itemName",
 						size: "w-full",
 						clearOnAdd: true,
 					},
@@ -182,10 +182,13 @@ function AddOrders() {
 	}, [newOrder, isLoading, isError, isSuccess, message, navigate, dispatch]);
 
 	const onSubmit = (formData) => {
+		console.log(formData);
 		const orderData = {
 			...formData,
 			frame: formData.frameID,
 			lens: formData.lensID,
+			otherItems: formData.otherItems,
+			amount: formData.amount,
 		};
 		console.log(orderData);
 		const patientId = patientDetails.details._id;

@@ -3,13 +3,13 @@ import jwt_decode from "jwt-decode";
 const BASE_URL = "http://localhost:5001/api";
 
 // Create schedule
-const createSchedule = async ({ patientId, scheduleData }, token) => {
+const createSchedule = async (scheduleData, token) => {
 	const config = {
 		headers: {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/schedule/${patientId}`;
+	const url = `${BASE_URL}/${getUserRole(token)}/schedule`;
 	const res = await axios.post(url, scheduleData, config);
 	return res.data;
 };

@@ -9,7 +9,7 @@ const createAppointment = async ({ patientId, appointmentData }, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/appointment/${patientId}`;
+	const url = `${BASE_URL}/${getUserRole(token)}/appointments/${patientId}`;
 	const res = await axios.post(url, appointmentData, config);
 	return res.data;
 };
@@ -21,7 +21,7 @@ const getAppointmentList = async (token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/appointment`;
+	const url = `${BASE_URL}/${getUserRole(token)}/appointments`;
 	const res = await axios.get(url, config);
 	return res.data;
 };
@@ -33,7 +33,7 @@ const getAppointmentDetails = async (appointmentId, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/appointment/${appointmentId}`;
+	const url = `${BASE_URL}/${getUserRole(token)}/appointments/${appointmentId}`;
 	const res = await axios.get(url, config);
 	return res.data;
 };
@@ -45,7 +45,7 @@ const editAppointment = async ({ appointmentId, appointmentData }, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/appointment/${appointmentId}`;
+	const url = `${BASE_URL}/${getUserRole(token)}/appointments/${appointmentId}`;
 	const res = await axios.put(url, appointmentData, config);
 	return res.data;
 };
@@ -57,7 +57,7 @@ const deleteAppointment = async (appointmentId, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${getUserRole(token)}/appointment/${appointmentId}`;
+	const url = `${BASE_URL}/${getUserRole(token)}/appointments/${appointmentId}`;
 	const res = await axios.delete(url, config);
 	return res.data;
 };

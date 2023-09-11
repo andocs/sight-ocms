@@ -125,6 +125,11 @@ const appointmentSlice = createSlice({
 			state.isSuccess = false;
 			state.message = "";
 		},
+		clear: (state) => {
+			state.newAppointment = null;
+			state.appointmentUpdate = null;
+			state.appointment = [];
+		},
 	},
 	extraReducers: (builder) => {
 		builder
@@ -208,5 +213,5 @@ const appointmentSlice = createSlice({
 	},
 });
 
-export const { reset } = appointmentSlice.actions;
+export const { reset, clear } = appointmentSlice.actions;
 export default appointmentSlice.reducer;

@@ -21,12 +21,13 @@ const CustomSearchInput = forwardRef(
 		const inputRef = useRef(null);
 
 		useEffect(() => {
-			dispatch(getInventory());
-		}, [dispatch]);
+			if (!inventoryItems) {
+				dispatch(getInventory());
+			}
+		}, [inventoryItems]);
 
 		useEffect(() => {
 			setItemSelected(value === initialValue);
-			console.log(itemSelected);
 		}, [value, initialValue]);
 
 		const handleChange = (e) => {

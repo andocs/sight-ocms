@@ -14,13 +14,10 @@ const initialState = {
 // Create schedule record
 export const createSchedule = createAsyncThunk(
 	"schedule/createSchedule",
-	async ({ patientId, scheduleData }, thunkAPI) => {
+	async (scheduleData, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			return await scheduleService.createSchedule(
-				{ patientId, scheduleData },
-				token
-			);
+			return await scheduleService.createSchedule(scheduleData, token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -122,6 +119,11 @@ const scheduleSlice = createSlice({
 			state.isSuccess = false;
 			state.message = "";
 		},
+		clear: (state) => {
+			state.newSchedule = null;
+			state.scheduleUpdate = null;
+			state.schedule = [];
+		},
 	},
 	extraReducers: (builder) => {
 		builder
@@ -205,5 +207,5 @@ const scheduleSlice = createSlice({
 	},
 });
 
-export const { reset } = scheduleSlice.actions;
+export const { reset, clear } = scheduleSlice.actions;
 export default scheduleSlice.reducer;

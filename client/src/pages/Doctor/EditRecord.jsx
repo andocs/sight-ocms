@@ -6,7 +6,6 @@ import {
 	getRecordDetails,
 	editEyeRecord,
 	reset,
-	clear,
 } from "../../features/record/recordSlice";
 
 import ReusableForm from "../../components/reusableform.component";

@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 
 import {
 	getOrderList,
-	getOrderDetails,
 	deleteOrder,
 	reset,
 	clear,
@@ -26,8 +25,9 @@ function ViewOrders() {
 
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
-	const { order, orderUpdate, isLoading, isSuccess, isError, message } =
-		useSelector((state) => state.order);
+	const { order, isLoading, isSuccess, isError, message } = useSelector(
+		(state) => state.order
+	);
 
 	useEffect(() => {
 		if (isError) {
@@ -70,22 +70,26 @@ function ViewOrders() {
 	}
 
 	const columns = [
+		{ header: "Order Time", field: "orderTime" },
 		{ header: "Status", field: "status" },
 		{ header: "Last Name", field: "userLastName" },
 		{ header: "First Name", field: "userFirstName" },
-		{ header: "Lens", field: `lensDetails` },
-		{ header: "Frame", field: "frameDetails" },
+		{ header: "Lens", field: `lensName` },
+		{ header: "Frame", field: "frameName" },
 		{ header: "Other Items", field: "otherItems" },
 	];
 
 	const viewColumns = [
+		{ header: "Order Time", field: "orderTime" },
 		{ header: "Status", field: "status" },
 		{ header: "Total Amount", field: "amount" },
 		{ header: "Last Name", field: "userLastName" },
 		{ header: "First Name", field: "userFirstName" },
-		{ header: "Lens", field: "lensDetails" },
+		{ header: "Lens", field: "lensName" },
+		{ header: "Lens Price", field: "lensPrice" },
 		{ header: "Lens Quantity", field: "lensQuantity" },
-		{ header: "Frame", field: "frameDetails" },
+		{ header: "Frame", field: "frameName" },
+		{ header: "Frame Price", field: "framePrice" },
 		{ header: "Frame Quantity", field: "frameQuantity" },
 		{ header: "Other Items", field: "otherItems" },
 	];
