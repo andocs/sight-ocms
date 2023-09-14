@@ -1,10 +1,29 @@
 import React from "react";
 
-function ViewCards({ header, columns, data, onClick }) {
+function ViewCards({ header, columns, data, onClick, actions }) {
 	const handleClick = (e) => {
 		e.preventDefault();
 		onClick();
 	};
+
+	const daysOfWeek = [
+		"Monday",
+		"Tuesday",
+		"Wednesday",
+		"Thursday",
+		"Friday",
+		"Saturday",
+		"Sunday",
+	];
+
+	const sortedData = [...data].sort((a, b) => {
+		if (a.hasOwnProperty("dayOfWeek") && b.hasOwnProperty("dayOfWeek")) {
+			const dayA = daysOfWeek.indexOf(a.dayOfWeek);
+			const dayB = daysOfWeek.indexOf(b.dayOfWeek);
+			return dayA - dayB;
+		}
+		return 0;
+	});
 
 	return (
 		<>
@@ -24,41 +43,53 @@ function ViewCards({ header, columns, data, onClick }) {
 					</div>
 				</div>
 			</div>
-			{data.length === 0 ? (
+			{sortedData.length === 0 ? (
 				<p>No data available.</p>
 			) : (
 				<div className="flex flex-wrap p-8 xl:w-5/6 justify-center">
-					{data.map((item, index) => (
+					{sortedData.map((item, index) => (
 						<div key={index} className="w-1/4 mx-4 mb-8">
-							<div className="bg-white p-4 shadow-md rounded-xl">
+							<div className="bg-white p-4 shadow-md rounded-xl relative">
 								<div className="flex justify-between">
-									<p className="text-2xl font-semibold">{item.dayOfWeek}</p>
-									<div className="space-x-4">
-										{/* Add your buttons here */}
-										<button className="text-blue-600 hover:text-blue-900">
-											Edit
-										</button>
-										<button className="text-red-600 hover:text-red-900">
-											Delete
-										</button>
+									{item.hasOwnProperty("dayOfWeek") && (
+										<p className="text-2xl font-semibold">{item.dayOfWeek}</p>
+									)}
+									<div className="space-x-4 absolute top-4 right-4">
+										{actions.map((action, actionIndex) => (
+											<button
+												key={actionIndex}
+												onClick={() => action.handler(item)}
+												className={
+													action.css
+														? `text-${action.css}-600 hover:text-${action.css}-900`
+														: `text-blue-600 hover:text-blue-900`
+												}
+											>
+												{action.label}
+											</button>
+										))}
 									</div>
 								</div>
 								<div className="mt-4">
 									{columns.map((column, columnIndex) => (
 										<div key={columnIndex} className="mb-2">
-											{column.header !== "Day of Week" && (
+											{item.hasOwnProperty(column.field) && (
 												<>
-													<p className="text-gray-500 font-medium">
-														{column.header}
-													</p>
-													<p className="text-black">
-														{column.field === "isLeave" ||
-														column.field === "isEmergencyBreak"
-															? item[column.field]
-																? "Yes"
-																: "No"
-															: item[column.field]}
-													</p>
+													{column.header !== "Day of Week" && (
+														<>
+															<p className="text-gray-500 font-medium">
+																{column.header}
+															</p>
+															<p className="text-black">
+																{column.field === "isLeave" ||
+																column.field === "isEmergencyBreak"
+																	? item[column.field]
+																		? "Yes"
+																		: "No"
+																	: item[column.field]}
+															</p>
+														</>
+													)}
 												</>
 											)}
 										</div>

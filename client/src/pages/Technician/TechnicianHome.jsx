@@ -1,4 +1,4 @@
-function PatientHome() {
+function TechnicianHome() {
 	return (
 		<>
 			<div className="w-full bg-white border-b">
@@ -8,13 +8,15 @@ function PatientHome() {
 					</div>
 					<div>
 						<button className="w-52 bg-blue-950 text-white rounded-lg text-base py-2 px-8 hover:bg-blue-900">
-							View Records
+							Create Request
 						</button>
 					</div>
 				</div>
+
 				<div></div>
 			</div>
 		</>
 	);
 }
-export default PatientHome;
+
+export default TechnicianHome;

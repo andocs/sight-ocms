@@ -134,7 +134,8 @@ const ReusableTable = ({ data, columns, actions }) => {
 														  )
 														: "N/A"}
 												</div>
-											) : item[column.field] == "" ? (
+											) : item[column.field] === "" ||
+											  item[column.field] === undefined ? (
 												"N/A"
 											) : (
 												item[column.field]
@@ -144,13 +145,38 @@ const ReusableTable = ({ data, columns, actions }) => {
 									{actions.length !== 1 ? (
 										<td className="px-6 py-4 flex space-x-2">
 											{actions.map((action, actionIndex) => (
-												<button
-													key={actionIndex}
-													onClick={() => action.handler(item)}
-													className="flex-1 bg-white rounded-lg shadow-lg truncate"
-												>
-													{action.label}
-												</button>
+												<>
+													{item["status"] ? (
+														item["status"] === "Completed" ||
+														item["status"] === "Cancelled" ? (
+															action.label === "View" && (
+																<button
+																	key={actionIndex}
+																	onClick={() => action.handler(item)}
+																	className="flex-1 bg-white rounded-lg shadow-lg truncate"
+																>
+																	{action.label}
+																</button>
+															)
+														) : (
+															<button
+																key={actionIndex}
+																onClick={() => action.handler(item)}
+																className="flex-1 bg-white rounded-lg shadow-lg truncate"
+															>
+																{action.label}
+															</button>
+														)
+													) : (
+														<button
+															key={actionIndex}
+															onClick={() => action.handler(item)}
+															className="flex-1 bg-white rounded-lg shadow-lg truncate"
+														>
+															{action.label}
+														</button>
+													)}
+												</>
 											))}
 										</td>
 									) : (

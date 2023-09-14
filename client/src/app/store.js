@@ -11,6 +11,7 @@ import appointmentReducer from "../features/appointment/appointmentSlice";
 import orderReducer from "../features/order/orderSlice";
 import scheduleReducer from "../features/schedule/scheduleSlice";
 import patientReducer from "../features/patient/patientSlice";
+import maintenanceReducer from "../features/maintenance/maintenanceSlice";
 
 function getReducerByUserRole() {
 	const token = localStorage.getItem("user");
@@ -27,6 +28,7 @@ function getReducerByUserRole() {
 			audit: auditReducer,
 			staff: staffReducer,
 			inventory: inventoryReducer,
+			maintenance: maintenanceReducer,
 		};
 	} else if (userRole === "doctor") {
 		return {
@@ -38,6 +40,14 @@ function getReducerByUserRole() {
 			order: orderReducer,
 			schedule: scheduleReducer,
 			patient: patientReducer,
+		};
+	} else if (userRole === "technician") {
+		return {
+			auth: authReducer,
+			audit: auditReducer,
+			order: orderReducer,
+			inventory: inventoryReducer,
+			maintenance: maintenanceReducer,
 		};
 	}
 }

@@ -219,7 +219,7 @@ function EditOrders() {
 			frame: orderUpdate.frameName,
 			lens: orderUpdate.lensName,
 		};
-		console.log(formData, initialData);
+
 		for (const key in initialData) {
 			if (JSON.stringify(initialData[key]) !== JSON.stringify(formData[key])) {
 				if (formData[key] !== "") {
@@ -232,7 +232,6 @@ function EditOrders() {
 			}
 		}
 
-		console.log(updateInfo);
 		if (JSON.stringify(updateInfo) === "{}") {
 			navigate("/doctor/view-orders");
 			dispatch(reset());

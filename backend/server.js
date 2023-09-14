@@ -26,6 +26,7 @@ app.use(errorHandler);
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/doctor", require("./routes/doctorRoutes"));
+app.use("/api/technician", require("./routes/technicianRoutes"));
 
 app.use(handleMulterErrors);
 

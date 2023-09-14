@@ -1327,7 +1327,6 @@ const deleteAppointment = async (req, res) => {
 //@route POST /api/doctor/schedule
 //@access private (doctor only)
 const addDoctorSchedule = asyncHandler(async (req, res) => {
-	console.log(req.body);
 	const {
 		dayOfWeek,
 		startTime,
@@ -1396,11 +1395,12 @@ const addDoctorSchedule = asyncHandler(async (req, res) => {
 			],
 			{ session }
 		);
-		await session.commitTransaction();
+
 		res.status(201).json({
 			data: doctorSchedule,
 			message: `Schedule for ${dayOfWeek} successfully added!.`,
 		});
+		await session.commitTransaction();
 	} catch (error) {
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
@@ -1460,6 +1460,22 @@ const updateDoctorSchedule = asyncHandler(async (req, res) => {
 	const scheduleId = req.params.id;
 	const updatedFields = req.body;
 
+	// Check if the updatedFields contain dayOfWeek
+	if (updatedFields.dayOfWeek !== undefined) {
+		// Check for conflicting schedules
+		const conflictingSchedule = await Schedule.findOne({
+			_id: { $ne: scheduleId },
+			doctor: doctorId,
+			dayOfWeek: updatedFields.dayOfWeek,
+		});
+
+		if (conflictingSchedule) {
+			return res.status(400).json({
+				message: "Schedule conflicts with existing schedule!",
+			});
+		}
+	}
+
 	const schedule = await Schedule.findOne({
 		_id: scheduleId,
 		doctor: doctorId,
@@ -1497,11 +1513,12 @@ const updateDoctorSchedule = asyncHandler(async (req, res) => {
 			],
 			{ session }
 		);
-		await session.commitTransaction();
+
 		res.json({
 			data: updatedSchedule,
-			message: `Schedule for ${dayOfWeek} successfully updated!`,
+			message: `Schedule for ${schedule.dayOfWeek} successfully updated!`,
 		});
+		await session.commitTransaction();
 	} catch (error) {
 		if (error.name === "ValidationError") {
 			const validationErrors = [];

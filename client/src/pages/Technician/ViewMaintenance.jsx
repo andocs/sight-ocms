@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+
 import {
-	getEyeRecords,
-	deleteEyeRecord,
+	getMaintenanceList,
+	deleteRequest,
 	reset,
 	clear,
-} from "../../features/record/recordSlice";
+} from "../../features/maintenance/maintenanceSlice";
 
 import Spinner from "../../components/spinner.component";
 import DeleteConfirmation from "../../components/deleteconfirmation.component";
@@ -15,17 +16,17 @@ import ViewModal from "../../components/viewmodal.component";
 
 import Table from "../../components/table.component";
 
-function ViewRecords() {
+function ViewMaintenance() {
 	let [isOpen, setIsOpen] = useState(false);
 	const [isConfirmed, setConfirmation] = useState(false);
 	let [isViewOpen, setViewOpen] = useState(false);
-	const [recordId, setRecordId] = useState("");
-	const [recordData, setRecordData] = useState("");
+	const [requestId, setMaintenanceId] = useState("");
+	const [maintenanceData, setMaintenanceData] = useState("");
 
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
-	const { record, isLoading, isSuccess, isError, message } = useSelector(
-		(state) => state.record
+	const { maintenance, isLoading, isSuccess, isError, message } = useSelector(
+		(state) => state.maintenance
 	);
 
 	useEffect(() => {
@@ -35,7 +36,7 @@ function ViewRecords() {
 		if (isSuccess && message !== "") {
 			toast.success(message);
 		}
-		dispatch(getEyeRecords());
+		dispatch(getMaintenanceList());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
@@ -54,14 +55,14 @@ function ViewRecords() {
 		setViewOpen(false);
 	}
 
-	function openModal(recordId) {
+	function openModal(requestId) {
 		setIsOpen(true);
-		setRecordId(recordId);
+		setMaintenanceId(requestId);
 	}
 
 	function checkConfirmation() {
 		setConfirmation(true);
-		dispatch(deleteEyeRecord(recordId));
+		dispatch(deleteRequest(requestId));
 		if (isSuccess && message) {
 			toast.message(message);
 		}
@@ -69,30 +70,26 @@ function ViewRecords() {
 	}
 
 	const columns = [
-		{ header: "Record Date", field: "createdAt" },
-		{ header: "Last Name", field: "userLastName" },
-		{ header: "First Name", field: "userFirstName" },
-		{ header: "OD SPH", field: `rightEye.sphere` },
-		{ header: "OD CYL", field: "rightEye.cylinder" },
-		{ header: "OD Axis", field: "rightEye.axis" },
-		{ header: "OS SPH", field: "leftEye.sphere" },
-		{ header: "OS CYL", field: "leftEye.cylinder" },
-		{ header: "OS Axis", field: "leftEye.axis" },
+		{ header: "Created At", field: "createdAt" },
+		{ header: "Title", field: "title" },
+		{ header: "Status", field: "status" },
+		{ header: "Details", field: "details" },
 	];
 
 	const actions = [
 		{
 			label: "View",
 			handler: (details) => {
-				setRecordData(details);
-				console.log(details);
+				setMaintenanceData(details);
 				setViewOpen(true);
 			},
 		},
 		{
 			label: "Update",
 			handler: (details) => {
-				navigate(`/doctor/edit-record/${details._id}`, { state: { details } });
+				navigate(`/technician/edit-request/${details._id}`, {
+					state: { details },
+				});
 			},
 		},
 		{
@@ -109,9 +106,9 @@ function ViewRecords() {
 				<ViewModal
 					isOpen={isViewOpen}
 					closeModal={closeViewModal}
-					dataFields={recordData}
+					dataFields={maintenanceData}
 					columnHeaders={columns}
-					modalTitle="Visit Record Details"
+					modalTitle="View Maintenance Details"
 				/>
 			)}
 
@@ -120,20 +117,20 @@ function ViewRecords() {
 				closeModal={closeModal}
 				onConfirm={checkConfirmation}
 			/>
-			<div className="w-full bg-white border-b">
+			<div className="w-full bg-white bmaintenance-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>
-						<p className="font-medium text-5xl">Eye Records</p>
+						<p className="font-medium text-5xl">Maintenance List</p>
 					</div>
 				</div>
 			</div>
 			<div className="p-8">
 				<div className="xl:w-5/6 flex flex-row">
-					<Table data={record} columns={columns} actions={actions} />
+					<Table data={maintenance} columns={columns} actions={actions} />
 				</div>
 			</div>
 		</>
 	);
 }
 
-export default ViewRecords;
+export default ViewMaintenance;

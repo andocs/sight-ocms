@@ -556,7 +556,7 @@ const deleteItem = asyncHandler(async (req, res) => {
 const getMaintenanceList = asyncHandler(async (req, res) => {
 	const maintenanceRequests = await Maintenance.find();
 	if ((maintenanceRequests = {})) {
-		return res.json({ message: "No items currently in inventory." });
+		return res.json({ message: "No requests currently." });
 	}
 	res.json(maintenanceRequests);
 });
@@ -568,7 +568,7 @@ const getMaintenanceRequestDetails = asyncHandler(async (req, res) => {
 	const requestId = req.params.id;
 	const maintenanceRequest = await Maintenance.findOne({ _id: requestId });
 	if (!maintenanceRequest) {
-		return res.status(404).json({ message: "Item not found!" });
+		return res.status(404).json({ message: "Request not found!" });
 	}
 	res.json(maintenanceRequest);
 });

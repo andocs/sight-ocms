@@ -31,6 +31,44 @@ export const createOrder = createAsyncThunk(
 	}
 );
 
+// Get all pending orders in the system
+export const getPendingOrders = createAsyncThunk(
+	"order/getPendingOrders",
+	async (_, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			return await orderService.getPendingOrders(token);
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
+//Get all previous orders by technician
+export const getOrderHistory = createAsyncThunk(
+	"order/getOrderHistory",
+	async (_, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			return await orderService.getOrderHistory(token);
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
 // Get all order records
 export const getOrderList = createAsyncThunk(
 	"order/getOrderList",
@@ -160,6 +198,36 @@ const orderSlice = createSlice({
 				state.isError = true;
 				state.message = action.payload;
 				state.newOrder = null;
+			})
+
+			.addCase(getPendingOrders.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(getPendingOrders.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.order = action.payload;
+			})
+			.addCase(getPendingOrders.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.message = action.payload;
+				state.order = null;
+			})
+
+			.addCase(getOrderHistory.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(getOrderHistory.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.order = action.payload;
+			})
+			.addCase(getOrderHistory.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.message = action.payload;
+				state.order = null;
 			})
 			.addCase(getOrderList.pending, (state) => {
 				state.isLoading = true;

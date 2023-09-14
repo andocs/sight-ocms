@@ -15,6 +15,30 @@ const createOrder = async ({ patientId, orderData }, token) => {
 	return res.data;
 };
 
+// Get all pending orders in the system
+const getPendingOrders = async (token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/order`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
+// Get all technician's previous orders
+const getOrderHistory = async (token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/order-history`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
 // Get all order records
 const getOrderList = async (token) => {
 	const config = {
@@ -82,6 +106,8 @@ const getUserRole = (token) => {
 
 const orderService = {
 	createOrder,
+	getPendingOrders,
+	getOrderHistory,
 	getOrderList,
 	getOrderDetails,
 	editOrder,

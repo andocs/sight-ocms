@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import Navbar from "./components/navbar.component";
+
 import Home from "./pages/Landing_Page/Home";
 import Services from "./pages/Landing_Page/Services";
 import About from "./pages/Landing_Page/About";
@@ -34,12 +36,6 @@ import ViewAuditLogs from "./pages/Admin/ViewAuditLogs";
 
 //DOCTOR
 import AddRecords from "./pages/Doctor/AddRecords";
-import AddTransaction from "./pages/Doctor/AddTransaction";
-import DeleteRecords from "./pages/Doctor/DeleteRecords";
-import GeneratePrescription from "./pages/Doctor/GeneratePrescription";
-import UpdateRecords from "./pages/Doctor/UpdateRecords";
-
-import Navbar from "./components/navbar.component";
 import WalkInConsult from "./pages/Doctor/WalkInConsult";
 import RegisteredConsult from "./pages/Doctor/RegisteredConsult";
 import ViewEyeRecords from "./pages/Doctor/ViewRecords";
@@ -56,6 +52,16 @@ import EditVisit from "./pages/Doctor/EditVisit";
 import EditRecord from "./pages/Doctor/EditRecord";
 import EditOrders from "./pages/Doctor/EditOrders";
 import EditAppointment from "./pages/Doctor/EditAppointment";
+import EditSchedule from "./pages/Doctor/EditSchedule";
+
+//TECHNICIAN
+import ViewPendingOrders from "./pages/Technician/ViewPendingOrders";
+import ViewOrderHistory from "./pages/Technician/ViewOrderHistory";
+import ViewMaintenance from "./pages/Technician/ViewMaintenance";
+import CreateMaintenanceRequest from "./pages/Technician/CreateMaintenanceRequest";
+import ViewTechInventory from "./pages/Technician/ViewTechInventory";
+import EditRequest from "./pages/Technician/EditRequest";
+import TechItemDetails from "./pages/Technician/ItemDetails";
 
 function App() {
 	return (
@@ -111,10 +117,19 @@ function App() {
 						<Route path="edit-order/:id" element={<EditOrders />} />
 						<Route path="add-schedule" element={<AddSchedule />} />
 						<Route path="view-schedule" element={<ViewSchedule />} />
+						<Route path="edit-schedule/:id" element={<EditSchedule />} />
 						<Route path="add-patient" element={<AddPatient />} />
 					</Route>
 
-					<Route path="/technician" element={<TechnicianDashboard />} />
+					<Route path="/technician" element={<TechnicianDashboard />}>
+						<Route path="view-orders" element={<ViewPendingOrders />} />
+						<Route path="view-history" element={<ViewOrderHistory />} />
+						<Route path="view-requests" element={<ViewMaintenance />} />
+						<Route path="add-request" element={<CreateMaintenanceRequest />} />
+						<Route path="edit-request/:id" element={<EditRequest />} />
+						<Route path="view-inventory" element={<ViewTechInventory />} />
+						<Route path="item-details" element={<TechItemDetails />} />
+					</Route>
 				</Routes>
 			</BrowserRouter>
 			<ToastContainer />

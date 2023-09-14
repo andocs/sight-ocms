@@ -75,16 +75,28 @@ function ViewSchedule() {
 		{ header: "Is Emergency Break", field: "isEmergencyBreak" },
 	];
 
-	const handleEdit = (scheduleId) => {
-		console.log(scheduleId);
-		navigate(`/doctor/edit-schedule/${scheduleId}`);
-	};
-	const handleDelete = (scheduleId) => {
-		openModal(scheduleId);
-	};
 	const goBack = () => {
 		navigate("/doctor");
 	};
+
+	const actions = [
+		{
+			label: "Edit",
+			handler: (details) => {
+				console.log(details);
+				navigate(`/doctor/edit-schedule/${details._id}`, {
+					state: { details },
+				});
+			},
+		},
+		{
+			label: "Delete",
+			css: "red",
+			handler: (details) => {
+				openModal(details._id);
+			},
+		},
+	];
 	return (
 		<>
 			<DeleteConfirmation
@@ -97,16 +109,7 @@ function ViewSchedule() {
 				columns={columns}
 				data={schedule}
 				onClick={goBack}
-				actions={{
-					edit: (item) => {
-						// Handle edit action for the specific item
-						console.log("Edit clicked for item:", item);
-					},
-					delete: (item) => {
-						// Handle delete action for the specific item
-						console.log("Delete clicked for item:", item);
-					},
-				}}
+				actions={actions}
 			/>
 		</>
 	);
