@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import scheduleService from "./scheduleService";
 
 const initialState = {
+	availableDays: null,
 	newSchedule: null,
 	scheduleUpdate: null,
 	schedule: [],
@@ -37,6 +38,25 @@ export const getScheduleList = createAsyncThunk(
 		try {
 			const token = thunkAPI.getState().auth.user;
 			return await scheduleService.getScheduleList(token);
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
+// Get available days
+export const getAvailableDays = createAsyncThunk(
+	"schedule/getAvailableDays",
+	async (_, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			return await scheduleService.getAvailableDays(token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -155,6 +175,20 @@ const scheduleSlice = createSlice({
 				state.isError = true;
 				state.message = action.payload;
 				state.schedule = null;
+			})
+			.addCase(getAvailableDays.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(getAvailableDays.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.availableDays = action.payload;
+			})
+			.addCase(getAvailableDays.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.message = action.payload;
+				state.availableDays = null;
 			})
 			.addCase(getScheduleDetails.pending, (state) => {
 				state.isLoading = true;

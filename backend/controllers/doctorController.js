@@ -1072,9 +1072,9 @@ const deleteRecord = asyncHandler(async (req, res) => {
 const createAppointment = async (req, res) => {
 	const patientId = req.params.id;
 	const doctorId = req.user.id;
-	const { date, startTime, endTime, notes } = req.body;
+	const { appointmentDate, appointmentStart, appointmentEnd, notes } = req.body;
 
-	if (!date || !startTime || !endTime) {
+	if (!appointmentDate || !appointmentStart || !appointmentEnd) {
 		return res
 			.status(404)
 			.json({ message: "Please fill in all the required fields!" });
@@ -1095,9 +1095,9 @@ const createAppointment = async (req, res) => {
 				{
 					doctor: doctorId,
 					patient: patientId,
-					date,
-					startTime,
-					endTime,
+					appointmentDate,
+					appointmentStart,
+					appointmentEnd,
 					notes,
 				},
 			],
@@ -1123,7 +1123,7 @@ const createAppointment = async (req, res) => {
 		await session.commitTransaction();
 		res.status(201).json({
 			data: appointment,
-			message: `Appointment with ${patient.personalInfo.fname} ${patient.personalInfo.lname} at ${date} successfully added!`,
+			message: `Appointment with ${patient.personalInfo.fname} ${patient.personalInfo.lname} at ${appointmentDate} successfully added!`,
 		});
 	} catch (error) {
 		if (error.name === "ValidationError") {
@@ -1166,11 +1166,46 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 		},
 		{
 			$project: {
-				date: 1,
+				appointmentDate: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
-				startTime: 1,
-				endTime: 1,
+				appointmentStart: 1,
+				appointmentEnd: 1,
+				notes: 1,
+				status: 1,
+			},
+		},
+	]);
+	res.json(appointment);
+});
+
+//@desc GET LIST OF DOCTOR'S PENDING APPOINTMENTS
+//@route GET /api/doctor/appointments
+//@access private (doctor only)
+const getPendingAppointments = asyncHandler(async (req, res) => {
+	const doctorId = new ObjectId(req.user.id);
+	const appointment = await Appointment.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				doctor: doctorId,
+				status: "Pending",
+			},
+		},
+		{
+			$project: {
+				appointmentDate: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				appointmentStart: 1,
+				appointmentEnd: 1,
 				notes: 1,
 				status: 1,
 			},
@@ -1346,6 +1381,7 @@ const addDoctorSchedule = asyncHandler(async (req, res) => {
 		!lunchBreakStart ||
 		!lunchBreakEnd
 	) {
+		console.log("mand");
 		return res.status(400).json({ message: "All fields are mandatory!" });
 	}
 
@@ -1354,6 +1390,7 @@ const addDoctorSchedule = asyncHandler(async (req, res) => {
 		dayOfWeek,
 	});
 	if (schedule) {
+		console.log("scged");
 		return res.status(400).json({ message: "Schedule already exists!" });
 	}
 
@@ -1432,6 +1469,23 @@ const getDoctorSchedule = asyncHandler(async (req, res) => {
 		res.json({ message: "No schedule currently added." });
 	}
 	res.json(doctorSchedules);
+});
+
+//@desc GET DOCTOR'S AVAILABLE DAYS
+//@route GET /api/doctor/available
+//@access private (doctor only)
+const getDoctorScheduleDays = asyncHandler(async (req, res) => {
+	const doctorId = req.user.id;
+	const doctorSchedules = await Schedule.find({ doctor: doctorId });
+
+	if (doctorSchedules.length === 0) {
+		res.json({});
+	} else {
+		const uniqueDays = [
+			...new Set(doctorSchedules.map((schedule) => schedule.dayOfWeek)),
+		];
+		res.json(uniqueDays);
+	}
 });
 
 //@desc GET SCHEDULE DETAILS
@@ -1626,12 +1680,14 @@ module.exports = {
 
 	createAppointment,
 	getAllAppointments,
+	getPendingAppointments,
 	getAppointmentDetails,
 	updateAppointment,
 	deleteAppointment,
 
 	addDoctorSchedule,
 	getDoctorSchedule,
+	getDoctorScheduleDays,
 	getScheduleDetails,
 	updateDoctorSchedule,
 	deleteDoctorSchedule,

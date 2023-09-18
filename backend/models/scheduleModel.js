@@ -2,10 +2,12 @@ const mongoose = require("mongoose");
 
 // Custom validator function for time in 'HH:mm AM/PM' format
 function validateTime(value) {
-	const timeRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9]) (AM|PM)$/;
+	if (value !== "N/A") {
+		const timeRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9]) (AM|PM)$/;
 
-	if (!timeRegex.test(value)) {
-		throw new Error("Invalid time format. Use 'HH:mm AM/PM' format.");
+		if (!timeRegex.test(value)) {
+			throw new Error("Invalid time format. Use 'HH:mm AM/PM' format.");
+		}
 	}
 }
 
@@ -25,6 +27,7 @@ for (let hour = 9; hour <= 17; hour++) {
 		}
 	}
 }
+timeSlots.push("N/A");
 
 const doctorScheduleSchema = new mongoose.Schema({
 	doctor: {

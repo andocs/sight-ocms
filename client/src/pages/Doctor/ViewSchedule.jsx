@@ -10,6 +10,8 @@ import {
 	clear,
 } from "../../features/schedule/scheduleSlice";
 
+import { getPendingAppointments } from "../../features/appointment/appointmentSlice";
+
 import Spinner from "../../components/spinner.component";
 import DeleteConfirmation from "../../components/deleteconfirmation.component";
 
@@ -26,6 +28,14 @@ function ViewSchedule() {
 	const { schedule, isLoading, isSuccess, isError, message } = useSelector(
 		(state) => state.schedule
 	);
+
+	const { appointment } = useSelector((state) => state.appointment);
+
+	useEffect(() => {
+		if (appointment.length === 0) {
+			dispatch(getPendingAppointments());
+		}
+	}, [dispatch, appointment]);
 
 	useEffect(() => {
 		if (isError) {
@@ -79,21 +89,44 @@ function ViewSchedule() {
 		navigate("/doctor");
 	};
 
+	function checkForConflicts(scheduleDetails, pendingAppointments) {
+		const scheduleDayOfWeek = scheduleDetails.dayOfWeek;
+		let hasConflict = false; // Flag to track conflicts
+
+		// Loop through pending appointments
+		for (const appointment of pendingAppointments) {
+			const appointmentDate = new Date(appointment.appointmentDate);
+			const appointmentDayOfWeek = appointmentDate.toLocaleDateString("en-US", {
+				weekday: "long",
+			});
+
+			if (scheduleDayOfWeek === appointmentDayOfWeek) {
+				toast.error("Conflict with pending appointment!");
+				return (hasConflict = true);
+			}
+		}
+	}
+
 	const actions = [
 		{
 			label: "Edit",
 			handler: (details) => {
-				console.log(details);
-				navigate(`/doctor/edit-schedule/${details._id}`, {
-					state: { details },
-				});
+				const hasConflict = checkForConflicts(details, appointment);
+				if (!hasConflict) {
+					navigate(`/doctor/edit-schedule/${details._id}`, {
+						state: { details },
+					});
+				}
 			},
 		},
 		{
 			label: "Delete",
 			css: "red",
 			handler: (details) => {
-				openModal(details._id);
+				const hasConflict = checkForConflicts(details, appointment);
+				if (!hasConflict) {
+					openModal(details._id);
+				}
 			},
 		},
 	];

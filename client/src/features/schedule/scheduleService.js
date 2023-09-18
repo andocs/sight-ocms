@@ -26,6 +26,18 @@ const getScheduleList = async (token) => {
 	return res.data;
 };
 
+// Get available days
+const getAvailableDays = async (token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/available`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
 // Get schedule record details
 const getScheduleDetails = async (scheduleId, token) => {
 	const config = {
@@ -71,6 +83,7 @@ const getUserRole = (token) => {
 const scheduleService = {
 	createSchedule,
 	getScheduleList,
+	getAvailableDays,
 	getScheduleDetails,
 	editSchedule,
 	deleteSchedule,

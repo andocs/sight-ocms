@@ -26,6 +26,18 @@ const getAppointmentList = async (token) => {
 	return res.data;
 };
 
+// Get all pending appointments
+const getPendingAppointments = async (token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/pending`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
 // Get appointment record details
 const getAppointmentDetails = async (appointmentId, token) => {
 	const config = {
@@ -71,6 +83,7 @@ const getUserRole = (token) => {
 const appointmentService = {
 	createAppointment,
 	getAppointmentList,
+	getPendingAppointments,
 	getAppointmentDetails,
 	editAppointment,
 	deleteAppointment,

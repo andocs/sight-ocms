@@ -41,12 +41,14 @@ const {
 
 	createAppointment,
 	getAllAppointments,
+	getPendingAppointments,
 	getAppointmentDetails,
 	updateAppointment,
 	deleteAppointment,
 
 	addDoctorSchedule,
 	getDoctorSchedule,
+	getDoctorScheduleDays,
 	getScheduleDetails,
 	updateDoctorSchedule,
 	deleteDoctorSchedule,
@@ -91,6 +93,8 @@ router
 
 router.route("/appointments").get(getAllAppointments);
 
+router.route("/pending").get(getPendingAppointments);
+
 router
 	.route("/appointments/:id")
 	.post(createAppointment)
@@ -105,6 +109,8 @@ router
 	.get(getScheduleDetails)
 	.put(updateDoctorSchedule)
 	.delete(deleteDoctorSchedule);
+
+router.route("/available").get(getDoctorScheduleDays);
 
 router.route("/inventory").get(getInventoryList);
 

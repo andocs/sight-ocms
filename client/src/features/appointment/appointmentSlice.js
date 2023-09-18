@@ -52,6 +52,25 @@ export const getAppointmentList = createAsyncThunk(
 	}
 );
 
+// Get all appointment records
+export const getPendingAppointments = createAsyncThunk(
+	"appointment/getPendingAppointments",
+	async (_, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			return await appointmentService.getPendingAppointments(token);
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
 // Get appointment details
 export const getAppointmentDetails = createAsyncThunk(
 	"appointment/getAppointmentDetails",
@@ -157,6 +176,20 @@ const appointmentSlice = createSlice({
 				state.appointment = action.payload;
 			})
 			.addCase(getAppointmentList.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.message = action.payload;
+				state.appointment = null;
+			})
+			.addCase(getPendingAppointments.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(getPendingAppointments.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.appointment = action.payload;
+			})
+			.addCase(getPendingAppointments.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;

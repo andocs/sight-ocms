@@ -255,11 +255,11 @@ const mainMenu = [
 			},
 		],
 	},
-	{
-		label: "Add Patient",
-		href: "/doctor/add-patient",
-		svg: addpatientsvg,
-	},
+	// {
+	// 	label: "Add Patient",
+	// 	href: "/doctor/add-patient",
+	// 	svg: addpatientsvg,
+	// },
 ];
 
 function DoctorNav() {

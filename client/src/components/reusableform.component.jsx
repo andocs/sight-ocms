@@ -4,7 +4,9 @@ import ImageInput from "./imageinput.component";
 import PasswordInput from "./passwordinput.component";
 import CustomSearchInput from "./customsearch.component";
 
-import DateInput from "./datetimeinput.component";
+import DatePicker from "react-datepicker";
+
+import "react-datepicker/dist/react-datepicker.css";
 
 import { toast } from "react-toastify";
 
@@ -25,34 +27,172 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			});
 		});
 	}
-	const [otherItemsList, setOtherItemsList] = useState([]);
+
 	const [formData, setFormData] = useState(initialFormData);
+	const [divHeight, setDivHeight] = useState(0);
+
+	const [selectedImage, setSelectedImage] = useState(null);
+
+	const [otherItemsList, setOtherItemsList] = useState([]);
 	const [inputValue, setInputValue] = useState("");
 	const [editedQuantity, setEditedQuantity] = useState("");
-	const [selectedImage, setSelectedImage] = useState(null);
-	const [divHeight, setDivHeight] = useState(0);
 	const [itemName, setItemName] = useState("");
 	const [itemPrice, setItemPrice] = useState("");
 	const [itemID, setItemID] = useState("");
 	const [isItemSelected, setIsItemSelected] = useState(true);
 	const [searchValue, setSearchValue] = useState("");
 
+	const [endTimeOptions, setEndTimeOptions] = useState([]);
+	const [lunchBreakStartOptions, setLunchBreakStartOptions] = useState([]);
+	const [lunchBreakEndOptions, setLunchBreakEndOptions] = useState([]);
+
+	const [appointmentStartOptions, setAppointmentStartOptions] = useState([]);
+	const [appointmentEndOptions, setAppointmentEndOptions] = useState([]);
+
+	let doctorSchedule = [];
+	const timeSlots = [];
+
+	for (let hour = 9; hour <= 17; hour++) {
+		for (let minute = 0; minute <= 30; minute += 30) {
+			if (hour == 17 && minute == 30) {
+				break;
+			} else {
+				const ampm = hour < 12 ? "AM" : "PM";
+				const hourFormatted = hour % 12 || 12;
+				const timeSlot = `${hourFormatted.toString().padStart(2, "0")}:${minute
+					.toString()
+					.padStart(2, "0")} ${ampm}`;
+				timeSlots.push(timeSlot);
+			}
+		}
+	}
+
 	const imageInputRef = useRef(null);
 	const formGroupRef = useRef(null);
-	const customSearchInputRef = createRef();
+	const customSearchInputRef = createRef(null);
 
-	useEffect(() => {
-		if (formGroupRef.current) {
-			const height = formGroupRef.current.offsetHeight;
-			setDivHeight(height);
-		}
-	}, []);
+	const getTomorrow = () => {
+		const today = new Date();
+		const tomorrow = new Date(today);
+		tomorrow.setDate(today.getDate() + 1);
 
-	useEffect(() => {
-		if (otherItems) {
-			setOtherItemsList(otherItems);
+		return tomorrow;
+	};
+
+	function calculateLunchBreakStartOptions(selectedStartTime, selectedEndTime) {
+		const minLunchBreakStart = timeSlots.indexOf(selectedStartTime) + 1;
+		const maxLunchBreakStart = Math.min(
+			timeSlots.indexOf(selectedEndTime) - 3,
+			timeSlots.indexOf("12:30 PM")
+		);
+
+		const lunchBreakStartOptions = timeSlots.slice(
+			minLunchBreakStart,
+			maxLunchBreakStart
+		);
+
+		return lunchBreakStartOptions;
+	}
+
+	function calculateLunchBreakEndOptions(selectedLunchBreakStart) {
+		if (selectedLunchBreakStart === "N/A") {
+			return [];
 		}
-	}, [otherItems]);
+		const minLunchBreakEnd = timeSlots.indexOf(selectedLunchBreakStart) + 1;
+		const maxLunchBreakEnd = timeSlots.indexOf(selectedLunchBreakStart) + 3;
+
+		const lunchBreakEndOptions = timeSlots.slice(
+			minLunchBreakEnd,
+			maxLunchBreakEnd
+		);
+
+		return lunchBreakEndOptions;
+	}
+
+	function calculateAvailableTimeSlots(selectedDate, doctorSchedule) {
+		if (doctorSchedule && selectedDate) {
+			const selectedDayOfWeek = selectedDate.toLocaleDateString("en-US", {
+				weekday: "long",
+			});
+
+			const schedule = doctorSchedule.find(
+				(entry) => entry.dayOfWeek === selectedDayOfWeek
+			);
+
+			if (schedule) {
+				const doctorStartTime = parseTime(schedule.startTime);
+				const doctorEndTime = parseTime(schedule.endTime);
+
+				const appointmentEndTime = new Date(doctorStartTime);
+				appointmentEndTime.setMinutes(appointmentEndTime.getMinutes() + 30);
+				const availableTimeSlots = [];
+				let currentTime = new Date(doctorStartTime);
+
+				if (
+					schedule.lunchBreakStart === "N/A" &&
+					schedule.lunchBreakEnd === "N/A"
+				) {
+					while (currentTime < doctorEndTime) {
+						if (currentTime >= doctorStartTime) {
+							availableTimeSlots.push(formatTime(currentTime));
+						}
+						currentTime.setMinutes(currentTime.getMinutes() + 30);
+					}
+					return availableTimeSlots;
+				} else {
+					const lunchBreakStart = parseTime(schedule.lunchBreakStart);
+					const lunchBreakEnd = parseTime(schedule.lunchBreakEnd);
+
+					while (currentTime < doctorEndTime) {
+						if (
+							currentTime >= doctorStartTime &&
+							(currentTime < lunchBreakStart || currentTime >= lunchBreakEnd)
+						) {
+							availableTimeSlots.push(formatTime(currentTime));
+						}
+						currentTime.setMinutes(currentTime.getMinutes() + 30);
+					}
+
+					return availableTimeSlots;
+				}
+			} else {
+				return [];
+			}
+		}
+	}
+
+	function calculateAppointmentEnd(selectedStartTime) {
+		let appointmentEndOption = [];
+		const startTime = parseTime(selectedStartTime);
+
+		const endTime = new Date(startTime);
+
+		endTime.setMinutes(endTime.getMinutes() + 30);
+
+		appointmentEndOption.push(formatTime(endTime));
+
+		return appointmentEndOption;
+	}
+
+	function parseTime(timeString) {
+		const parts = timeString.split(" ");
+		const timeParts = parts[0].split(":");
+		let hours = parseInt(timeParts[0]);
+		const minutes = parseInt(timeParts[1]);
+		if (parts[1] === "PM" && hours !== 12) {
+			hours += 12;
+		}
+		return new Date(0, 0, 0, hours, minutes);
+	}
+
+	function formatTime(time) {
+		const hours = time.getHours();
+		const minutes = time.getMinutes();
+		const ampm = hours >= 12 ? "PM" : "AM";
+		const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
+		const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+		return `${formattedHours}:${formattedMinutes} ${ampm}`;
+	}
 
 	const handleInputChange = (value) => {
 		if (value !== itemName) {
@@ -264,6 +404,38 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 		}));
 	};
 
+	const renderListBoxInput = (field) => {
+		const options =
+			field.name === "endTime"
+				? endTimeOptions
+				: field.name === "lunchBreakStart"
+				? lunchBreakStartOptions
+				: field.name === "lunchBreakEnd"
+				? lunchBreakEndOptions
+				: field.name === "appointmentStart"
+				? appointmentStartOptions
+				: field.name === "appointmentEnd"
+				? appointmentEndOptions
+				: field.options;
+
+		if (
+			options &&
+			(formData[field.name] !== "" || formData[field.name] !== "N/A")
+		) {
+			return (
+				<ListBoxInput
+					key={formData[field.name]}
+					options={options}
+					initialValue={formData[field.name]}
+					onChange={(value) => {
+						handleChange(field.name, value);
+					}}
+				/>
+			);
+		}
+		return null;
+	};
+
 	const renderInput = (field) => {
 		switch (field.type) {
 			case "text":
@@ -298,13 +470,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 					/>
 				);
 			case "listbox":
-				return (
-					<ListBoxInput
-						options={field.options}
-						initialValue={formData[field.name] || ""}
-						onChange={(value) => handleChange(field.name, value)}
-					/>
-				);
+				return renderListBoxInput(field);
 			case "textarea":
 				return (
 					<textarea
@@ -348,16 +514,188 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 					/>
 				);
 			case "date":
+				const isDisabled = (date) => {
+					const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
+						weekday: "long",
+					});
+					const daysToDisable = field.disabled;
+
+					return !daysToDisable.includes(dayOfWeek);
+				};
+
+				const schedule = field?.available;
+				if (schedule) {
+					doctorSchedule = schedule;
+				}
+
 				return (
-					<DateInput
-						value={formData[field.name] || ""}
-						onChange={(value) => handleChange(field.name, value)}
-					/>
+					<div className="relative w-fit">
+						<DatePicker
+							key={formData[field.name]}
+							className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
+							selected={
+								formData[field.name] !== ""
+									? formData[field.name]
+									: getTomorrow()
+							}
+							onChange={(value) => handleChange(field.name, value)}
+							minDate={getTomorrow()}
+							filterDate={isDisabled}
+						/>
+						<div className="w-6 h-6 absolute top-4 right-5 z-10">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+							>
+								<path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" />
+								<path
+									fillRule="evenodd"
+									d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z"
+									clipRule="evenodd"
+								/>
+							</svg>
+						</div>
+					</div>
 				);
 			default:
 				return null;
 		}
 	};
+
+	useEffect(() => {
+		if (formGroupRef.current) {
+			const height = formGroupRef.current.offsetHeight;
+			setDivHeight(height);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (otherItems) {
+			setOtherItemsList(otherItems);
+		}
+	}, [otherItems]);
+
+	useEffect(() => {
+		if (formData.startTime) {
+			const startIdx = timeSlots.indexOf(formData.startTime);
+			const endTimeOptions = timeSlots.slice(startIdx + 6);
+
+			setEndTimeOptions(endTimeOptions);
+		}
+	}, [formData.startTime]);
+
+	useEffect(() => {
+		if (formData.startTime && formData.endTime) {
+			const lunchBreakStartOptions = calculateLunchBreakStartOptions(
+				formData.startTime,
+				formData.endTime
+			);
+			lunchBreakStartOptions.push("N/A");
+			setLunchBreakStartOptions(lunchBreakStartOptions);
+		}
+	}, [formData.startTime, formData.endTime]);
+
+	useEffect(() => {
+		if (formData.lunchBreakStart) {
+			const lunchBreakEndOptions = calculateLunchBreakEndOptions(
+				formData.lunchBreakStart
+			);
+			setLunchBreakEndOptions(lunchBreakEndOptions);
+		}
+	}, [formData.lunchBreakStart]);
+
+	useEffect(() => {
+		if (formData.appointmentDate) {
+			const availableTimeSlots = calculateAvailableTimeSlots(
+				formData.appointmentDate,
+				doctorSchedule
+			);
+			setAppointmentStartOptions(availableTimeSlots);
+		}
+	}, [formData.appointmentDate]);
+
+	useEffect(() => {
+		if (formData.appointmentStart) {
+			const appointmentEndOptions = calculateAppointmentEnd(
+				formData.appointmentStart
+			);
+			setAppointmentEndOptions(appointmentEndOptions);
+		}
+	}, [formData.appointmentStart]);
+
+	useEffect(() => {
+		if (formData.endTime && endTimeOptions.length > 0) {
+			if (
+				timeSlots.indexOf(endTimeOptions[0]) >
+				timeSlots.indexOf(formData["endTime"])
+			) {
+				setFormData((prevData) => ({
+					...prevData,
+					endTime: endTimeOptions[0],
+				}));
+			}
+		} else if (endTimeOptions.length === 0) {
+			setFormData((prevData) => ({
+				...prevData,
+				endTime: "N/A",
+			}));
+		}
+	}, [endTimeOptions]);
+
+	useEffect(() => {
+		if (formData.lunchBreakStart && lunchBreakStartOptions.length > 0) {
+			setFormData((prevData) => ({
+				...prevData,
+				lunchBreakStart: lunchBreakStartOptions[0],
+			}));
+		} else if (lunchBreakStartOptions.length === 0) {
+			setFormData((prevData) => ({
+				...prevData,
+				lunchBreakStart: "N/A",
+			}));
+		}
+	}, [lunchBreakStartOptions]);
+
+	useEffect(() => {
+		if (formData.lunchBreakEnd && lunchBreakEndOptions.length > 0) {
+			setFormData((prevData) => ({
+				...prevData,
+				lunchBreakEnd: lunchBreakEndOptions[0],
+			}));
+		} else if (lunchBreakEndOptions.length === 0) {
+			setFormData((prevData) => ({
+				...prevData,
+				lunchBreakEnd: "N/A",
+			}));
+		}
+	}, [lunchBreakEndOptions]);
+
+	useEffect(() => {
+		if (
+			formData.appointmentStart === "" &&
+			appointmentStartOptions.length > 0
+		) {
+			setFormData((prevData) => ({
+				...prevData,
+				appointmentStart: appointmentStartOptions[0],
+			}));
+		}
+	}, [appointmentStartOptions]);
+
+	useEffect(() => {
+		if (formData.appointmentEnd && appointmentEndOptions.length > 0) {
+			setFormData((prevData) => ({
+				...prevData,
+				appointmentEnd: appointmentEndOptions[0],
+			}));
+		} else if (appointmentEndOptions.length === 0) {
+			setFormData((prevData) => ({
+				...prevData,
+				appointmentEnd: "N/A",
+			}));
+		}
+	}, [appointmentEndOptions]);
 
 	return (
 		<form

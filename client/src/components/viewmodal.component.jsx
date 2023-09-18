@@ -32,6 +32,18 @@ function ViewModal({
 		return new Date(dateString).toLocaleDateString(undefined, options);
 	};
 
+	const formatDateandTime = (dateString) => {
+		const options = {
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+			hour: "numeric",
+			minute: "numeric",
+			hour12: true,
+		};
+		return new Date(dateString).toLocaleString(undefined, options);
+	};
+
 	return (
 		<Transition appear show={isOpen} as={Fragment}>
 			<Dialog as="div" className="relative z-50" onClose={closeModal}>
@@ -72,8 +84,12 @@ function ViewModal({
 												<p className="text-sm text-gray-500">
 													<strong>{title.header}</strong>
 													{": "}
-													{title.field === "createdAt"
+													{title.field === "appointmentDate"
 														? formatDate(dataFields[title.field])
+														: title.field === "createdAt" ||
+														  title.field === "orderTime" ||
+														  title.field === "visitDate"
+														? formatDateandTime(dataFields[title.field])
 														: getItemFieldValue(dataFields, title.field)}
 												</p>
 											</div>

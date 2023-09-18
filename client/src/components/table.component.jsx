@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 const ReusableTable = ({ data, columns, actions }) => {
 	const [searchQuery, setSearchQuery] = useState("");
@@ -121,7 +121,7 @@ const ReusableTable = ({ data, columns, actions }) => {
 														  )
 														: "N/A"}
 												</div>
-											) : column.field === "date" ? (
+											) : column.field === "appointmentDate" ? (
 												<div>
 													{item[column.field]
 														? new Date(item[column.field]).toLocaleString(
@@ -145,7 +145,7 @@ const ReusableTable = ({ data, columns, actions }) => {
 									{actions.length !== 1 ? (
 										<td className="px-6 py-4 flex space-x-2">
 											{actions.map((action, actionIndex) => (
-												<>
+												<Fragment key={actionIndex}>
 													{item["status"] ? (
 														item["status"] === "Completed" ||
 														item["status"] === "Cancelled" ? (
@@ -176,7 +176,7 @@ const ReusableTable = ({ data, columns, actions }) => {
 															{action.label}
 														</button>
 													)}
-												</>
+												</Fragment>
 											))}
 										</td>
 									) : (

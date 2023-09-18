@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function DateInput({ value, onChange }) {
+function DateInput({ value, onChange, disabledDates }) {
 	const [date, setDate] = useState(value || "");
 
 	const handleDateChange = (newDate) => {
@@ -8,9 +8,6 @@ function DateInput({ value, onChange }) {
 		onChange(newDate);
 	};
 
-	console.log(date);
-
-	// Function to format the date as "mm/dd/yyyy"
 	const formatDate = (inputDate) => {
 		const dateObject = new Date(inputDate);
 		const year = dateObject.getFullYear();
@@ -19,13 +16,23 @@ function DateInput({ value, onChange }) {
 		return `${year}-${month}-${day}`;
 	};
 
+	const isDateDisabled = (date) => {
+		// Check if the date's day of the week is in the disabledDates array
+		const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
+			weekday: "long",
+		});
+		return disabledDates.includes(dayOfWeek);
+	};
+
 	return (
 		<input
 			type="date"
 			value={date ? formatDate(date) : ""}
 			onChange={(e) => handleDateChange(e.target.value)}
 			onBlur={() => handleDateChange(formatDate(date))}
+			min={new Date().toISOString().split("T")[0]}
 			className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
+			disabled={disabledDates.some((date) => isDateDisabled(date))}
 		/>
 	);
 }

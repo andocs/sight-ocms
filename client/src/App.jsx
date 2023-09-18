@@ -18,7 +18,6 @@ import DoctorDashboard from "./pages/Doctor/DoctorDashboard";
 import TechnicianDashboard from "./pages/Technician/TechnicianDashboard";
 
 //PATIENT
-import ViewHistory from "./pages/Patient/ViewHistory";
 import ViewOrder from "./pages/Patient/ViewOrder";
 import ViewRecords from "./pages/Patient/ViewRecords";
 
@@ -92,7 +91,6 @@ function App() {
 
 					<Route path="/patient" element={<PatientDashboard />}>
 						<Route path="view-records" element={<ViewRecords />} />
-						<Route path="view-history" element={<ViewHistory />} />
 						<Route path="view-order" element={<ViewOrder />} />
 					</Route>
 

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -8,17 +8,22 @@ import {
 	editAppointment,
 	reset,
 } from "../../features/appointment/appointmentSlice";
+import {
+	getScheduleList,
+	getAvailableDays,
+} from "../../features/schedule/scheduleSlice";
 
 import ReusableForm from "../../components/reusableform.component";
 import Spinner from "../../components/spinner.component";
 
 function EditAppointment() {
+	const [daysOfWeek, setDaysOfWeek] = useState([]);
 	const location = useLocation();
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const appointmentDetails = location.state;
 	const appointmentId = appointmentDetails.details._id;
-
+	let doctorSchedule = null;
 	const {
 		appointmentUpdate,
 		newAppointment,
@@ -28,71 +33,37 @@ function EditAppointment() {
 		message,
 	} = useSelector((state) => state.appointment);
 
-	function generateTimeOptions() {
-		const options = [];
-		const startTime = new Date();
-		startTime.setHours(9, 0, 0, 0); // Set initial start time to 9:00 AM
+	const { schedule, availableDays } = useSelector((state) => state.schedule);
 
-		const endTime = new Date();
-		endTime.setHours(17, 0, 0, 0); // Set end time to 5:00 PM
-
-		const interval = 30 * 60 * 1000; // 30 minutes in milliseconds
-
-		while (startTime < endTime) {
-			const timeString = startTime.toLocaleTimeString([], {
-				hour: "2-digit",
-				minute: "2-digit",
-			});
-			options.push(timeString);
-			startTime.setTime(startTime.getTime() + interval);
+	useEffect(() => {
+		if (!doctorSchedule) {
+			dispatch(getScheduleList());
 		}
+	}, [dispatch, doctorSchedule]);
 
-		return options;
-	}
-
-	const formGroups = [
-		{
-			label: "Appointment Information",
-			size: "w-full",
-			fields: [
-				[
-					{
-						label: "Appointment Date *",
-						type: "date",
-						value: appointmentUpdate?.date || "",
-						name: "date",
-						size: "w-full",
-					},
-					{
-						label: "Start Time *",
-						type: "listbox",
-						value: appointmentUpdate?.startTime || generateTimeOptions()[0],
-						options: generateTimeOptions(),
-						name: "startTime",
-						size: "w-full",
-					},
-					{
-						label: "End Time *",
-						type: "listbox",
-						value: appointmentUpdate?.endTime || generateTimeOptions()[1],
-						options: generateTimeOptions(),
-						name: "endTime",
-						size: "w-full",
-					},
-				],
-				[
-					{
-						label: "Additional Notes",
-						type: "textarea",
-						value: appointmentUpdate?.notes || "",
-						name: "notes",
-						placeholder: "Additional Notes here...",
-						size: "w-full",
-					},
-				],
-			],
-		},
-	];
+	useEffect(() => {
+		const allDays = [
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
+			"Sunday",
+		];
+		if (!availableDays) {
+			dispatch(getAvailableDays());
+		} else if (Object.keys(availableDays).length === 0) {
+			setDaysOfWeek(allDays);
+		} else {
+			const days = allDays.filter((day) => !availableDays.includes(day));
+			if (days.length === 0) {
+				setDaysOfWeek([]);
+			} else {
+				setDaysOfWeek(days);
+			}
+		}
+	}, [availableDays]);
 
 	useEffect(() => {
 		if (!appointmentUpdate) {
@@ -125,13 +96,61 @@ function EditAppointment() {
 		return <Spinner />;
 	}
 
+	const formGroups = [
+		{
+			label: "Appointment Information",
+			size: "w-full",
+			fields: [
+				[
+					{
+						label: "Appointment Date *",
+						type: "date",
+						value: appointmentUpdate?.appointmentDate
+							? new Date(appointmentUpdate?.appointmentDate)
+							: "",
+						name: "appointmentDate",
+						size: "w-full",
+						disabled: daysOfWeek,
+						available: schedule,
+					},
+					{
+						label: "Start Time *",
+						type: "listbox",
+						value: appointmentUpdate?.appointmentStart || "",
+						options: "",
+						name: "appointmentStart",
+						size: "w-full",
+					},
+					{
+						label: "End Time *",
+						type: "listbox",
+						value: appointmentUpdate?.appointmentEnd || "",
+						options: "",
+						name: "appointmentEnd",
+						size: "w-full",
+					},
+				],
+				[
+					{
+						label: "Additional Notes",
+						type: "textarea",
+						value: appointmentUpdate?.notes || "",
+						name: "notes",
+						placeholder: "Additional Notes here...",
+						size: "w-full",
+					},
+				],
+			],
+		},
+	];
+
 	const onSubmit = (formData) => {
 		const updateInfo = {};
 
 		const initialData = {
-			date: appointmentUpdate.date,
-			startTime: appointmentUpdate.startTime,
-			endTime: appointmentUpdate.endTime,
+			appointmentDate: appointmentUpdate.appointmentDate,
+			appointmentStart: appointmentUpdate.appointmentStart,
+			appointmentEnd: appointmentUpdate.appointmentEnd,
 			notes: appointmentUpdate.notes,
 		};
 		for (const key in initialData) {
@@ -150,20 +169,23 @@ function EditAppointment() {
 			dispatch(reset());
 		} else {
 			const appointmentData = updateInfo;
+			console.log(appointmentData);
 			dispatch(editAppointment({ appointmentId, appointmentData }));
 		}
 	};
 	return (
 		<>
-			<ReusableForm
-				key={appointmentUpdate ? appointmentUpdate._id : "default"}
-				header={{
-					title: "Edit Appointment Record",
-					buttontext: "Update Record",
-				}}
-				fields={formGroups}
-				onSubmit={onSubmit}
-			/>
+			{daysOfWeek && schedule && (
+				<ReusableForm
+					key={appointmentUpdate}
+					header={{
+						title: "Edit Appointment Record",
+						buttontext: "Update Record",
+					}}
+					fields={formGroups}
+					onSubmit={onSubmit}
+				/>
+			)}
 		</>
 	);
 }

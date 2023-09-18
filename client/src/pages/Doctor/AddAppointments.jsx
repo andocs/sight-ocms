@@ -8,10 +8,15 @@ import {
 	createAppointment,
 } from "../../features/appointment/appointmentSlice";
 
+import {
+	getScheduleList,
+	getAvailableDays,
+} from "../../features/schedule/scheduleSlice";
+
 import ReusableForm from "../../components/reusableform.component";
 import Table from "../../components/table.component";
 import ViewModal from "../../components/viewmodal.component";
-import ProceedConfirmation from "../../components/proceedconfirmation.component";
+import Spinner from "../../components/spinner.component";
 
 const header = {
 	title: "Create Appointment Record",
@@ -24,87 +29,38 @@ function AddAppointments() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	let [isOpen, setIsOpen] = useState(false);
-	let [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-	const [isConfirmed, setConfirmation] = useState(false);
-	const [isRejected, setRejection] = useState(false);
 	const [patientData, setPatientData] = useState(null);
+	const [daysOfWeek, setDaysOfWeek] = useState([]);
 
 	function closeModal() {
 		setIsOpen(false);
 	}
 
-	function generateTimeOptions() {
-		const options = [];
-		const startTime = new Date();
-		startTime.setHours(9, 0, 0, 0); // Set initial start time to 9:00 AM
+	const timeSlots = [];
 
-		const endTime = new Date();
-		endTime.setHours(17, 0, 0, 0); // Set end time to 5:00 PM
-
-		const interval = 30 * 60 * 1000; // 30 minutes in milliseconds
-
-		while (startTime < endTime) {
-			const timeString = startTime.toLocaleTimeString([], {
-				hour: "2-digit",
-				minute: "2-digit",
-			});
-			options.push(timeString);
-			startTime.setTime(startTime.getTime() + interval);
+	for (let hour = 9; hour <= 17; hour++) {
+		for (let minute = 0; minute <= 30; minute += 30) {
+			if (hour == 17 && minute == 30) {
+				break;
+			} else {
+				const ampm = hour < 12 ? "AM" : "PM";
+				const hourFormatted = hour % 12 || 12;
+				const timeSlot = `${hourFormatted.toString().padStart(2, "0")}:${minute
+					.toString()
+					.padStart(2, "0")} ${ampm}`;
+				timeSlots.push(timeSlot);
+			}
 		}
-
-		return options;
 	}
 
 	const patientDetails = location.state;
-
+	let doctorSchedule = null;
 	const { newAppointment, isLoading, isError, isSuccess, message } =
 		useSelector((state) => state.appointment);
 
-	const { patient } = useSelector((state) => state.patient);
+	const { schedule, availableDays } = useSelector((state) => state.schedule);
 
-	const formGroups = [
-		{
-			label: "Appointment Information",
-			size: "w-full",
-			fields: [
-				[
-					{
-						label: "Appointment Date *",
-						type: "date",
-						value: "",
-						name: "date",
-						size: "w-full",
-					},
-					{
-						label: "Start Time *",
-						type: "listbox",
-						value: generateTimeOptions()[0],
-						options: generateTimeOptions(),
-						name: "startTime",
-						size: "w-full",
-					},
-					{
-						label: "End Time *",
-						type: "listbox",
-						value: generateTimeOptions()[1],
-						options: generateTimeOptions(),
-						name: "endTime",
-						size: "w-full",
-					},
-				],
-				[
-					{
-						label: "Additional Notes",
-						type: "textarea",
-						value: "",
-						name: "notes",
-						placeholder: "Additional Notes here...",
-						size: "w-full",
-					},
-				],
-			],
-		},
-	];
+	const { patient } = useSelector((state) => state.patient);
 
 	const columns = [
 		{ header: "Last Name", field: "lname" },
@@ -130,6 +86,36 @@ function AddAppointments() {
 			},
 		},
 	];
+
+	useEffect(() => {
+		if (!doctorSchedule) {
+			dispatch(getScheduleList());
+		}
+	}, [dispatch, doctorSchedule]);
+
+	useEffect(() => {
+		const allDays = [
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
+			"Sunday",
+		];
+		if (!availableDays) {
+			dispatch(getAvailableDays());
+		} else if (Object.keys(availableDays).length === 0) {
+			setDaysOfWeek(allDays);
+		} else {
+			const days = allDays.filter((day) => !availableDays.includes(day));
+			if (days.length === 0) {
+				setDaysOfWeek([]);
+			} else {
+				setDaysOfWeek(days);
+			}
+		}
+	}, [availableDays]);
 
 	useEffect(() => {
 		if (!patientDetails) {
@@ -164,6 +150,63 @@ function AddAppointments() {
 		navigate,
 		dispatch,
 	]);
+
+	if (isLoading) {
+		return <Spinner />;
+	}
+
+	const getTomorrow = () => {
+		const today = new Date();
+		const tomorrow = new Date(today);
+		tomorrow.setDate(today.getDate() + 1);
+		return tomorrow;
+	};
+
+	const formGroups = [
+		{
+			label: "Appointment Information",
+			size: "w-full",
+			fields: [
+				[
+					{
+						label: "Appointment Date *",
+						type: "date",
+						value: getTomorrow(),
+						name: "appointmentDate",
+						size: "w-full",
+						disabled: daysOfWeek,
+						available: schedule,
+					},
+					{
+						label: "Start Time *",
+						type: "listbox",
+						value: "",
+						options: "",
+						name: "appointmentStart",
+						size: "w-full",
+					},
+					{
+						label: "End Time *",
+						type: "listbox",
+						value: "",
+						options: "",
+						name: "appointmentEnd",
+						size: "w-full",
+					},
+				],
+				[
+					{
+						label: "Additional Notes",
+						type: "textarea",
+						value: "",
+						name: "notes",
+						placeholder: "Additional Notes here...",
+						size: "w-full",
+					},
+				],
+			],
+		},
+	];
 
 	const onSubmit = (formData) => {
 		const appointmentData = formData;
@@ -206,11 +249,15 @@ function AddAppointments() {
 						</div>
 					</>
 				) : (
-					<ReusableForm
-						header={header}
-						fields={formGroups}
-						onSubmit={onSubmit}
-					/>
+					<>
+						{availableDays && schedule && (
+							<ReusableForm
+								header={header}
+								fields={formGroups}
+								onSubmit={onSubmit}
+							/>
+						)}
+					</>
 				)}
 			</div>
 		</>

@@ -70,12 +70,12 @@ function ViewAppointments() {
 	}
 
 	const columns = [
-		{ header: "Date", field: "date" },
+		{ header: "Date", field: "appointmentDate" },
 		{ header: "Status", field: "status" },
 		{ header: "Last Name", field: "userLastName" },
 		{ header: "First Name", field: "userFirstName" },
-		{ header: "Start Time", field: `startTime` },
-		{ header: "End Time", field: "endTime" },
+		{ header: "Start Time", field: `appointmentStart` },
+		{ header: "End Time", field: "appointmentEnd" },
 		{ header: "Additional Notes", field: "notes" },
 	];
 
