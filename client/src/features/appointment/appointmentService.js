@@ -14,6 +14,18 @@ const createAppointment = async ({ patientId, appointmentData }, token) => {
 	return res.data;
 };
 
+// Schedule appointment
+const scheduleAppointment = async (appointmentData, token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/appointments`;
+	const res = await axios.post(url, appointmentData, config);
+	return res.data;
+};
+
 // Get all appointment records
 const getAppointmentList = async (token) => {
 	const config = {
@@ -82,6 +94,7 @@ const getUserRole = (token) => {
 
 const appointmentService = {
 	createAppointment,
+	scheduleAppointment,
 	getAppointmentList,
 	getPendingAppointments,
 	getAppointmentDetails,

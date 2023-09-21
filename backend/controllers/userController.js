@@ -365,12 +365,14 @@ const updateInfo = asyncHandler(async (req, res) => {
 			],
 			{ session }
 		);
-		await session.commitTransaction();
+
 		res.status(201).json({
-			data: updatedStaff,
+			data: updatedUser,
 			message: "Your account has successfully been updated!",
 		});
+		await session.commitTransaction();
 	} catch (error) {
+		console.log(error);
 		if (req.file) {
 			fs.unlinkSync(req.file.path);
 		}
@@ -387,7 +389,6 @@ const updateInfo = asyncHandler(async (req, res) => {
 
 		if (session) {
 			await session.abortTransaction();
-			session.endSession();
 		}
 		return res.status(400).json({ message: error });
 	}
@@ -401,76 +402,88 @@ const changePassword = asyncHandler(async (req, res) => {
 	const userId = req.user.id;
 	const { oldPassword, newPassword, confPassword } = req.body;
 
+	if (!oldPassword || !newPassword || !confPassword) {
+		return res
+			.status(404)
+			.json({ message: "Please fill in all the required fields!" });
+	}
+
 	const user = await User.findById(userId);
 
 	if (!user) {
 		return res.status(404).json({ message: "User not found!" });
 	}
 
-	if (await bcrypt.compare(oldPassword, user.password)) {
-		if (newPassword === confPassword) {
-			const hashedPassword = await bcrypt.hash(newPassword, 10);
-			const updates = {
-				password: hashedPassword,
-			};
+	if (!(await bcrypt.compare(oldPassword, user.password))) {
+		return res.status(404).json({ message: "You entered the wrong password" });
+	}
 
-			const session = await User.startSession(sessionOptions);
-			try {
-				session.startTransaction();
-
-				const updatedUser = await User.findByIdAndUpdate(userId, updates, {
-					new: true,
-					runValidators: true,
-					session,
-				});
-
-				await AuditLog.create(
-					[
-						{
-							userId: userId,
-							operation: "update",
-							entity: "User",
-							entityId: userId,
-							oldValues: user,
-							newValues: updatedUser,
-							userIpAddress: req.ip,
-							userAgent: req.get("user-agent"),
-							additionalInfo: "User Information added",
-						},
-					],
-					{ session }
-				);
-				await session.commitTransaction();
-				res.status(201).json({
-					data: updatedStaff,
-					message: `${user.fname} ${user.lname}'s password is successfully updated!`,
-				});
-			} catch (error) {
-				if (error.name === "ValidationError") {
-					const validationErrors = [];
-					for (const field in error.errors) {
-						validationErrors.push({
-							fieldName: field,
-							message: error.errors[field].message,
-						});
-					}
-					return res.status(400).json({ message: validationErrors });
-				}
-
-				if (session) {
-					await session.abortTransaction();
-					session.endSession();
-				}
-				return res.status(400).json({ message: error });
-			}
-			session.endSession();
-		} else {
-			return res.status(404).json({ message: "New passwords do not match!" });
-		}
-	} else if (await bcrypt.compare(newPassword, user.password)) {
+	if (await bcrypt.compare(newPassword, user.password)) {
 		return res.status(404).json({ message: "You are using an old password!" });
-	} else {
-		return res.status(404).json({ message: "You entered the wrong password!" });
+	}
+
+	if (newPassword !== confPassword) {
+		return res.status(404).json({ message: "New passwords do not match!" });
+	}
+
+	if (newPassword === confPassword) {
+		const hashedPassword = await bcrypt.hash(newPassword, 10);
+		const updates = {
+			password: hashedPassword,
+		};
+
+		const session = await User.startSession(sessionOptions);
+		try {
+			session.startTransaction();
+
+			const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+				new: true,
+				runValidators: true,
+				session,
+			});
+
+			await AuditLog.create(
+				[
+					{
+						userId: userId,
+						operation: "update",
+						entity: "User",
+						entityId: userId,
+						oldValues: user,
+						newValues: updatedUser,
+						userIpAddress: req.ip,
+						userAgent: req.get("user-agent"),
+						additionalInfo: "User Information added",
+					},
+				],
+				{ session }
+			);
+
+			res.status(201).json({
+				data: updatedUser,
+				message: "Your account's password is successfully updated!",
+			});
+			await session.commitTransaction();
+		} catch (error) {
+			console.log(error);
+			if (error.name === "ValidationError") {
+				const validationErrors = [];
+				for (const field in error.errors) {
+					validationErrors.push({
+						fieldName: field,
+						message: error.errors[field].message,
+					});
+				}
+				return res.status(400).json({ message: validationErrors });
+			}
+
+			if (session) {
+				await session.abortTransaction();
+				session.endSession();
+			}
+			return res.status(400).json({ message: error });
+		}
+		session.endSession();
 	}
 });
 

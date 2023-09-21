@@ -2,54 +2,33 @@ const express = require("express");
 const router = express.Router();
 
 const {
-	registerStaff,
-	getStaffList,
-	getStaffDetails,
-	updateStaff,
-	deleteUser,
-	addInventoryItem,
-	getInventoryList,
-	getItemDetails,
-	updateItem,
-	deleteItem,
-	getMaintenanceList,
-	getMaintenanceRequestDetails,
-	updateRequestStatus,
-	getAuditLogs,
-	getAuditLogDetails,
-} = require("../controllers/adminController");
+	getRecords,
+	getRecordDetails,
+
+	getAllOrders,
+	getOrderDetails,
+
+	scheduleAppointment,
+	getAllAppointments,
+	getPendingAppointments,
+	getAppointmentDetails,
+} = require("../controllers/patientController");
 
 const validateToken = require("../middleware/validateTokenHandler");
-const restrictToAdmin = require("../middleware/restrictToAdmin");
+const restrictToPatient = require("../middleware/restrictToPatient");
 
 router.use(validateToken);
-router.use(restrictToAdmin);
+router.use(restrictToPatient);
 
-router.route("/staff").post(upload, registerStaff).get(getStaffList);
+router.route("/records").get(getRecords);
+router.route("/records/:id").get(getRecordDetails);
 
-router
-	.route("/staff/:id")
-	.get(getStaffDetails)
-	.put(upload, updateStaff)
-	.delete(deleteUser);
+router.route("/order").get(getAllOrders);
+router.route("/order/:id").get(getOrderDetails);
 
-router.route("/inventory").post(upload, addInventoryItem).get(getInventoryList);
+router.route("/appointments").post(scheduleAppointment).get(getAllAppointments);
+router.route("/appointments/:id").get(getAppointmentDetails);
 
-router
-	.route("/inventory/:id")
-	.get(getItemDetails)
-	.put(upload, updateItem)
-	.delete(deleteItem);
-
-router.get("/maintenance", getMaintenanceList);
-
-router
-	.route("/maintenance/:id")
-	.get(getMaintenanceRequestDetails)
-	.put(updateRequestStatus);
-
-router.get("/log", getAuditLogs);
-
-router.get("/log/:id", getAuditLogDetails);
+router.route("/pending").get(getPendingAppointments);
 
 module.exports = router;

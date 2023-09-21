@@ -1,29 +1,27 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
 import {
-	getAppointmentList,
-	deleteAppointment,
+	getPendingAppointments,
+	editAppointment,
 	reset,
 	clear,
 } from "../../features/appointment/appointmentSlice";
 
 import Spinner from "../../components/spinner.component";
-import DeleteConfirmation from "../../components/deleteconfirmation.component";
+import AcceptConfirmation from "../../components/acceptconfirmation.component";
 import ViewModal from "../../components/viewmodal.component";
 
 import Table from "../../components/table.component";
 
-function ViewAppointments() {
+function ViewPending() {
 	let [isOpen, setIsOpen] = useState(false);
 	const [isConfirmed, setConfirmation] = useState(false);
 	let [isViewOpen, setViewOpen] = useState(false);
 	const [appointmentId, setAppointmentId] = useState("");
 	const [appointmentData, setAppointmentData] = useState("");
 
-	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const { appointment, isLoading, isSuccess, isError, message } = useSelector(
 		(state) => state.appointment
@@ -36,7 +34,7 @@ function ViewAppointments() {
 		if (isSuccess && message !== "") {
 			toast.success(message);
 		}
-		dispatch(getAppointmentList());
+		dispatch(getPendingAppointments());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
@@ -46,7 +44,6 @@ function ViewAppointments() {
 	if (isLoading) {
 		return <Spinner />;
 	}
-
 	function closeModal() {
 		setIsOpen(false);
 	}
@@ -61,8 +58,9 @@ function ViewAppointments() {
 	}
 
 	function checkConfirmation() {
+		const appointmentData = { status: "Scheduled" };
 		setConfirmation(true);
-		dispatch(deleteAppointment(appointmentId));
+		dispatch(editAppointment({ appointmentId, appointmentData }));
 		if (isSuccess && message) {
 			toast.message(message);
 		}
@@ -88,15 +86,7 @@ function ViewAppointments() {
 			},
 		},
 		{
-			label: "Update",
-			handler: (details) => {
-				navigate(`/doctor/edit-appointment/${details._id}`, {
-					state: { details },
-				});
-			},
-		},
-		{
-			label: "Delete",
+			label: "Accept",
 			handler: (details) => {
 				openModal(details._id);
 			},
@@ -111,19 +101,21 @@ function ViewAppointments() {
 					closeModal={closeViewModal}
 					dataFields={appointmentData}
 					columnHeaders={columns}
-					modalTitle="View Appointment Details"
+					modalTitle="View Order Details"
 				/>
 			)}
 
-			<DeleteConfirmation
+			<AcceptConfirmation
+				text={"Accept"}
 				isOpen={isOpen}
 				closeModal={closeModal}
 				onConfirm={checkConfirmation}
 			/>
+
 			<div className="w-full bg-white bappointment-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>
-						<p className="font-medium text-5xl">Appointment List</p>
+						<p className="font-medium text-5xl">View Pending Appointments</p>
 					</div>
 				</div>
 			</div>
@@ -136,4 +128,4 @@ function ViewAppointments() {
 	);
 }
 
-export default ViewAppointments;
+export default ViewPending;

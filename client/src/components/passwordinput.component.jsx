@@ -43,7 +43,7 @@ const PasswordInput = ({ value, onChange, text }) => {
 	};
 
 	return (
-		<div className="relative">
+		<div className="relative w-full">
 			<input
 				type={showPassword ? "text" : "password"}
 				placeholder={showPassword ? "" : "••••••••"}

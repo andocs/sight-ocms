@@ -1,9 +1,9 @@
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { logout, reset } from "../features/auth/authSlice";
+import { useSelector, useDispatch } from "react-redux";
+import { getUser, logout, reset } from "../features/auth/authSlice";
 import decode from "jwt-decode";
 
 const navigation = [
@@ -13,14 +13,27 @@ const navigation = [
 	{ name: "Technology", href: "/technology" },
 ];
 
-function classNames(...classes) {
-	return classes.filter(Boolean).join(" ");
-}
+const defaultsvg = (
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		viewBox="0 0 24 24"
+		fill="#075985"
+		className="w-8 h-8 rounded-full bg-white"
+	>
+		<path
+			fillRule="evenodd"
+			d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
+			clipRule="evenodd"
+		/>
+	</svg>
+);
 
 export default function Navbar() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const location = useLocation();
+
+	const { infoUpdate } = useSelector((state) => state.auth);
 
 	const user = localStorage.getItem("user");
 
@@ -36,6 +49,12 @@ export default function Navbar() {
 		const decodedToken = decode(token);
 		role = decodedToken.user.role;
 	}
+
+	useEffect(() => {
+		if (token && !infoUpdate) {
+			dispatch(getUser());
+		}
+	}, [dispatch, infoUpdate]);
 
 	const updatedNavigation = user
 		? [...navigation, { name: "Dashboard", href: `/${role}` }]
@@ -73,12 +92,12 @@ export default function Navbar() {
 											src="/images/sight-logo.png"
 											alt="Your Company"
 										/>
-										<p className="hidden h-14 w-auto lg:block font-semibold text-xl break-words">
+										<p className="hidden w-[350px] lg:block font-semibold text-2xl break-words">
 											{" "}
 											OPTICAL CLINIC MANAGEMENT SYSTEM
 										</p>
 									</a>
-									<div className="absolute w-full">
+									<div className="absolute mt-1 w-full">
 										<div className="hidden sm:ml-6 sm:flex grow sm:place-items-center justify-center relative">
 											{isDashboardRoute ? (
 												<div className="w-2/6">
@@ -126,12 +145,13 @@ export default function Navbar() {
 															<NavLink
 																to={`${item.href}`}
 																key={`${item.name}`}
-																className={classNames(
-																	location.pathname === item.href
-																		? "bg-sky-800 text-white"
-																		: "text-sky-800 hover:bg-gray-400 hover:text-white",
-																	"rounded-md px-3 py-2 text-xl font-medium"
-																)}
+																className={`rounded-md px-3 py-2 text-xl font-medium "
+																	${
+																		location.pathname === item.href
+																			? "bg-sky-800 text-white"
+																			: "text-sky-800 hover:bg-gray-400 hover:text-white"
+																	}
+																		`}
 																aria-current={item.current ? "page" : undefined}
 																onClick={
 																	item.name === "Logout"
@@ -164,13 +184,17 @@ export default function Navbar() {
 										{/* Profile dropdown */}
 										<Menu as="div" className="relative ml-3">
 											<div>
-												<Menu.Button className="flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+												<Menu.Button className="flex rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-sky-800">
 													<span className="sr-only">Open user menu</span>
-													<img
-														className="h-8 w-8 rounded-full"
-														src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-														alt=""
-													/>
+													{infoUpdate?.image ? (
+														<img
+															className="h-8 w-8 rounded-full"
+															src={`/images/uploads/${infoUpdate?.image}`}
+															alt=""
+														/>
+													) : (
+														<>{defaultsvg}</>
+													)}
 												</Menu.Button>
 											</div>
 											<Transition
@@ -186,11 +210,9 @@ export default function Navbar() {
 													<Menu.Item>
 														{({ active }) => (
 															<a
-																href="#"
-																className={classNames(
-																	active ? "bg-gray-100" : "",
-																	"block px-4 py-2 text-sm text-gray-700"
-																)}
+																href="/profile"
+																className={`block px-4 py-2 text-sm text-gray-700 "
+																	${active ? "bg-gray-100" : ""}`}
 															>
 																Your Profile
 															</a>
@@ -200,23 +222,8 @@ export default function Navbar() {
 														{({ active }) => (
 															<a
 																href="#"
-																className={classNames(
-																	active ? "bg-gray-100" : "",
-																	"block px-4 py-2 text-sm text-gray-700"
-																)}
-															>
-																Settings
-															</a>
-														)}
-													</Menu.Item>
-													<Menu.Item>
-														{({ active }) => (
-															<a
-																href="#"
-																className={classNames(
-																	active ? "bg-gray-100" : "",
-																	"block px-4 py-2 text-sm text-gray-700"
-																)}
+																className={`block px-4 py-2 text-sm text-gray-700 "
+																	${active ? "bg-gray-100" : ""}`}
 																onClick={onLogout}
 															>
 																Sign out
@@ -238,12 +245,14 @@ export default function Navbar() {
 										key={item.name}
 										as="a"
 										href={item.href}
-										className={classNames(
-											item.current
-												? "bg-gray-900 text-white"
-												: "text-gray-300 hover:bg-gray-700 hover:text-white",
-											"block rounded-md px-3 py-2 text-base font-medium"
-										)}
+										className={`block rounded-md px-3 py-2 text-base font-medium 
+											${
+												item.current
+													? "bg-gray-900 text-white"
+													: "text-gray-300 hover:bg-gray-700 hover:text-white"
+											}
+											
+										`}
 										aria-current={item.current ? "page" : undefined}
 									>
 										{item.name}

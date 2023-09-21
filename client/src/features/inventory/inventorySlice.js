@@ -55,9 +55,7 @@ export const getItemDetails = createAsyncThunk(
 	async (itemId, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
-			const itemDetails = await inventoryService.getItemDetails(itemId, token);
-			console.log(itemDetails);
-			return itemDetails;
+			return await inventoryService.getItemDetails(itemId, token);
 		} catch (error) {
 			const message =
 				(error.response &&

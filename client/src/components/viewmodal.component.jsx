@@ -16,7 +16,7 @@ function getItemFieldValue(item, field) {
 	} else if (field === "otherItems") {
 		return item[field].length > 0 ? "" : "N/A";
 	} else {
-		return item[field] === "" ? "N/A" : item[field];
+		return item[field] === "" || !item[field] ? "N/A" : item[field];
 	}
 }
 

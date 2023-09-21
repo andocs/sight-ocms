@@ -49,6 +49,15 @@ function getReducerByUserRole() {
 			inventory: inventoryReducer,
 			maintenance: maintenanceReducer,
 		};
+	} else if (userRole === "patient") {
+		return {
+			auth: authReducer,
+			audit: auditReducer,
+			record: recordReducer,
+			order: orderReducer,
+			appointment: appointmentReducer,
+			schedule: scheduleReducer,
+		};
 	}
 }
 

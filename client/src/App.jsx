@@ -18,7 +18,7 @@ import DoctorDashboard from "./pages/Doctor/DoctorDashboard";
 import TechnicianDashboard from "./pages/Technician/TechnicianDashboard";
 
 //PATIENT
-import ViewOrder from "./pages/Patient/ViewOrder";
+import ViewPatientOrders from "./pages/Patient/ViewOrders";
 import ViewRecords from "./pages/Patient/ViewRecords";
 
 //ADMIN
@@ -61,6 +61,11 @@ import CreateMaintenanceRequest from "./pages/Technician/CreateMaintenanceReques
 import ViewTechInventory from "./pages/Technician/ViewTechInventory";
 import EditRequest from "./pages/Technician/EditRequest";
 import TechItemDetails from "./pages/Technician/ItemDetails";
+import ViewPending from "./pages/Doctor/ViewPending";
+import ViewPendingAppointments from "./pages/Patient/ViewPendingAppointments";
+import ViewPatientAppointments from "./pages/Patient/ViewPatientAppointments";
+import AddAppointment from "./pages/Patient/AddAppointment";
+import Profile from "./pages/Landing_Page/Profile";
 
 function App() {
 	return (
@@ -75,6 +80,7 @@ function App() {
 					<Route path="/technology" element={<Technology />} />
 					<Route path="/login" element={<Login />} />
 					<Route path="/register" element={<Register />} />
+					<Route path="/profile" element={<Profile />} />
 
 					<Route path="/admin" element={<AdminDashboard />}>
 						<Route path="add-staff" element={<AddStaff />} />
@@ -91,7 +97,13 @@ function App() {
 
 					<Route path="/patient" element={<PatientDashboard />}>
 						<Route path="view-records" element={<ViewRecords />} />
-						<Route path="view-order" element={<ViewOrder />} />
+						<Route path="view-orders" element={<ViewPatientOrders />} />
+						<Route path="add-appointment" element={<AddAppointment />} />
+						<Route path="view-pending" element={<ViewPendingAppointments />} />
+						<Route
+							path="view-appointments"
+							element={<ViewPatientAppointments />}
+						/>
 					</Route>
 
 					<Route path="/doctor" element={<DoctorDashboard />}>
@@ -115,6 +127,7 @@ function App() {
 						<Route path="edit-order/:id" element={<EditOrders />} />
 						<Route path="add-schedule" element={<AddSchedule />} />
 						<Route path="view-schedule" element={<ViewSchedule />} />
+						<Route path="view-pending" element={<ViewPending />} />
 						<Route path="edit-schedule/:id" element={<EditSchedule />} />
 						<Route path="add-patient" element={<AddPatient />} />
 					</Route>

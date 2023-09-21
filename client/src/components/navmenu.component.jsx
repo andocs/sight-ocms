@@ -81,7 +81,7 @@ function MenuButton({ menus }) {
 				>
 					{menus.svg}
 				</div>
-				<span className="ml-3">{menus.label}</span>
+				<span className="w-[136px] truncate ml-3">{menus.label}</span>
 			</div>
 		</Menu.Item>
 	);

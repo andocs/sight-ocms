@@ -412,7 +412,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 				? lunchBreakStartOptions
 				: field.name === "lunchBreakEnd"
 				? lunchBreakEndOptions
-				: field.name === "appointmentStart"
+				: field.name === "appointmentStart" && field.options.length === 0
 				? appointmentStartOptions
 				: field.name === "appointmentEnd"
 				? appointmentEndOptions
@@ -514,48 +514,63 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 					/>
 				);
 			case "date":
-				const isDisabled = (date) => {
-					const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
-						weekday: "long",
-					});
-					const daysToDisable = field.disabled;
-
-					return !daysToDisable.includes(dayOfWeek);
-				};
-
 				const schedule = field?.available;
 				if (schedule) {
 					doctorSchedule = schedule;
 				}
 
+				let filterDate = null;
+
+				if (field.disabled) {
+					const isDisabled = (date) => {
+						const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
+							weekday: "long",
+						});
+						const daysToDisable = field.disabled;
+
+						if (field.disabled) {
+							return !daysToDisable.includes(dayOfWeek);
+						} else {
+							return null;
+						}
+					};
+					filterDate = isDisabled;
+				}
+
 				return (
-					<div className="relative w-fit">
-						<DatePicker
-							key={formData[field.name]}
-							className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
-							selected={
-								formData[field.name] !== ""
-									? formData[field.name]
-									: getTomorrow()
-							}
-							onChange={(value) => handleChange(field.name, value)}
-							minDate={getTomorrow()}
-							filterDate={isDisabled}
-						/>
-						<div className="w-6 h-6 absolute top-4 right-5 z-10">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="currentColor"
-							>
-								<path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" />
-								<path
-									fillRule="evenodd"
-									d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z"
-									clipRule="evenodd"
-								/>
-							</svg>
-						</div>
+					<div className="relative w-full">
+						<label>
+							<DatePicker
+								key={formData[field.name]}
+								wrapperClassName="w-full"
+								popperPlacement="bottom-end"
+								popperModifiers={{ name: "arrow", options: { padding: 212 } }}
+								className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
+								selected={
+									formData[field.name] !== ""
+										? formData[field.name]
+										: getTomorrow()
+								}
+								onChange={(value) => handleChange(field.name, value)}
+								minDate={getTomorrow()}
+								filterDate={filterDate}
+							/>
+							<div className="w-6 h-6 absolute top-4 right-5 z-10">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill="currentColor"
+									className="cursor-pointer"
+								>
+									<path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" />
+									<path
+										fillRule="evenodd"
+										d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z"
+										clipRule="evenodd"
+									/>
+								</svg>
+							</div>
+						</label>
 					</div>
 				);
 			default:

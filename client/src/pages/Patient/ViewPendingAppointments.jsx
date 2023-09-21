@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { getEyeRecords, reset, clear } from "../../features/record/recordSlice";
+
+import {
+	getPendingAppointments,
+	reset,
+	clear,
+} from "../../features/appointment/appointmentSlice";
 
 import Spinner from "../../components/spinner.component";
 import ViewModal from "../../components/viewmodal.component";
-
 import Table from "../../components/table.component";
 
-function ViewRecords() {
+function ViewPendingAppointments() {
 	let [isViewOpen, setViewOpen] = useState(false);
-	const [recordData, setRecordData] = useState("");
+	const [appointmentData, setAppointmentData] = useState("");
 
 	const dispatch = useDispatch();
-	const { record, isLoading, isSuccess, isError, message } = useSelector(
-		(state) => state.record
+	const { appointment, isLoading, isSuccess, isError, message } = useSelector(
+		(state) => state.appointment
 	);
 
 	useEffect(() => {
@@ -24,7 +28,7 @@ function ViewRecords() {
 		if (isSuccess && message !== "") {
 			toast.success(message);
 		}
-		dispatch(getEyeRecords());
+		dispatch(getPendingAppointments());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
@@ -40,22 +44,20 @@ function ViewRecords() {
 	}
 
 	const columns = [
-		{ header: "Record Date", field: "createdAt" },
-		{ header: "Last Name", field: "userLastName" },
-		{ header: "First Name", field: "userFirstName" },
-		{ header: "OD SPH", field: `rightEye.sphere` },
-		{ header: "OD CYL", field: "rightEye.cylinder" },
-		{ header: "OD Axis", field: "rightEye.axis" },
-		{ header: "OS SPH", field: "leftEye.sphere" },
-		{ header: "OS CYL", field: "leftEye.cylinder" },
-		{ header: "OS Axis", field: "leftEye.axis" },
+		{ header: "Date", field: "appointmentDate" },
+		{ header: "Status", field: "status" },
+		{ header: "Last Name", field: "doctorLastName" },
+		{ header: "First Name", field: "doctorFirstName" },
+		{ header: "Start Time", field: `appointmentStart` },
+		{ header: "End Time", field: "appointmentEnd" },
+		{ header: "Additional Notes", field: "notes" },
 	];
 
 	const actions = [
 		{
 			label: "View",
 			handler: (details) => {
-				setRecordData(details);
+				setAppointmentData(details);
 				setViewOpen(true);
 			},
 		},
@@ -67,25 +69,26 @@ function ViewRecords() {
 				<ViewModal
 					isOpen={isViewOpen}
 					closeModal={closeViewModal}
-					dataFields={recordData}
+					dataFields={appointmentData}
 					columnHeaders={columns}
-					modalTitle="Visit Record Details"
+					modalTitle="View Appointment Details"
 				/>
 			)}
-			<div className="w-full bg-white border-b">
+
+			<div className="w-full bg-white bappointment-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>
-						<p className="font-medium text-5xl">View Eye Records</p>
+						<p className="font-medium text-5xl">View Pending Appointments</p>
 					</div>
 				</div>
 			</div>
 			<div className="p-8">
 				<div className="xl:w-5/6 flex flex-row">
-					<Table data={record} columns={columns} actions={actions} />
+					<Table data={appointment} columns={columns} actions={actions} />
 				</div>
 			</div>
 		</>
 	);
 }
 
-export default ViewRecords;
+export default ViewPendingAppointments;

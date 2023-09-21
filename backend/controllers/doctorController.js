@@ -1098,6 +1098,7 @@ const createAppointment = async (req, res) => {
 					appointmentDate,
 					appointmentStart,
 					appointmentEnd,
+					status: "Scheduled",
 					notes,
 				},
 			],
@@ -1280,7 +1281,7 @@ const updateAppointment = async (req, res) => {
 		await session.commitTransaction();
 		res.status(201).json({
 			data: updatedAppointment,
-			message: `Appointment with id ${appointmentId} at ${appointment.date} successfully updated!`,
+			message: `Appointment with id ${appointmentId} at ${appointment.appointmentDate} successfully updated!`,
 		});
 	} catch (error) {
 		if (error.name === "ValidationError") {

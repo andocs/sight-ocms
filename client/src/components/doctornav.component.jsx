@@ -228,6 +228,11 @@ const mainMenu = [
 		svg: appointmentsvg,
 		submenus: [
 			{
+				label: "View Pending",
+				href: "/doctor/view-pending",
+				svg: submenusvg,
+			},
+			{
 				label: "View Appointments",
 				href: "/doctor/view-appointments",
 				svg: submenusvg,
