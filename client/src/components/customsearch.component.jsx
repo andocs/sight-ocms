@@ -10,7 +10,15 @@ import { getInventory } from "../features/order/orderSlice";
 
 const CustomSearchInput = forwardRef(
 	(
-		{ onInputChange, onSelect, value, placeholder, onRemove, initialValue },
+		{
+			onInputChange,
+			onSelect,
+			value,
+			placeholder,
+			onRemove,
+			initialValue,
+			category,
+		},
 		ref
 	) => {
 		const dispatch = useDispatch();
@@ -40,8 +48,10 @@ const CustomSearchInput = forwardRef(
 				return;
 			}
 			if (inventoryItems) {
-				const filtered = inventoryItems.filter((item) =>
-					item.itemName.toLowerCase().includes(newValue.toLowerCase())
+				const filtered = inventoryItems.filter(
+					(item) =>
+						item.itemName.toLowerCase().includes(newValue.toLowerCase()) &&
+						(!category || item.category === category)
 				);
 				setFilteredSuggestions(filtered);
 			}

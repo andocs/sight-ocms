@@ -34,10 +34,10 @@ function TechItemDetails() {
 		}
 	}, []);
 
-	const header = { title: "Item Details", buttontext: "Back to View Items" };
+	const header = { title: "Item Details", buttontext: "Back to Inventory" };
 
 	const fields = {
-		title: "Item",
+		title: item.vendor,
 		header: item.itemName,
 		image: item.image,
 		imagelbl: "Item Picture",
@@ -48,23 +48,37 @@ function TechItemDetails() {
 				details: [
 					{ label: "Item Name", value: item.itemName },
 					{ label: "Description", value: item.description },
-					{ label: "Price", value: item.price },
-					{ label: "Quantity", value: item.quantity },
-					{ label: "Category", value: "placeholder" },
-					{ label: "Expiration Date", value: "placeholder" },
-					{ label: "Critical Level", value: "placeholder" },
+					{ label: "Vendor/Manufacturer", value: item.vendor },
+					{ label: "Category", value: item.category },
+					{ label: "Unit", value: item.unit },
+					{
+						label: "Quantity",
+						value: `${item.quantity} ${
+							item.unit === "box"
+								? `(${item.piecesPerBox}pcs/${item.unit})`
+								: "pcs."
+						}`,
+					},
+					{ label: "Critical Level", value: `${item.criticalLevel} pcs.` },
+					{ label: "Restock Level", value: `${item.restockLevel} pcs.` },
+					{ label: "Price", value: `₱${item.price}` },
 				],
 			},
 		],
 	};
 
 	const goBack = () => {
-		navigate("/technician");
+		navigate("/technician/view-inventory");
 	};
 
 	return (
 		<>
-			<ViewDetails header={header} props={fields} onClick={goBack} />
+			<ViewDetails
+				header={header}
+				props={fields}
+				onClick={goBack}
+				batches={item.batches && item.batches}
+			/>
 		</>
 	);
 }

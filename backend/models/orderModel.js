@@ -25,10 +25,6 @@ const orderSchema = new mongoose.Schema(
 			enum: ["Pending", "In Progress", "Completed", "Cancelled"],
 			required: true,
 		},
-		// prescription: {
-		//   type: mongoose.Schema.Types.ObjectId,
-		//   ref: 'Prescription',
-		// },
 		frame: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "Inventory",

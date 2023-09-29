@@ -23,7 +23,6 @@ const sessionOptions = {
 
 // Function to generate a receipt
 const generateReceipt = (transaction) => {
-	// Placeholder logic for generating a receipt
 	const receipt = {
 		id: transaction._id,
 		patientName: transaction.patientName,
@@ -49,7 +48,6 @@ const generateReceipt = (transaction) => {
 const createPatient = asyncHandler(async (req, res) => {
 	const { fname, lname, gender, email, contact, address, city, province } =
 		req.body;
-	console.log(req.body);
 
 	if (!email || !contact) {
 		return res.status(404).json({ message: "Email or Contact required!" });
@@ -429,7 +427,6 @@ const deleteVisit = asyncHandler(async (req, res) => {
 const createOrder = asyncHandler(async (req, res) => {
 	const doctorId = req.user.id;
 	const patientId = req.params.id;
-	console.log(req.body);
 	const {
 		frame,
 		lens,
@@ -664,8 +661,6 @@ const updateOrder = asyncHandler(async (req, res) => {
 	const orderId = req.params.id;
 	const updates = req.body;
 
-	console.log(updates);
-
 	const order = await Order.findOne({
 		_id: orderId,
 		doctor: doctorId,
@@ -799,8 +794,6 @@ const addRecord = asyncHandler(async (req, res) => {
 		"leftEye.axis": leftEyeAxis,
 		additionalNotes,
 	} = req.body;
-
-	console.log(req.body);
 
 	if (
 		rightEyeSphere == "0.00" ||
@@ -1181,9 +1174,42 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 });
 
 //@desc GET LIST OF DOCTOR'S PENDING APPOINTMENTS
-//@route GET /api/doctor/appointments
+//@route GET /api/doctor/pending
 //@access private (doctor only)
 const getPendingAppointments = asyncHandler(async (req, res) => {
+	const appointment = await Appointment.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				status: "Pending",
+			},
+		},
+		{
+			$project: {
+				appointmentDate: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				appointmentStart: 1,
+				appointmentEnd: 1,
+				notes: 1,
+				status: 1,
+			},
+		},
+	]);
+	res.json(appointment);
+});
+
+//@desc GET LIST OF DOCTOR'S PENDING APPOINTMENTS
+//@route GET /api/doctor/scheduled
+//@access private (doctor only)
+const getScheduledAppointments = asyncHandler(async (req, res) => {
 	const doctorId = new ObjectId(req.user.id);
 	const appointment = await Appointment.aggregate([
 		{
@@ -1197,7 +1223,7 @@ const getPendingAppointments = asyncHandler(async (req, res) => {
 		{
 			$match: {
 				doctor: doctorId,
-				status: "Pending",
+				status: "Scheduled",
 			},
 		},
 		{
@@ -1382,7 +1408,6 @@ const addDoctorSchedule = asyncHandler(async (req, res) => {
 		!lunchBreakStart ||
 		!lunchBreakEnd
 	) {
-		console.log("mand");
 		return res.status(400).json({ message: "All fields are mandatory!" });
 	}
 
@@ -1391,7 +1416,6 @@ const addDoctorSchedule = asyncHandler(async (req, res) => {
 		dayOfWeek,
 	});
 	if (schedule) {
-		console.log("scged");
 		return res.status(400).json({ message: "Schedule already exists!" });
 	}
 
@@ -1682,6 +1706,7 @@ module.exports = {
 	createAppointment,
 	getAllAppointments,
 	getPendingAppointments,
+	getScheduledAppointments,
 	getAppointmentDetails,
 	updateAppointment,
 	deleteAppointment,

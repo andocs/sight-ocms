@@ -26,6 +26,7 @@ const {
 	getInventoryList,
 	getItemDetails,
 	updateItem,
+	restockItem,
 	deleteItem,
 	getMaintenanceList,
 	getMaintenanceRequestDetails,
@@ -55,6 +56,8 @@ router
 	.get(getItemDetails)
 	.put(upload, updateItem)
 	.delete(deleteItem);
+
+router.route("/restock/:id").put(restockItem);
 
 router.get("/maintenance", getMaintenanceList);
 

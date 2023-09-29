@@ -10,7 +10,7 @@ import {
 	clear,
 } from "../../features/schedule/scheduleSlice";
 
-import { getPendingAppointments } from "../../features/appointment/appointmentSlice";
+import { getScheduledAppointments } from "../../features/appointment/appointmentSlice";
 
 import Spinner from "../../components/spinner.component";
 import DeleteConfirmation from "../../components/deleteconfirmation.component";
@@ -32,8 +32,8 @@ function ViewSchedule() {
 	const { appointment } = useSelector((state) => state.appointment);
 
 	useEffect(() => {
-		if (appointment.length === 0) {
-			dispatch(getPendingAppointments());
+		if (!appointment) {
+			dispatch(getScheduledAppointments());
 		}
 	}, [dispatch, appointment]);
 
@@ -89,19 +89,23 @@ function ViewSchedule() {
 		navigate("/doctor");
 	};
 
-	function checkForConflicts(scheduleDetails, pendingAppointments) {
+	function checkForConflicts(scheduleDetails, scheduledAppointments) {
 		const scheduleDayOfWeek = scheduleDetails.dayOfWeek;
+		const currentDate = new Date(); // Get the current date
+
 		let hasConflict = false; // Flag to track conflicts
 
 		// Loop through pending appointments
-		for (const appointment of pendingAppointments) {
+		for (const appointment of scheduledAppointments) {
 			const appointmentDate = new Date(appointment.appointmentDate);
 			const appointmentDayOfWeek = appointmentDate.toLocaleDateString("en-US", {
 				weekday: "long",
 			});
 
-			if (scheduleDayOfWeek === appointmentDayOfWeek) {
-				toast.error("Conflict with pending appointment!");
+			if (
+				scheduleDayOfWeek === appointmentDayOfWeek &&
+				appointmentDate >= currentDate
+			) {
 				return (hasConflict = true);
 			}
 		}
@@ -116,6 +120,8 @@ function ViewSchedule() {
 					navigate(`/doctor/edit-schedule/${details._id}`, {
 						state: { details },
 					});
+				} else {
+					toast.error("Conflict with scheduled appointment!");
 				}
 			},
 		},
@@ -126,6 +132,8 @@ function ViewSchedule() {
 				const hasConflict = checkForConflicts(details, appointment);
 				if (!hasConflict) {
 					openModal(details._id);
+				} else {
+					toast.error("Conflict with scheduled appointment!");
 				}
 			},
 		},

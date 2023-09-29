@@ -15,7 +15,7 @@ function ListBoxInput({ options, initialValue, onChange }) {
 			<Listbox value={selectedValue} onChange={handleValueChange}>
 				{/* Listbox rendering */}
 				<div className="h-14 w-full flex flex-col border border-sky-800 rounded-lg bg-gray-50">
-					<Listbox.Button className="relative w-full h-full cursor-default rounded-lg font-medium bg-gray-50 py-2 pl-3 pr-10 text-left focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-500">
+					<Listbox.Button className="relative text-sky-800 w-full h-full cursor-default rounded-lg font-medium bg-gray-50 py-2 pl-3 pr-10 text-left focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-500">
 						<span className="block truncate">{selectedValue}</span>
 						<span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
 							<ChevronDownIcon

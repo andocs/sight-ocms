@@ -337,11 +337,54 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 			for (const itemId in itemMap) {
 				const oldItem = await Inventory.findOne({ _id: itemId });
 				const quantityChange = -itemMap[itemId];
+				if (oldItem.quantity < Math.abs(quantityChange)) {
+					await session.abortTransaction();
+					session.endSession();
+					return res
+						.status(400)
+						.json({ message: "Insufficient stock on hand!" });
+				}
 				const inventoryItem = await Inventory.findByIdAndUpdate(
 					{ _id: itemId },
 					{ $inc: { quantity: quantityChange } },
 					{ new: true, runValidators: true, session }
 				);
+
+				if (inventoryItem.category === "Medicine") {
+					const batches = inventoryItem.batches;
+
+					batches.sort((a, b) => a.expirationDate - b.expirationDate);
+
+					let remainingQuantity = Math.abs(quantityChange);
+
+					for (let i = 0; i < batches.length; i++) {
+						if (remainingQuantity > 0) {
+							const batch = batches[i];
+							if (batch.batchQuantity > 0) {
+								const subtractQuantity = Math.min(
+									remainingQuantity,
+									batch.batchQuantity
+								);
+								batch.batchQuantity -= subtractQuantity;
+								remainingQuantity -= subtractQuantity;
+							}
+						} else {
+							break;
+						}
+					}
+
+					for (const batch of batches) {
+						if (batch.batchQuantity < 0) {
+							await session.abortTransaction();
+							session.endSession();
+							return res
+								.status(400)
+								.json({ message: "Batch quantity cannot go negative" });
+						}
+					}
+
+					await inventoryItem.save({ session });
+				}
 
 				await AuditLog.create(
 					[
@@ -385,6 +428,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 			message: `Order with id ${orderId} is successfully updated!`,
 		});
 	} catch (error) {
+		console.log(error);
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
 			for (const field in error.errors) {

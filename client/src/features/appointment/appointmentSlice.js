@@ -4,7 +4,7 @@ import appointmentService from "./appointmentService";
 const initialState = {
 	newAppointment: null,
 	appointmentUpdate: null,
-	appointment: [],
+	appointment: null,
 	isLoading: false,
 	isError: false,
 	isSuccess: false,
@@ -81,6 +81,24 @@ export const getPendingAppointments = createAsyncThunk(
 		try {
 			const token = thunkAPI.getState().auth.user;
 			return await appointmentService.getPendingAppointments(token);
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
+export const getScheduledAppointments = createAsyncThunk(
+	"appointment/getScheduledAppointments",
+	async (_, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			return await appointmentService.getScheduledAppointments(token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -227,6 +245,20 @@ const appointmentSlice = createSlice({
 				state.appointment = action.payload;
 			})
 			.addCase(getPendingAppointments.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.message = action.payload;
+				state.appointment = null;
+			})
+			.addCase(getScheduledAppointments.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(getScheduledAppointments.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.appointment = action.payload;
+			})
+			.addCase(getScheduledAppointments.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;

@@ -27,6 +27,7 @@ const {
 	createAppointment,
 	getAllAppointments,
 	getPendingAppointments,
+	getScheduledAppointments,
 	getAppointmentDetails,
 	updateAppointment,
 	deleteAppointment,
@@ -79,6 +80,7 @@ router
 router.route("/appointments").get(getAllAppointments);
 
 router.route("/pending").get(getPendingAppointments);
+router.route("/scheduled").get(getScheduledAppointments);
 
 router
 	.route("/appointments/:id")

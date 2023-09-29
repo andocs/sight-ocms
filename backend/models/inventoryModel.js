@@ -21,15 +21,45 @@ const inventorySchema = new mongoose.Schema(
 					"Item Name must contain at least 2 non-space and non-special characters",
 			},
 		},
+		category: {
+			type: String,
+			required: true,
+			enum: ["Frame", "Lens", "Medicine", "Others"],
+		},
 		quantity: {
 			type: Number,
 			required: true,
+			min: 1,
+		},
+		unit: {
+			type: String,
+			required: true,
+			enum: ["piece", "box"],
+		},
+		piecesPerBox: {
+			type: Number,
+			required: function () {
+				return this.unit === "box";
+			},
+		},
+		criticalLevel: {
+			type: Number,
+			default: 1,
+			min: 1,
+		},
+		restockLevel: {
+			type: Number,
+			default: 1,
 			min: 1,
 		},
 		price: {
 			type: Number,
 			required: true,
 			min: 1,
+		},
+		vendor: {
+			type: String,
+			required: true,
 		},
 		description: {
 			type: String,
@@ -52,6 +82,41 @@ const inventorySchema = new mongoose.Schema(
 		},
 		image: {
 			type: String,
+		},
+		batches: {
+			type: [
+				{
+					batchNumber: {
+						type: String,
+						required: function () {
+							return this.category === "Medicine";
+						},
+					},
+					expirationDate: {
+						type: Date,
+						required: function () {
+							return this.category === "Medicine";
+						},
+					},
+					batchQuantity: {
+						type: Number,
+						required: function () {
+							return this.category === "Medicine";
+						},
+					},
+				},
+			],
+			validate: [
+				function (batches) {
+					if (
+						this.category === "Medicine" &&
+						(!batches || batches.length === 0)
+					) {
+						throw new Error("Batches are required for 'Medicine' category.");
+					}
+				},
+				{ message: "Batches are required for 'Medicine' category." },
+			],
 		},
 	},
 	{

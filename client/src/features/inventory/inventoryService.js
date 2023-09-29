@@ -50,6 +50,18 @@ const editInventoryDetails = async ({ itemId, itemDetails }, token) => {
 	return res.data;
 };
 
+// Restock Item
+const restockItem = async ({ itemId, itemDetails }, token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/restock/${itemId}`;
+	const res = await axios.put(url, itemDetails, config);
+	return res.data;
+};
+
 // Delete inventory item
 const deleteInventoryItem = async (itemId, token) => {
 	const config = {
@@ -73,6 +85,7 @@ const inventoryService = {
 	getInventoryItems,
 	getItemDetails,
 	editInventoryDetails,
+	restockItem,
 	deleteInventoryItem,
 };
 

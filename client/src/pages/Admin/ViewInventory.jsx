@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import {
+	restockItem,
 	clear,
 	deleteInventoryItem,
 	getInventoryItems,
@@ -12,11 +13,14 @@ import {
 import Spinner from "../../components/spinner.component";
 import DeleteConfirmation from "../../components/deleteconfirmation.component";
 import Table from "../../components/table.component";
+import RestockModal from "../../components/restockmodal.component";
 
 function ViewInventory() {
-	let [isOpen, setIsOpen] = useState(false);
+	const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 	const [isConfirmed, setConfirmation] = useState(false);
 	const [itemId, setItemId] = useState("");
+	const [selectedItem, setSelectedItem] = useState("");
 
 	function closeModal() {
 		setIsOpen(false);
@@ -25,6 +29,16 @@ function ViewInventory() {
 	function openModal(itemId) {
 		setIsOpen(true);
 		setItemId(itemId);
+	}
+
+	function closeRestockModal() {
+		setIsRestockModalOpen(false);
+		setSelectedItem("");
+	}
+
+	function openRestockModal(details) {
+		setSelectedItem(details);
+		setIsRestockModalOpen(true);
 	}
 
 	function checkConfirmation() {
@@ -68,12 +82,20 @@ function ViewInventory() {
 		{
 			label: "View",
 			handler: (details) => {
+				console.log(details);
 				navigate("/admin/item-details", { state: details });
+			},
+		},
+		{
+			label: "Restock",
+			handler: (details) => {
+				openRestockModal(details);
 			},
 		},
 		{
 			label: "Update",
 			handler: (details) => {
+				console.log(details);
 				navigate(`/admin/edit-item/${details._id}`, { state: { details } });
 			},
 		},
@@ -85,12 +107,26 @@ function ViewInventory() {
 		},
 	];
 
+	const handleRestock = (updates) => {
+		const itemId = selectedItem._id;
+		const itemDetails = updates;
+		dispatch(restockItem({ itemId, itemDetails }));
+		console.log(updates);
+	};
+
 	return (
 		<>
 			<DeleteConfirmation
 				isOpen={isOpen}
 				closeModal={closeModal}
 				onConfirm={checkConfirmation}
+			/>
+
+			<RestockModal
+				item={selectedItem}
+				isOpen={isRestockModalOpen}
+				closeModal={closeRestockModal}
+				handleRestock={handleRestock}
 			/>
 
 			<div className="w-full bg-white border-b">

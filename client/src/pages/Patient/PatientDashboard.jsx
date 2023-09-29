@@ -46,7 +46,7 @@ function PatientDashboard() {
 
 	return (
 		<>
-			<div className="flex flex-row overflow-hidden">
+			<div className="flex flex-row overflow-hidden h-full">
 				<Sidenav />
 				<div className="bg-slate-50 w-full flex flex-col overflow-auto">
 					{isPatientHome()}

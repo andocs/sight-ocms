@@ -4,7 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 function AcceptConfirmation({ text, isOpen, closeModal, onConfirm }) {
 	return (
 		<Transition appear show={isOpen} as={Fragment}>
-			<Dialog as="div" className="relative z-10" onClose={closeModal}>
+			<Dialog as="div" className="relative z-50" onClose={closeModal}>
 				<Transition.Child
 					as={Fragment}
 					enter="ease-out duration-300"

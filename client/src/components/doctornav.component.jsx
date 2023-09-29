@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { setNavPage } from "../features/auth/authSlice";
 import NavMenu from "./navmenu.component";
 
 const dashboardsvg = (
@@ -260,14 +263,41 @@ const mainMenu = [
 			},
 		],
 	},
-	// {
-	// 	label: "Add Patient",
-	// 	href: "/doctor/add-patient",
-	// 	svg: addpatientsvg,
-	// },
 ];
 
+function stripMainMenu(mainMenu) {
+	const strippedMenu = [];
+
+	mainMenu.forEach((item) => {
+		if (item.label !== "Dashboard") {
+			if (item.submenus) {
+				// If item has submenus, include submenus instead
+				strippedMenu.push(
+					...item.submenus.map((submenu) => ({
+						label: submenu.label,
+						href: submenu.href,
+					}))
+				);
+			} else {
+				// Otherwise, include the main item
+				strippedMenu.push({
+					label: item.label,
+					href: item.href,
+				});
+			}
+		}
+	});
+
+	return strippedMenu;
+}
+
 function DoctorNav() {
+	const dispatch = useDispatch();
+
+	useEffect(() => {
+		const updatedNav = stripMainMenu(mainMenu);
+		dispatch(setNavPage(updatedNav));
+	}, [dispatch]);
 	return (
 		<div>
 			<NavMenu mainMenu={mainMenu} />

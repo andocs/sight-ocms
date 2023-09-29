@@ -1,4 +1,3 @@
-import { useState } from "react";
 import AdminNav from "./adminnav.component";
 import PatientNav from "./patientnav.component";
 import DoctorNav from "./doctornav.component";
@@ -13,25 +12,11 @@ function Sidenav() {
 		role = decodedToken.user.role;
 	}
 
-	const [isExpanded, setIsExpanded] = useState(true);
-
-	const handleToggleWidth = () => {
-		setIsExpanded(!isExpanded);
-		console.log(isExpanded);
-	};
-
-	function classNames(...classes) {
-		return classes.filter(Boolean).join(" ");
-	}
-
 	return (
 		<>
 			<aside
 				id="logo-sidebar"
-				className={classNames(
-					isExpanded ? null : "-translate-x-1/2 ml-24",
-					"sticky z-10 w-72 left-0 sidenav transition-transform bg-white border-r border-gray-200"
-				)}
+				className="hidden lg:block sticky z-10 w-72 left-0 sidenav transition-transform bg-white border-r border-gray-200"
 				aria-label="Sidebar"
 			>
 				<hr />
@@ -54,7 +39,7 @@ function Sidenav() {
 							</div>
 
 							<div className="mr-3 mt-1.5">
-								<button onClick={handleToggleWidth}>
+								<button>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 24 24"

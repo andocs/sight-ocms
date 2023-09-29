@@ -42,12 +42,12 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	const [isItemSelected, setIsItemSelected] = useState(true);
 	const [searchValue, setSearchValue] = useState("");
 
-	const [endTimeOptions, setEndTimeOptions] = useState([]);
-	const [lunchBreakStartOptions, setLunchBreakStartOptions] = useState([]);
-	const [lunchBreakEndOptions, setLunchBreakEndOptions] = useState([]);
+	const [endTimeOptions, setEndTimeOptions] = useState("");
+	const [lunchBreakStartOptions, setLunchBreakStartOptions] = useState("");
+	const [lunchBreakEndOptions, setLunchBreakEndOptions] = useState("");
 
-	const [appointmentStartOptions, setAppointmentStartOptions] = useState([]);
-	const [appointmentEndOptions, setAppointmentEndOptions] = useState([]);
+	const [appointmentStartOptions, setAppointmentStartOptions] = useState("");
+	const [appointmentEndOptions, setAppointmentEndOptions] = useState("");
 
 	let doctorSchedule = [];
 	const timeSlots = [];
@@ -77,6 +77,25 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 		tomorrow.setDate(today.getDate() + 1);
 
 		return tomorrow;
+	};
+
+	const getDateTwoMonthsFromNow = () => {
+		const today = new Date();
+
+		// Get the current month and year
+		const currentMonth = today.getMonth();
+		const currentYear = today.getFullYear();
+
+		// Calculate the target month, considering it might cross into a new year
+		const targetMonth = (currentMonth + 2) % 12;
+
+		// Calculate the target year, considering it might increment
+		const targetYear = currentYear + Math.floor((currentMonth + 2) / 12);
+
+		// Create the date for 2 months from now
+		const twoMonthsFromNow = new Date(targetYear, targetMonth, today.getDate());
+
+		return twoMonthsFromNow;
 	};
 
 	function calculateLunchBreakStartOptions(selectedStartTime, selectedEndTime) {
@@ -381,6 +400,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 				}
 				onSubmit(formData);
 			}
+		} else if (formData.piecesPerBox && formData.unit !== "box") {
+			formData.piecesPerBox = null;
+			onSubmit(formData);
 		} else {
 			onSubmit(formData);
 		}
@@ -407,15 +429,15 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	const renderListBoxInput = (field) => {
 		const options =
 			field.name === "endTime"
-				? endTimeOptions
+				? endTimeOptions && endTimeOptions
 				: field.name === "lunchBreakStart"
-				? lunchBreakStartOptions
+				? lunchBreakStartOptions && lunchBreakStartOptions
 				: field.name === "lunchBreakEnd"
-				? lunchBreakEndOptions
+				? lunchBreakEndOptions && lunchBreakEndOptions
 				: field.name === "appointmentStart" && field.options.length === 0
-				? appointmentStartOptions
+				? appointmentStartOptions && appointmentStartOptions
 				: field.name === "appointmentEnd"
-				? appointmentEndOptions
+				? appointmentEndOptions && appointmentEndOptions
 				: field.options;
 
 		if (
@@ -426,7 +448,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 				<ListBoxInput
 					key={formData[field.name]}
 					options={options}
-					initialValue={formData[field.name]}
+					initialValue={formData[field?.name]}
 					onChange={(value) => {
 						handleChange(field.name, value);
 					}}
@@ -447,10 +469,36 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 						placeholder={field.placeholder}
 						name={field.name}
 						id={field.name}
-						value={formData[field.name] || ""}
+						step={field.name === "price" ? "any" : null}
+						value={
+							formData.category === "Medicine" && field.category === "Medicine"
+								? (formData[field.name] = field.initial)
+								: formData[field.name]
+						}
 						onChange={(e) => handleChange(field.name, e.target.value)}
 						min={field.min}
-						className={`${field.placeholdercss} placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500`}
+						disabled={
+							field.id &&
+							formData.category === "Medicine" &&
+							field.category === "Medicine"
+						}
+						max={
+							field.name === "criticalLevel"
+								? formData.quantity
+								: field.name === "restockLevel"
+								? formData.criticalLevel
+								: null
+						}
+						className={`${field.placeholdercss} ${
+							field.id &&
+							formData.category === "Medicine" &&
+							field.category === "Medicine" &&
+							"text-slate-400"
+						} ${
+							field.name === "piecesPerBox" &&
+							formData.unit !== "box" &&
+							"hidden"
+						} placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500`}
 					/>
 				);
 			case "password":
@@ -498,21 +546,58 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 					</div>
 				);
 			case "customsearch":
-				return (
-					<CustomSearchInput
-						ref={customSearchInputRef}
-						onInputChange={(value, itemSelected) =>
-							handleChange(field.name, value, itemSelected)
-						}
-						onSelect={(selectedItem) =>
-							handleCustomSearchSelect(field.name, selectedItem)
-						}
-						onRemove={(e) => handleOnRemove(field.name)}
-						value={formData[field.name] || inputValue}
-						placeholder={field.placeholder}
-						initialValue={searchValue}
-					/>
-				);
+				if (field.name === "frame") {
+					return (
+						<CustomSearchInput
+							ref={customSearchInputRef}
+							onInputChange={(value, itemSelected) =>
+								handleChange(field.name, value, itemSelected)
+							}
+							onSelect={(selectedItem) =>
+								handleCustomSearchSelect(field.name, selectedItem)
+							}
+							onRemove={(e) => handleOnRemove(field.name)}
+							value={formData[field.name] || inputValue}
+							placeholder={field.placeholder}
+							initialValue={searchValue}
+							category={"Frame"}
+						/>
+					);
+				} else if (field.name === "lens") {
+					return (
+						<CustomSearchInput
+							ref={customSearchInputRef}
+							onInputChange={(value, itemSelected) =>
+								handleChange(field.name, value, itemSelected)
+							}
+							onSelect={(selectedItem) =>
+								handleCustomSearchSelect(field.name, selectedItem)
+							}
+							onRemove={(e) => handleOnRemove(field.name)}
+							value={formData[field.name] || inputValue}
+							placeholder={field.placeholder}
+							initialValue={searchValue}
+							category={"Lens"}
+						/>
+					);
+				} else {
+					return (
+						<CustomSearchInput
+							ref={customSearchInputRef}
+							onInputChange={(value, itemSelected) =>
+								handleChange(field.name, value, itemSelected)
+							}
+							onSelect={(selectedItem) =>
+								handleCustomSearchSelect(field.name, selectedItem)
+							}
+							onRemove={(e) => handleOnRemove(field.name)}
+							value={formData[field.name] || inputValue}
+							placeholder={field.placeholder}
+							initialValue={searchValue}
+						/>
+					);
+				}
+
 			case "date":
 				const schedule = field?.available;
 				if (schedule) {
@@ -537,42 +622,85 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 					filterDate = isDisabled;
 				}
 
-				return (
-					<div className="relative w-full">
-						<label>
-							<DatePicker
-								key={formData[field.name]}
-								wrapperClassName="w-full"
-								popperPlacement="bottom-end"
-								popperModifiers={{ name: "arrow", options: { padding: 212 } }}
-								className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
-								selected={
-									formData[field.name] !== ""
-										? formData[field.name]
-										: getTomorrow()
-								}
-								onChange={(value) => handleChange(field.name, value)}
-								minDate={getTomorrow()}
-								filterDate={filterDate}
-							/>
-							<div className="w-6 h-6 absolute top-4 right-5 z-10">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="currentColor"
-									className="cursor-pointer"
-								>
-									<path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" />
-									<path
-										fillRule="evenodd"
-										d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z"
-										clipRule="evenodd"
-									/>
-								</svg>
-							</div>
-						</label>
-					</div>
-				);
+				if (field.name === "expirationDate") {
+					return (
+						<div
+							className={`${
+								formData.category !== "Medicine" ? "hidden" : "relative w-full"
+							}`}
+						>
+							<label>
+								<DatePicker
+									key={formData[field.name]}
+									wrapperClassName="w-full"
+									popperPlacement="bottom-end"
+									popperModifiers={{ name: "arrow", options: { padding: 212 } }}
+									className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
+									selected={
+										formData[field.name] !== ""
+											? formData[field.name]
+											: (formData[field.name] = getDateTwoMonthsFromNow())
+									}
+									onChange={(value) => handleChange(field.name, value)}
+									minDate={getDateTwoMonthsFromNow()}
+									filterDate={filterDate}
+								/>
+								<div className="w-6 h-6 absolute top-4 right-5 z-10">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										className="cursor-pointer"
+									>
+										<path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" />
+										<path
+											fillRule="evenodd"
+											d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</div>
+							</label>
+						</div>
+					);
+				} else {
+					return (
+						<div className="relative w-full">
+							<label>
+								<DatePicker
+									key={formData[field.name]}
+									wrapperClassName="w-full"
+									popperPlacement="bottom-end"
+									popperModifiers={{ name: "arrow", options: { padding: 212 } }}
+									className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
+									selected={
+										formData[field.name] !== ""
+											? formData[field.name]
+											: getTomorrow()
+									}
+									onChange={(value) => handleChange(field.name, value)}
+									minDate={getTomorrow()}
+									filterDate={filterDate}
+								/>
+								<div className="w-6 h-6 absolute top-4 right-5 z-10">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										className="cursor-pointer"
+									>
+										<path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" />
+										<path
+											fillRule="evenodd"
+											d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</div>
+							</label>
+						</div>
+					);
+				}
 			default:
 				return null;
 		}
@@ -592,7 +720,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	}, [otherItems]);
 
 	useEffect(() => {
-		if (formData.startTime) {
+		if (!formData.startTime) {
+			setEndTimeOptions("");
+		} else {
 			const startIdx = timeSlots.indexOf(formData.startTime);
 			const endTimeOptions = timeSlots.slice(startIdx + 6);
 
@@ -601,7 +731,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	}, [formData.startTime]);
 
 	useEffect(() => {
-		if (formData.startTime && formData.endTime) {
+		if (!formData.startTime && !formData.endTime) {
+			setLunchBreakStartOptions("");
+		} else {
 			const lunchBreakStartOptions = calculateLunchBreakStartOptions(
 				formData.startTime,
 				formData.endTime
@@ -612,7 +744,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	}, [formData.startTime, formData.endTime]);
 
 	useEffect(() => {
-		if (formData.lunchBreakStart) {
+		if (!formData.lunchBreakStart) {
+			setLunchBreakEndOptions("");
+		} else {
 			const lunchBreakEndOptions = calculateLunchBreakEndOptions(
 				formData.lunchBreakStart
 			);
@@ -621,7 +755,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	}, [formData.lunchBreakStart]);
 
 	useEffect(() => {
-		if (formData.appointmentDate) {
+		if (!formData.appointmentDate) {
+			setAppointmentStartOptions("");
+		} else {
 			const availableTimeSlots = calculateAvailableTimeSlots(
 				formData.appointmentDate,
 				doctorSchedule
@@ -631,7 +767,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	}, [formData.appointmentDate]);
 
 	useEffect(() => {
-		if (formData.appointmentStart) {
+		if (!formData.appointmentStart) {
+			setAppointmentEndOptions("");
+		} else {
 			const appointmentEndOptions = calculateAppointmentEnd(
 				formData.appointmentStart
 			);
@@ -640,7 +778,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	}, [formData.appointmentStart]);
 
 	useEffect(() => {
-		if (formData.endTime && endTimeOptions.length > 0) {
+		if (endTimeOptions && endTimeOptions.length > 0) {
 			if (
 				timeSlots.indexOf(endTimeOptions[0]) >
 				timeSlots.indexOf(formData["endTime"])
@@ -650,7 +788,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 					endTime: endTimeOptions[0],
 				}));
 			}
-		} else if (endTimeOptions.length === 0) {
+		} else if (endTimeOptions !== "" && endTimeOptions.length === 0) {
 			setFormData((prevData) => ({
 				...prevData,
 				endTime: "N/A",
@@ -659,12 +797,15 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	}, [endTimeOptions]);
 
 	useEffect(() => {
-		if (formData.lunchBreakStart && lunchBreakStartOptions.length > 0) {
+		if (lunchBreakStartOptions && lunchBreakStartOptions.length > 0) {
 			setFormData((prevData) => ({
 				...prevData,
 				lunchBreakStart: lunchBreakStartOptions[0],
 			}));
-		} else if (lunchBreakStartOptions.length === 0) {
+		} else if (
+			lunchBreakStartOptions !== "" &&
+			lunchBreakStartOptions.length === 0
+		) {
 			setFormData((prevData) => ({
 				...prevData,
 				lunchBreakStart: "N/A",
@@ -673,12 +814,15 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	}, [lunchBreakStartOptions]);
 
 	useEffect(() => {
-		if (formData.lunchBreakEnd && lunchBreakEndOptions.length > 0) {
+		if (lunchBreakEndOptions && lunchBreakEndOptions.length > 0) {
 			setFormData((prevData) => ({
 				...prevData,
 				lunchBreakEnd: lunchBreakEndOptions[0],
 			}));
-		} else if (lunchBreakEndOptions.length === 0) {
+		} else if (
+			lunchBreakEndOptions !== "" &&
+			lunchBreakEndOptions.length === 0
+		) {
 			setFormData((prevData) => ({
 				...prevData,
 				lunchBreakEnd: "N/A",
@@ -689,6 +833,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	useEffect(() => {
 		if (
 			formData.appointmentStart === "" &&
+			appointmentStartOptions &&
 			appointmentStartOptions.length > 0
 		) {
 			setFormData((prevData) => ({
@@ -699,12 +844,15 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	}, [appointmentStartOptions]);
 
 	useEffect(() => {
-		if (formData.appointmentEnd && appointmentEndOptions.length > 0) {
+		if (appointmentEndOptions && appointmentEndOptions.length > 0) {
 			setFormData((prevData) => ({
 				...prevData,
 				appointmentEnd: appointmentEndOptions[0],
 			}));
-		} else if (appointmentEndOptions.length === 0) {
+		} else if (
+			appointmentEndOptions !== "" &&
+			appointmentEndOptions.length === 0
+		) {
 			setFormData((prevData) => ({
 				...prevData,
 				appointmentEnd: "N/A",
@@ -853,19 +1001,24 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 													key={subFieldsIndex}
 												>
 													{subFields.map((field, fieldIndex) => (
-														<div
-															className={`mb-4 px-8 ${field.size}`}
-															key={fieldIndex}
-														>
-															<label
-																htmlFor={field.name}
-																className="text-l uppercase text-start block w-full mb-4 text-sm font-medium truncate text-sky-800"
-															>
-																{field.label}
-															</label>
+														<>
+															{field.name === "piecesPerBox" &&
+															formData.unit !== "box" ? null : (
+																<div
+																	className={`mb-4 px-8 ${field.size}`}
+																	key={fieldIndex}
+																>
+																	<label
+																		htmlFor={field.name}
+																		className="text-l uppercase text-start block w-full mb-4 text-sm font-medium truncate text-sky-800"
+																	>
+																		{field.label}
+																	</label>
 
-															{renderInput(field)}
-														</div>
+																	{renderInput(field)}
+																</div>
+															)}
+														</>
 													))}
 												</div>
 											))}
@@ -969,14 +1122,19 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 													<div>
 														{initialFormData.image &&
 														!selectedImage &&
-														field.name === "image" ? null : (
-															<label
-																htmlFor={field.name}
-																className="text-l uppercase text-start block w-full mb-4 text-sm font-medium truncate text-sky-800"
-															>
-																{field.label}
-															</label>
+														field.name === "image" ? null : field.name ===
+																"expirationDate" &&
+														  formData.category !== "Medicine" ? null : (
+															<>
+																<label
+																	htmlFor={field.name}
+																	className="text-l uppercase text-start block w-full mb-4 text-sm font-medium truncate text-sky-800"
+																>
+																	{field.label}
+																</label>
+															</>
 														)}
+
 														{renderInput(field)}
 													</div>
 												</div>

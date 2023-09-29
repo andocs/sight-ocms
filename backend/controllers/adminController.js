@@ -314,9 +314,33 @@ const deleteUser = asyncHandler(async (req, res) => {
 //@route POST /api/admin/inventory
 //@access private (admin only)
 const addInventoryItem = asyncHandler(async (req, res) => {
-	const { itemName, quantity, price, description } = req.body;
+	const {
+		itemName,
+		category,
+		unit,
+		criticalLevel,
+		restockLevel,
+		vendor,
+		quantity,
+		batchNumber,
+		expirationDate,
+		batchQuantity,
+		price,
+		description,
+		piecesPerBox,
+	} = req.body;
 
-	if (!itemName || !quantity || !price || !description) {
+	if (
+		!itemName ||
+		!category ||
+		!unit ||
+		!criticalLevel ||
+		!restockLevel ||
+		!vendor ||
+		!quantity ||
+		!price ||
+		!description
+	) {
 		if (req.file) {
 			fs.unlinkSync(req.file.path);
 		}
@@ -334,6 +358,29 @@ const addInventoryItem = asyncHandler(async (req, res) => {
 			.json({ message: "Item with the same name already exists!" });
 	}
 
+	if (unit === "box" && (!piecesPerBox || piecesPerBox === 0)) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
+		return res.status(400).json({ message: "All fields are mandatory!" });
+	}
+
+	if (
+		category === "Medicine" &&
+		(!batchNumber || !expirationDate || !batchQuantity)
+	) {
+		if (req.file) {
+			fs.unlinkSync(req.file.path);
+		}
+		return res.status(400).json({ message: "All fields are mandatory!" });
+	}
+
+	const batches = {
+		batchNumber,
+		expirationDate,
+		batchQuantity,
+	};
+
 	const session = await Inventory.startSession(sessionOptions);
 	try {
 		session.startTransaction();
@@ -343,19 +390,30 @@ const addInventoryItem = asyncHandler(async (req, res) => {
 		} else {
 			image = null;
 		}
+		const inventoryItemData = {
+			itemName,
+			category,
+			unit,
+			criticalLevel,
+			restockLevel,
+			vendor,
+			quantity,
+			price,
+			description,
+			image,
+		};
 
-		const inventoryItem = await Inventory.create(
-			[
-				{
-					itemName,
-					quantity,
-					price,
-					description,
-					image,
-				},
-			],
-			{ session }
-		);
+		if (category === "Medicine") {
+			inventoryItemData.batches = batches;
+		}
+
+		if (unit === "box") {
+			inventoryItemData.piecesPerBox = piecesPerBox;
+		}
+
+		const inventoryItem = await Inventory.create([inventoryItemData], {
+			session,
+		});
 
 		await AuditLog.create(
 			[
@@ -440,6 +498,19 @@ const updateItem = asyncHandler(async (req, res) => {
 		return res.status(404).json({ message: "Item not found!" });
 	}
 
+	let unsetUpdate = null;
+
+	if (updatedFields.piecesPerBox === "null") {
+		if (item.piecesPerBox) {
+			unsetUpdate = {
+				$unset: {
+					["piecesPerBox"]: 1,
+				},
+			};
+		}
+		delete updatedFields["piecesPerBox"];
+	}
+
 	const session = await Inventory.startSession(sessionOptions);
 	try {
 		session.startTransaction();
@@ -450,11 +521,22 @@ const updateItem = asyncHandler(async (req, res) => {
 		} else {
 			image = null;
 		}
+
 		const updatedItem = await Inventory.findByIdAndUpdate(
 			itemId,
 			updatedFields,
 			{ new: true, runValidators: true, session }
 		);
+
+		console.log(unsetUpdate);
+
+		if (unsetUpdate) {
+			await Inventory.findByIdAndUpdate(itemId, unsetUpdate, {
+				new: true,
+				runValidators: true,
+				session,
+			});
+		}
 
 		await AuditLog.create(
 			[
@@ -481,6 +563,85 @@ const updateItem = asyncHandler(async (req, res) => {
 		if (req.file) {
 			fs.unlinkSync(req.file.path);
 		}
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		throw error;
+	}
+	session.endSession();
+});
+
+//@desc RESTOCK INVENTORY ITEM
+//@route PUT /api/admin/restock/:id
+//@access private (admin only)
+const restockItem = asyncHandler(async (req, res) => {
+	const itemId = req.params.id;
+	const updatedFields = req.body;
+
+	const item = await Inventory.findOne({ _id: itemId });
+
+	if (!item) {
+		return res.status(404).json({ message: "Item not found!" });
+	}
+
+	const session = await Inventory.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+
+		let updateOperation;
+
+		if (updatedFields.batches && updatedFields.quantity) {
+			const { batches, quantity } = updatedFields;
+
+			updateOperation = {
+				$inc: { quantity: quantity },
+				$push: { batches: batches },
+			};
+		} else {
+			updateOperation = {
+				$inc: { quantity: updatedFields.quantity },
+			};
+		}
+
+		const updatedItem = await Inventory.findByIdAndUpdate(
+			itemId,
+			updateOperation,
+			{ new: true, runValidators: true, session }
+		);
+
+		await AuditLog.create(
+			[
+				{
+					userId: req.user.id,
+					operation: "update",
+					entity: "Inventory",
+					entityId: itemId,
+					oldValues: item,
+					newValues: updatedItem,
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "Inventory Item updated",
+				},
+			],
+			{ session }
+		);
+		await session.commitTransaction();
+		res.status(201).json({
+			data: updatedItem,
+			message: `Item ${item.itemName} succesfully restocked!`,
+		});
+	} catch (error) {
 		if (error.name === "ValidationError") {
 			const validationErrors = [];
 			for (const field in error.errors) {
@@ -693,6 +854,7 @@ module.exports = {
 	getInventoryList,
 	getItemDetails,
 	updateItem,
+	restockItem,
 	deleteItem,
 
 	getMaintenanceList,

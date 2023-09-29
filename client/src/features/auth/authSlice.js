@@ -5,6 +5,7 @@ const user = JSON.parse(localStorage.getItem("user"));
 
 const initialState = {
 	user: user ? user : null,
+	navPage: [],
 	infoUpdate: null,
 	newInfo: null,
 	isError: false,
@@ -133,6 +134,9 @@ export const authSlice = createSlice({
 		clear: (state) => {
 			(state.newInfo = null), (state.infoUpdate = null);
 		},
+		setNavPage: (state, action) => {
+			state.navPage = action.payload;
+		},
 	},
 	extraReducers: (builder) => {
 		builder
@@ -168,6 +172,8 @@ export const authSlice = createSlice({
 			})
 			.addCase(logout.fulfilled, (state) => {
 				state.user = null;
+				state.navPage = null;
+				state.infoUpdate = null;
 			})
 			.addCase(getUser.pending, (state) => {
 				state.isLoading = true;
@@ -231,5 +237,5 @@ export const authSlice = createSlice({
 	},
 });
 
-export const { reset, clear } = authSlice.actions;
+export const { reset, clear, setNavPage } = authSlice.actions;
 export default authSlice.reducer;

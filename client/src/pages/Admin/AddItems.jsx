@@ -18,6 +18,15 @@ const defaultsvg = (
 	</div>
 );
 
+const categories = [
+	{ category: "Frame" },
+	{ category: "Lens" },
+	{ category: "Medicine" },
+	{ category: "Others" },
+];
+
+const units = [{ unit: "piece" }, { unit: "box" }];
+
 const header = { title: "Add Inventory Items", buttontext: "Add Item" };
 
 const formGroups = [
@@ -27,15 +36,43 @@ const formGroups = [
 			[
 				{
 					type: "text",
-					label: "ITEM NAME",
+					label: "ITEM NAME *",
 					placeholder: "Item Name",
 					name: "itemName",
 					value: "",
 					size: "w-full",
 				},
 				{
+					type: "listbox",
+					label: "CATEGORY *",
+					value: categories[0].category,
+					options: categories.map((category) => category.category),
+					name: "category",
+					size: "w-2/5",
+				},
+			],
+			[
+				{
+					type: "text",
+					label: "VENDOR *",
+					name: "vendor",
+					value: "",
+					placeholder: "Item Vendor",
+					size: "w-full",
+				},
+				{
 					type: "number",
-					label: "ITEM QUANTITY",
+					label: "ITEM PRICE *",
+					name: "price",
+					value: 1,
+					min: 1,
+					size: "w-2/5",
+				},
+			],
+			[
+				{
+					type: "number",
+					label: "ITEM QUANTITY *",
 					name: "quantity",
 					value: 1,
 					min: 1,
@@ -43,8 +80,34 @@ const formGroups = [
 				},
 				{
 					type: "number",
-					label: "ITEM PRICE",
-					name: "price",
+					label: "PIECES PER BOX *",
+					name: "piecesPerBox",
+					value: 1,
+					min: 1,
+					size: "w-2/5",
+				},
+				{
+					type: "listbox",
+					label: "ITEM UNIT *",
+					name: "unit",
+					value: units[0].unit,
+					options: units.map((unit) => unit.unit),
+					size: "w-2/5",
+				},
+			],
+			[
+				{
+					type: "number",
+					label: "CRITICAL LEVEL *",
+					name: "criticalLevel",
+					value: 1,
+					min: 1,
+					size: "w-full",
+				},
+				{
+					type: "number",
+					label: "RESTOCK LEVEL *",
+					name: "restockLevel",
 					value: 1,
 					min: 1,
 					size: "w-full",
@@ -53,7 +116,7 @@ const formGroups = [
 			[
 				{
 					type: "textarea",
-					label: "ITEM DESCRIPTION",
+					label: "ITEM DESCRIPTION *",
 					placeholder: "Item Description here...",
 					name: "description",
 					value: "",
@@ -74,7 +137,15 @@ const imageGroup = [
 				name: "image",
 				size: "w-full",
 			},
+			{
+				type: "date",
+				label: "EXPIRATION DATE *",
+				name: "expirationDate",
+				value: "",
+				size: "w-full",
+			},
 		],
+
 		placeholder: defaultsvg,
 	},
 ];
@@ -104,16 +175,50 @@ function AddItems() {
 		dispatch(reset());
 	}, [newItem, isLoading, isError, isSuccess, message, navigate, dispatch]);
 
+	function generateUniqueBatchNumber() {
+		const timestamp = new Date().toISOString().replace(/[^0-9]/g, "");
+		const randomString = Math.random()
+			.toString(36)
+			.substring(2, 8)
+			.toUpperCase();
+		const batchNumber = timestamp + randomString;
+		return batchNumber;
+	}
+
+	const uniqueBatchNumber = generateUniqueBatchNumber();
+
 	const onSubmit = (formData) => {
+		if (formData.unit === "box") {
+			formData.quantity = formData.piecesPerBox * formData.quantity;
+			formData.criticalLevel = formData.piecesPerBox * formData.criticalLevel;
+			formData.restockLevel = formData.piecesPerBox * formData.restockLevel;
+		}
 		if (formData.image !== "") {
 			const itemData = new FormData();
 			itemData.append("itemName", formData.itemName);
-			itemData.append("quantity", formData.quantity);
+			itemData.append("category", formData.category);
+			itemData.append("vendor", formData.vendor);
 			itemData.append("price", formData.price);
+			itemData.append("quantity", formData.quantity);
+			itemData.append("unit", formData.unit);
+			itemData.append("criticalLevel", formData.criticalLevel);
+			itemData.append("restockLevel", formData.restockLevel);
 			itemData.append("description", formData.description);
 			itemData.append("image", formData.image);
+			if (formData.category === "Medicine") {
+				itemData.append("batchNumber", uniqueBatchNumber);
+				itemData.append("expirationDate", formData.expirationDate);
+				itemData.append("batchQuantity", formData.quantity);
+			}
+			if (formData.unit === "box") {
+				itemData.append("piecesPerBox", formData.piecesPerBox);
+			}
 			dispatch(addNewItem(itemData));
 		} else {
+			formData["batchNumber"] = uniqueBatchNumber;
+			formData["expirationDate"] = formData.expirationDate;
+			formData["batchQuantity"] = formData.quantity;
+			console.log(formData);
 			dispatch(addNewItem(formData));
 		}
 	};

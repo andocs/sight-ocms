@@ -90,6 +90,25 @@ export const editInventoryDetails = createAsyncThunk(
 	}
 );
 
+// Restock Item
+export const restockItem = createAsyncThunk(
+	"inventory/restockItem",
+	async ({ itemId, itemDetails }, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			return await inventoryService.restockItem({ itemId, itemDetails }, token);
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
 // Delete staff account
 export const deleteInventoryItem = createAsyncThunk(
 	"inventory/deleteInventoryItem",
@@ -178,6 +197,22 @@ const inventorySlice = createSlice({
 				state.message = action.payload.message;
 			})
 			.addCase(editInventoryDetails.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.isSuccess = false;
+				state.message = action.payload;
+				state.newItem = null;
+			})
+			.addCase(restockItem.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(restockItem.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.newItem = action.payload.data;
+				state.message = action.payload.message;
+			})
+			.addCase(restockItem.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.isSuccess = false;

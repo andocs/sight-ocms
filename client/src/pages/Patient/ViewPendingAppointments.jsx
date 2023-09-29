@@ -84,7 +84,9 @@ function ViewPendingAppointments() {
 			</div>
 			<div className="p-8">
 				<div className="xl:w-5/6 flex flex-row">
-					<Table data={appointment} columns={columns} actions={actions} />
+					{appointment && (
+						<Table data={appointment} columns={columns} actions={actions} />
+					)}
 				</div>
 			</div>
 		</>
