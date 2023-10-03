@@ -101,7 +101,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	function calculateLunchBreakStartOptions(selectedStartTime, selectedEndTime) {
 		const minLunchBreakStart = timeSlots.indexOf(selectedStartTime) + 1;
 		const maxLunchBreakStart = Math.min(
-			timeSlots.indexOf(selectedEndTime) - 3,
+			timeSlots.indexOf(selectedEndTime) - 2,
 			timeSlots.indexOf("12:30 PM")
 		);
 
@@ -235,7 +235,6 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	};
 
 	const handleAddItemClick = () => {
-		console.log("click");
 		const _id = formData["otherItems._id"];
 		const itemName = formData["otherItems.itemName"];
 		const quantity = formData["otherItems.quantity"];
@@ -798,10 +797,15 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 
 	useEffect(() => {
 		if (lunchBreakStartOptions && lunchBreakStartOptions.length > 0) {
-			setFormData((prevData) => ({
-				...prevData,
-				lunchBreakStart: lunchBreakStartOptions[0],
-			}));
+			if (
+				timeSlots.indexOf(formData["lunchBreakStart"]) >=
+				timeSlots.indexOf(formData["endTime"]) - 2
+			) {
+				setFormData((prevData) => ({
+					...prevData,
+					lunchBreakStart: lunchBreakStartOptions[0],
+				}));
+			}
 		} else if (
 			lunchBreakStartOptions !== "" &&
 			lunchBreakStartOptions.length === 0
@@ -811,7 +815,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 				lunchBreakStart: "N/A",
 			}));
 		}
-	}, [lunchBreakStartOptions]);
+	}, [formData.endTime, lunchBreakStartOptions]);
 
 	useEffect(() => {
 		if (lunchBreakEndOptions && lunchBreakEndOptions.length > 0) {

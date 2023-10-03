@@ -137,7 +137,7 @@ function ViewOrders() {
 			<div className="w-full bg-white border-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>
-						<p className="font-medium text-5xl">Eye Orders</p>
+						<p className="font-medium text-5xl">View Orders</p>
 					</div>
 				</div>
 			</div>

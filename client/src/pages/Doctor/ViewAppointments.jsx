@@ -5,22 +5,17 @@ import { toast } from "react-toastify";
 
 import {
 	getAppointmentList,
-	deleteAppointment,
 	reset,
 	clear,
 } from "../../features/appointment/appointmentSlice";
 
 import Spinner from "../../components/spinner.component";
-import DeleteConfirmation from "../../components/deleteconfirmation.component";
 import ViewModal from "../../components/viewmodal.component";
 
 import Table from "../../components/table.component";
 
 function ViewAppointments() {
-	let [isOpen, setIsOpen] = useState(false);
-	const [isConfirmed, setConfirmation] = useState(false);
 	let [isViewOpen, setViewOpen] = useState(false);
-	const [appointmentId, setAppointmentId] = useState("");
 	const [appointmentData, setAppointmentData] = useState("");
 
 	const navigate = useNavigate();
@@ -47,26 +42,8 @@ function ViewAppointments() {
 		return <Spinner />;
 	}
 
-	function closeModal() {
-		setIsOpen(false);
-	}
-
 	function closeViewModal() {
 		setViewOpen(false);
-	}
-
-	function openModal(appointmentId) {
-		setIsOpen(true);
-		setAppointmentId(appointmentId);
-	}
-
-	function checkConfirmation() {
-		setConfirmation(true);
-		dispatch(deleteAppointment(appointmentId));
-		if (isSuccess && message) {
-			toast.message(message);
-		}
-		setIsOpen(false);
 	}
 
 	const columns = [
@@ -95,12 +72,6 @@ function ViewAppointments() {
 				});
 			},
 		},
-		{
-			label: "Delete",
-			handler: (details) => {
-				openModal(details._id);
-			},
-		},
 	];
 
 	return (
@@ -115,11 +86,6 @@ function ViewAppointments() {
 				/>
 			)}
 
-			<DeleteConfirmation
-				isOpen={isOpen}
-				closeModal={closeModal}
-				onConfirm={checkConfirmation}
-			/>
 			<div className="w-full bg-white bappointment-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>

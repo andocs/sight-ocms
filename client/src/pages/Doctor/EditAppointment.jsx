@@ -33,6 +33,12 @@ function EditAppointment() {
 		message,
 	} = useSelector((state) => state.appointment);
 
+	const status = [
+		{ status: "Scheduled" },
+		{ status: "Cancelled" },
+		{ status: "Completed" },
+	];
+
 	const { schedule, availableDays } = useSelector((state) => state.schedule);
 
 	useEffect(() => {
@@ -114,6 +120,16 @@ function EditAppointment() {
 						available: schedule,
 					},
 					{
+						label: "Status *",
+						type: "listbox",
+						value: appointmentUpdate?.status || status[0].status,
+						options: status.map((status) => status.status),
+						name: "status",
+						size: "w-full",
+					},
+				],
+				[
+					{
 						label: "Start Time *",
 						type: "listbox",
 						value: appointmentUpdate?.appointmentStart || "",
@@ -149,6 +165,7 @@ function EditAppointment() {
 
 		const initialData = {
 			appointmentDate: appointmentUpdate.appointmentDate,
+			status: appointmentUpdate.status,
 			appointmentStart: appointmentUpdate.appointmentStart,
 			appointmentEnd: appointmentUpdate.appointmentEnd,
 			notes: appointmentUpdate.notes,

@@ -39,7 +39,7 @@ function DoctorDashboard() {
 
 	function isDoctorHome() {
 		if (location.pathname === "/doctor") {
-			return <DoctorHome />;
+			return token && <DoctorHome />;
 		} else {
 			return <Outlet />;
 		}

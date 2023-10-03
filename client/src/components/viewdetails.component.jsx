@@ -52,6 +52,18 @@ function ViewDetails({ header, props, onClick, batches }) {
 		onClick();
 	};
 
+	const formatDateandTime = (dateString) => {
+		const options = {
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+			hour: "numeric",
+			minute: "numeric",
+			hour12: true,
+		};
+		return new Date(dateString).toLocaleString(undefined, options);
+	};
+
 	const formatDate = (date) => {
 		const options = {
 			year: "numeric",
@@ -194,7 +206,12 @@ function ViewDetails({ header, props, onClick, batches }) {
 															{detail.label}
 															{": "}
 														</p>
-														<p className="mx-1 font-medium"> {detail.value} </p>
+														<p className="mx-1 font-medium">
+															{" "}
+															{detail.label === "Created At"
+																? formatDateandTime(detail.value)
+																: detail.value}{" "}
+														</p>
 													</div>
 												))}
 											</div>

@@ -88,6 +88,8 @@ function ViewModal({
 														? formatDate(dataFields[title.field])
 														: title.field === "createdAt" ||
 														  title.field === "orderTime" ||
+														  title.field === "acceptTime" ||
+														  title.field === "completeTime" ||
 														  title.field === "visitDate"
 														? formatDateandTime(dataFields[title.field])
 														: getItemFieldValue(dataFields, title.field)}

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+
 import ViewDetails from "../../components/viewdetails.component";
 
 const imgplaceholder = (
@@ -36,6 +37,7 @@ const subheadersvg = (
 function StaffDetails() {
 	const location = useLocation();
 	const navigate = useNavigate();
+
 	const errors = [];
 	let pushed = 0;
 	const staff = location.state;

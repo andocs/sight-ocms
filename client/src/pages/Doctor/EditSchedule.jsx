@@ -75,7 +75,7 @@ function EditSchedule() {
 					{
 						label: "Start Time",
 						type: "listbox",
-						value: scheduleUpdate?.startTime || timeSlots[0], // Set the default value if needed
+						value: scheduleUpdate?.startTime || timeSlots[0],
 						options: timeSlots,
 						name: "startTime",
 						size: "w-full",
@@ -83,7 +83,7 @@ function EditSchedule() {
 					{
 						label: "End Time",
 						type: "listbox",
-						value: scheduleUpdate?.endTime || timeSlots[1], // Set the default value if needed
+						value: scheduleUpdate?.endTime || timeSlots[1],
 						options: timeSlots,
 						name: "endTime",
 						size: "w-full",
@@ -93,15 +93,14 @@ function EditSchedule() {
 					{
 						label: "Lunch Break Start",
 						type: "listbox",
-						value: scheduleUpdate?.lunchBreakStart || timeSlots[0], // Set the default value if needed
-						options: timeSlots,
+						value: scheduleUpdate?.lunchBreakStart,
 						name: "lunchBreakStart",
 						size: "w-full",
 					},
 					{
 						label: "Lunch Break End",
 						type: "listbox",
-						value: scheduleUpdate?.lunchBreakEnd || timeSlots[1], // Set the default value if needed
+						value: scheduleUpdate?.lunchBreakEnd,
 						options: timeSlots,
 						name: "lunchBreakEnd",
 						size: "w-full",

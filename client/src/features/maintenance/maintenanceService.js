@@ -27,6 +27,18 @@ const getMaintenanceList = async (token) => {
 	return res.data;
 };
 
+// Get pending maintenance requests
+const getPendingRequests = async (token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/pending`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
 // Get maintenance request details
 const getRequestDetails = async (requestId, token) => {
 	const config = {
@@ -72,6 +84,7 @@ const getUserRole = (token) => {
 const maintenanceService = {
 	createRequest,
 	getMaintenanceList,
+	getPendingRequests,
 	getRequestDetails,
 	editRequest,
 	deleteRequest,

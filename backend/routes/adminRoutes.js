@@ -29,10 +29,14 @@ const {
 	restockItem,
 	deleteItem,
 	getMaintenanceList,
+	getPendingRequests,
 	getMaintenanceRequestDetails,
 	updateRequestStatus,
 	getAuditLogs,
 	getAuditLogDetails,
+	generateWeeklyStaffReports,
+	generateMonthlyStaffReports,
+	generateInventoryReport,
 } = require("../controllers/adminController");
 
 const validateToken = require("../middleware/validateTokenHandler");
@@ -60,6 +64,7 @@ router
 router.route("/restock/:id").put(restockItem);
 
 router.get("/maintenance", getMaintenanceList);
+router.get("/pending", getPendingRequests);
 
 router
 	.route("/maintenance/:id")
@@ -69,5 +74,9 @@ router
 router.get("/log", getAuditLogs);
 
 router.get("/log/:id", getAuditLogDetails);
+
+router.get("/report/staff/weekly", generateWeeklyStaffReports);
+router.get("/report/staff/monthly", generateMonthlyStaffReports);
+router.get("/report/inventory", generateInventoryReport);
 
 module.exports = router;

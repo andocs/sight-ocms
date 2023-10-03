@@ -39,7 +39,7 @@ function AdminDashboard() {
 
 	function isAdminHome() {
 		if (location.pathname === "/admin") {
-			return <AdminHome />;
+			return token && <AdminHome />;
 		} else {
 			return <Outlet />;
 		}

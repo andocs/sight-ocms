@@ -152,6 +152,8 @@ const getOrderHistory = asyncHandler(async (req, res) => {
 		{
 			$project: {
 				orderTime: 1,
+				acceptTime: 1,
+				completeTime: 1,
 				status: 1,
 				amount: 1,
 				doctorLastName: {
@@ -232,6 +234,8 @@ const getOrderDetails = asyncHandler(async (req, res) => {
 		{
 			$project: {
 				orderTime: 1,
+				acceptTime: 1,
+				completeTime: 1,
 				status: 1,
 				amount: 1,
 				doctorLastName: {
@@ -287,15 +291,11 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 
 		if (updates.status === "In Progress") {
 			updates.technician = technicianId;
+			updates.acceptTime = new Date();
 		}
 
-		const updatedOrder = await Order.findByIdAndUpdate(orderId, updates, {
-			new: true,
-			runValidators: true,
-			session,
-		});
-
 		if (updates.status === "Completed") {
+			updates.completeTime = new Date();
 			const items = [];
 			const itemMap = {};
 
@@ -404,6 +404,12 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 				);
 			}
 		}
+
+		const updatedOrder = await Order.findByIdAndUpdate(orderId, updates, {
+			new: true,
+			runValidators: true,
+			session,
+		});
 
 		await AuditLog.create(
 			[

@@ -1169,6 +1169,11 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 				status: 1,
 			},
 		},
+		{
+			$sort: {
+				appointmentDate: 1, // Sort by appointmentDate in ascending order
+			},
+		},
 	]);
 	res.json(appointment);
 });
@@ -1177,6 +1182,7 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 //@route GET /api/doctor/pending
 //@access private (doctor only)
 const getPendingAppointments = asyncHandler(async (req, res) => {
+	const currentDate = new Date();
 	const appointment = await Appointment.aggregate([
 		{
 			$lookup: {
@@ -1189,6 +1195,7 @@ const getPendingAppointments = asyncHandler(async (req, res) => {
 		{
 			$match: {
 				status: "Pending",
+				appointmentDate: { $gte: currentDate },
 			},
 		},
 		{
@@ -1202,6 +1209,11 @@ const getPendingAppointments = asyncHandler(async (req, res) => {
 				status: 1,
 			},
 		},
+		{
+			$sort: {
+				appointmentDate: 1, // Sort by appointmentDate in ascending order
+			},
+		},
 	]);
 	res.json(appointment);
 });
@@ -1211,6 +1223,7 @@ const getPendingAppointments = asyncHandler(async (req, res) => {
 //@access private (doctor only)
 const getScheduledAppointments = asyncHandler(async (req, res) => {
 	const doctorId = new ObjectId(req.user.id);
+	const currentDate = new Date();
 	const appointment = await Appointment.aggregate([
 		{
 			$lookup: {
@@ -1224,6 +1237,9 @@ const getScheduledAppointments = asyncHandler(async (req, res) => {
 			$match: {
 				doctor: doctorId,
 				status: "Scheduled",
+				appointmentDate: {
+					$gte: currentDate,
+				},
 			},
 		},
 		{
@@ -1235,6 +1251,11 @@ const getScheduledAppointments = asyncHandler(async (req, res) => {
 				appointmentEnd: 1,
 				notes: 1,
 				status: 1,
+			},
+		},
+		{
+			$sort: {
+				appointmentDate: 1,
 			},
 		},
 	]);
@@ -1269,13 +1290,24 @@ const updateAppointment = async (req, res) => {
 
 	const appointment = await Appointment.findOne({
 		_id: appointmentId,
-		doctor: doctorId,
 	});
 
 	if (!appointment) {
 		return res
 			.status(404)
 			.json({ message: "Appointment not found or unauthorized!" });
+	}
+
+	if (appointment.doctor) {
+		const doctor = new ObjectId(req.user.id);
+		if (appointment.doctor.toString() !== doctor.toString()) {
+			console.log(appointment.doctor, doctorId);
+			return res.status(404).json({ message: "Unauthorized Access!" });
+		}
+	}
+
+	if (!appointment.doctor && updatedFields.status === "Scheduled") {
+		updatedFields.doctor = doctorId;
 	}
 
 	const session = await Appointment.startSession(sessionOptions);

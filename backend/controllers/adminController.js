@@ -6,12 +6,40 @@ const AuditLog = require("../models/auditLogModel");
 
 const User = require("../models/userModel");
 const Inventory = require("../models/inventoryModel");
+const Order = require("../models/orderModel");
 const Maintenance = require("../models/maintenanceModel");
 
 const sessionOptions = {
 	readConcern: { level: "snapshot" },
 	writeConcern: { w: "majority" },
 };
+
+// Function to calculate the completion rate
+function calculateCompletionRate(completedOrders, totalOrders) {
+	if (totalOrders === 0) return 0;
+	return (completedOrders / totalOrders) * 100;
+}
+
+// Function to calculate average processing time
+function calculateAverageProcessingTime(orders, staffId) {
+	if (orders.length === 0) return 0;
+
+	const totalTime = orders.reduce((total, order) => {
+		const doctorString = order.doctor.toString();
+		const techString = order.technician && order.technician.toString();
+		const start =
+			doctorString === staffId
+				? new Date(order.orderTime)
+				: techString === staffId
+				? new Date(order.acceptTime)
+				: new Date(order.orderTime);
+		const end = new Date(order.completeTime || new Date());
+		const duration = (end - start) / (1000 * 60 * 60);
+		return total + duration;
+	}, 0);
+
+	return totalTime / orders.length;
+}
 
 /**
 ##### STAFF MANAGEMENT (CRUD) #####
@@ -146,7 +174,7 @@ const registerStaff = asyncHandler(async (req, res) => {
 //@access private (admin only)
 const getStaffList = asyncHandler(async (req, res) => {
 	const staff = await User.find({ role: { $in: ["doctor", "technician"] } });
-	if (staff == {}) {
+	if (staff.length === 0) {
 		res.json({ message: "No staff currently registered." });
 	}
 	res.json(staff);
@@ -464,7 +492,7 @@ const addInventoryItem = asyncHandler(async (req, res) => {
 //@access private (admin only)
 const getInventoryList = asyncHandler(async (req, res) => {
 	const inventoryList = await Inventory.find();
-	if (inventoryList == {}) {
+	if (inventoryList.length === 0) {
 		res.json({ message: "No items currently in inventory." });
 	}
 	res.json(inventoryList);
@@ -715,10 +743,77 @@ const deleteItem = asyncHandler(async (req, res) => {
 //@route GET /api/admin/maintenance
 //@access private (admin only)
 const getMaintenanceList = asyncHandler(async (req, res) => {
-	const maintenanceRequests = await Maintenance.find();
-	if ((maintenanceRequests = {})) {
-		return res.json({ message: "No requests currently." });
-	}
+	const maintenanceRequests = await Maintenance.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "technician",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				status: { $in: ["In Progress", "Completed"] },
+			},
+		},
+		{
+			$project: {
+				title: 1,
+				status: 1,
+				details: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				image: 1,
+				createdAt: 1,
+			},
+		},
+		{
+			$sort: {
+				createdAt: 1,
+			},
+		},
+	]);
+
+	res.json(maintenanceRequests);
+});
+
+//@desc GET PENDING REQUEST LIST
+//@route GET /api/admin/pending
+//@access private (admin only)
+const getPendingRequests = asyncHandler(async (req, res) => {
+	const maintenanceRequests = await Maintenance.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "technician",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				status: "Pending",
+			},
+		},
+		{
+			$project: {
+				title: 1,
+				status: 1,
+				details: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				image: 1,
+				createdAt: 1,
+			},
+		},
+		{
+			$sort: {
+				createdAt: 1,
+			},
+		},
+	]);
+
 	res.json(maintenanceRequests);
 });
 
@@ -843,6 +938,190 @@ const getAuditLogDetails = asyncHandler(async (req, res) => {
 	res.json(auditLog);
 });
 
+/**
+##### REPORT GENERATION #####
+**/
+
+// Generate weekly staff reports
+const generateWeeklyStaffReports = asyncHandler(async (req, res) => {
+	try {
+		const now = new Date();
+		const oneWeekAgo = new Date(now);
+		oneWeekAgo.setDate(now.getDate() - 7);
+
+		const weeklyOrders = await Order.find({
+			orderTime: { $gte: oneWeekAgo, $lte: now },
+			status: "Completed", // Filter for completed orders
+		});
+
+		// Group orders by doctor and technician
+		const weeklyReports = {};
+
+		weeklyOrders.forEach((order) => {
+			const doctorId = order.doctor.toString();
+			const technicianId = order.technician ? order.technician.toString() : "";
+
+			if (!weeklyReports[doctorId]) {
+				weeklyReports[doctorId] = {
+					doctor: doctorId,
+					totalOrders: 0,
+					completedOrders: 0,
+					pendingOrders: 0,
+					completionRate: 0,
+					avgProcessingTime: 0,
+					revenueGenerated: 0,
+				};
+			}
+
+			if (technicianId && !weeklyReports[technicianId]) {
+				weeklyReports[technicianId] = {
+					technician: technicianId,
+					totalOrders: 0,
+					completedOrders: 0,
+					pendingOrders: 0,
+					completionRate: 0,
+					avgCompletionTime: 0,
+					revenueGenerated: 0,
+				};
+			}
+
+			weeklyReports[doctorId].totalOrders++;
+			weeklyReports[doctorId].completedOrders++;
+			weeklyReports[doctorId].avgProcessingTime =
+				calculateAverageProcessingTime([order], doctorId);
+			weeklyReports[doctorId].revenueGenerated += order.amount;
+
+			if (technicianId) {
+				weeklyReports[technicianId].totalOrders++;
+				weeklyReports[technicianId].completedOrders++;
+				weeklyReports[technicianId].avgCompletionTime =
+					calculateAverageProcessingTime([order], technicianId);
+				weeklyReports[technicianId].revenueGenerated += order.amount;
+			}
+		});
+
+		// Calculate completion rate and pending orders for the week
+		Object.values(weeklyReports).forEach((report) => {
+			report.completionRate = calculateCompletionRate(
+				report.completedOrders,
+				report.totalOrders
+			);
+			report.pendingOrders = report.totalOrders - report.completedOrders;
+		});
+		res.json(weeklyReports);
+	} catch (error) {
+		console.error("Error generating weekly reports:", error);
+		res.status(500).json({ message: "Error generating weekly reports" });
+	}
+});
+
+// Generate monthly staff reports
+const generateMonthlyStaffReports = asyncHandler(async (req, res) => {
+	try {
+		const now = new Date();
+		const oneMonthAgo = new Date(now);
+		oneMonthAgo.setMonth(now.getMonth() - 1);
+
+		const monthlyOrders = await Order.find({
+			orderTime: { $gte: oneMonthAgo, $lte: now },
+			status: "Completed", // Filter for completed orders
+		});
+
+		// Group orders by doctor and technician
+		const monthlyReports = {};
+
+		monthlyOrders.forEach((order) => {
+			const doctorId = order.doctor.toString();
+			const technicianId = order.technician ? order.technician.toString() : "";
+
+			if (!monthlyReports[doctorId]) {
+				monthlyReports[doctorId] = {
+					doctor: doctorId,
+					totalOrders: 0,
+					completedOrders: 0,
+					pendingOrders: 0,
+					completionRate: 0,
+					avgProcessingTime: 0,
+					revenueGenerated: 0,
+				};
+			}
+
+			if (technicianId && !monthlyReports[technicianId]) {
+				monthlyReports[technicianId] = {
+					doctor: technicianId,
+					totalOrders: 0,
+					completedOrders: 0,
+					pendingOrders: 0,
+					completionRate: 0,
+					avgProcessingTime: 0,
+					revenueGenerated: 0,
+				};
+			}
+
+			monthlyReports[doctorId].totalOrders++;
+			monthlyReports[doctorId].completedOrders++;
+			monthlyReports[doctorId].avgProcessingTime =
+				calculateAverageProcessingTime([order]);
+			monthlyReports[doctorId].revenueGenerated += order.amount;
+
+			if (technicianId) {
+				monthlyReports[technicianId].totalOrders++;
+				monthlyReports[technicianId].completedOrders++;
+				monthlyReports[technicianId].avgProcessingTime =
+					calculateAverageProcessingTime([order]);
+				monthlyReports[technicianId].revenueGenerated += order.amount;
+			}
+		});
+
+		// Calculate completion rate and pending orders for the month
+		Object.values(monthlyReports).forEach((report) => {
+			report.completionRate = calculateCompletionRate(
+				report.completedOrders,
+				report.totalOrders
+			);
+			report.pendingOrders = report.totalOrders - report.completedOrders;
+		});
+
+		console.log(monthlyReports);
+		res.json(monthlyReports);
+	} catch (error) {
+		console.error("Error generating monthly reports:", error);
+		res.status(500).json({ message: "Error generating monthly reports" });
+	}
+});
+
+// Generate inventory report
+const generateInventoryReport = asyncHandler(async (req, res) => {
+	const inventoryList = await Inventory.find();
+
+	if (inventoryList.length === 0) {
+		return res.json({ message: "No items currently in inventory." });
+	}
+
+	// Process the data to create the report
+	const report = inventoryList.map((item) => {
+		const stockStatus =
+			item.quantity <= item.criticalLevel
+				? "Low Stock"
+				: item.quantity <= item.restockLevel
+				? "Needs Restocking"
+				: "In Stock";
+
+		return {
+			itemName: item.itemName,
+			category: item.category,
+			quantity: item.quantity,
+			unit: item.unit,
+			price: item.price,
+			vendor: item.vendor,
+			description: item.description,
+			stockStatus,
+		};
+	});
+	console.log(report);
+	res.json(report);
+});
+
 module.exports = {
 	registerStaff,
 	getStaffList,
@@ -858,9 +1137,14 @@ module.exports = {
 	deleteItem,
 
 	getMaintenanceList,
+	getPendingRequests,
 	getMaintenanceRequestDetails,
 	updateRequestStatus,
 
 	getAuditLogs,
 	getAuditLogDetails,
+
+	generateWeeklyStaffReports,
+	generateMonthlyStaffReports,
+	generateInventoryReport,
 };

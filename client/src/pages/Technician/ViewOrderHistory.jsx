@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
@@ -25,7 +24,6 @@ function ViewOrderHistory() {
 	let [isViewOpen, setViewOpen] = useState(false);
 	const [orderData, setOrderData] = useState("");
 
-	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const { order, isLoading, isSuccess, isError, message } = useSelector(
 		(state) => state.order
@@ -105,6 +103,8 @@ function ViewOrderHistory() {
 
 	const viewColumns = [
 		{ header: "Order Time", field: "orderTime" },
+		{ header: "Accepted Time", field: "acceptTime" },
+		{ header: "Completed Time", field: "completeTime" },
 		{ header: "Status", field: "status" },
 		{ header: "Total Amount", field: "amount" },
 		{ header: "Doctor FName", field: "doctorLastName" },

@@ -39,7 +39,7 @@ function TechnicianDashboard() {
 
 	function isTechnicianHome() {
 		if (location.pathname === "/technician") {
-			return <TechnicianHome />;
+			return token && <TechnicianHome />;
 		} else {
 			return <Outlet />;
 		}

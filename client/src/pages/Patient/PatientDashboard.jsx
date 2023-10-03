@@ -38,7 +38,7 @@ function PatientDashboard() {
 
 	function isPatientHome() {
 		if (location.pathname === "/patient") {
-			return <PatientHome />;
+			return token && <PatientHome />;
 		} else {
 			return <Outlet />;
 		}

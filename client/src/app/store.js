@@ -12,6 +12,7 @@ import orderReducer from "../features/order/orderSlice";
 import scheduleReducer from "../features/schedule/scheduleSlice";
 import patientReducer from "../features/patient/patientSlice";
 import maintenanceReducer from "../features/maintenance/maintenanceSlice";
+import reportReducer from "../features/report/reportSlice";
 
 function getReducerByUserRole() {
 	const token = localStorage.getItem("user");
@@ -29,6 +30,7 @@ function getReducerByUserRole() {
 			staff: staffReducer,
 			inventory: inventoryReducer,
 			maintenance: maintenanceReducer,
+			report: reportReducer,
 		};
 	} else if (userRole === "doctor") {
 		return {

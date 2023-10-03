@@ -17,10 +17,10 @@ import ViewModal from "../../components/viewmodal.component";
 import Table from "../../components/table.component";
 
 function ViewPendingOrders() {
-	let [isOpen, setIsOpen] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 	const [isConfirmed, setConfirmation] = useState(false);
 	const [orderId, setOrderId] = useState("");
-	let [isViewOpen, setViewOpen] = useState(false);
+	const [isViewOpen, setViewOpen] = useState(false);
 	const [orderData, setOrderData] = useState("");
 
 	const navigate = useNavigate();

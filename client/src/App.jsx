@@ -66,6 +66,9 @@ import ViewPendingAppointments from "./pages/Patient/ViewPendingAppointments";
 import ViewPatientAppointments from "./pages/Patient/ViewPatientAppointments";
 import AddAppointment from "./pages/Patient/AddAppointment";
 import Profile from "./pages/Landing_Page/Profile";
+import ViewPendingRequests from "./pages/Admin/ViewPendingRequests";
+import ViewRequests from "./pages/Admin/ViewRequests";
+import RequestDetails from "./pages/Admin/RequestDetails";
 
 function App() {
 	return (
@@ -92,6 +95,9 @@ function App() {
 						<Route path="item-details" element={<ItemDetails />} />
 						<Route path="edit-item/:id" element={<EditItem />} />
 						<Route path="remove-item" element={<RemoveItems />} />
+						<Route path="view-pending" element={<ViewPendingRequests />} />
+						<Route path="view-requests" element={<ViewRequests />} />
+						<Route path="request-details" element={<RequestDetails />} />
 						<Route path="view-logs" element={<ViewAuditLogs />} />
 					</Route>
 

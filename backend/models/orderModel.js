@@ -20,6 +20,12 @@ const orderSchema = new mongoose.Schema(
 			type: Date,
 			required: true,
 		},
+		acceptTime: {
+			type: Date,
+		},
+		completeTime: {
+			type: Date,
+		},
 		status: {
 			type: String,
 			enum: ["Pending", "In Progress", "Completed", "Cancelled"],

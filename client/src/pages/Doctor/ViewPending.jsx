@@ -9,6 +9,8 @@ import {
 	clear,
 } from "../../features/appointment/appointmentSlice";
 
+import { getScheduleList } from "../../features/schedule/scheduleSlice";
+
 import Spinner from "../../components/spinner.component";
 import AcceptConfirmation from "../../components/acceptconfirmation.component";
 import ViewModal from "../../components/viewmodal.component";
@@ -17,7 +19,6 @@ import Table from "../../components/table.component";
 
 function ViewPending() {
 	let [isOpen, setIsOpen] = useState(false);
-	const [isConfirmed, setConfirmation] = useState(false);
 	let [isViewOpen, setViewOpen] = useState(false);
 	const [appointmentId, setAppointmentId] = useState("");
 	const [appointmentData, setAppointmentData] = useState("");
@@ -27,6 +28,12 @@ function ViewPending() {
 		(state) => state.appointment
 	);
 
+	const { schedule } = useSelector((state) => state.schedule);
+
+	useEffect(() => {
+		dispatch(getScheduleList());
+	}, [dispatch]);
+
 	useEffect(() => {
 		if (isError) {
 			toast.error(message);
@@ -34,9 +41,7 @@ function ViewPending() {
 		if (isSuccess && message !== "") {
 			toast.success(message);
 		}
-		if (!appointment) {
-			dispatch(getPendingAppointments());
-		}
+		dispatch(getPendingAppointments());
 
 		return () => {
 			dispatch(reset());
@@ -49,24 +54,79 @@ function ViewPending() {
 	}
 	function closeModal() {
 		setIsOpen(false);
+		setAppointmentData("");
+		setAppointmentId("");
 	}
 
 	function closeViewModal() {
 		setViewOpen(false);
+		setAppointmentData("");
+		setAppointmentId("");
 	}
 
-	function openModal(appointmentId) {
+	function openModal(appointment) {
 		setIsOpen(true);
-		setAppointmentId(appointmentId);
+		setAppointmentData(appointment);
+		setAppointmentId(appointment._id);
+	}
+
+	function checkScheduleConflict(schedule, appointment) {
+		let hasConflict = false;
+		const appointmentDate = new Date(appointment.appointmentDate);
+
+		const appointmentDayOfWeek = appointmentDate.toLocaleDateString("en-US", {
+			weekday: "long",
+		});
+
+		// Find the doctor's schedule for the appointment day of the week
+		const doctorSchedule = schedule.find(
+			(day) => day.dayOfWeek === appointmentDayOfWeek
+		);
+
+		if (!doctorSchedule) {
+			return (hasConflict = true);
+		}
+
+		const doctorStartTime = new Date("01/01/2000 " + doctorSchedule.startTime);
+		const doctorEndTime = new Date("01/01/2000 " + doctorSchedule.endTime);
+		const lunchBreakStart = new Date(
+			"01/01/2000 " + doctorSchedule.lunchBreakStart
+		);
+		const lunchBreakEnd = new Date(
+			"01/01/2000 " + doctorSchedule.lunchBreakEnd
+		);
+		const appointmentStartTime = new Date(
+			"01/01/2000 " + appointment.appointmentStart
+		);
+		const appointmentEndTime = new Date(
+			"01/01/2000 " + appointment.appointmentEnd
+		);
+		console.log(appointmentEndTime, lunchBreakEnd);
+
+		if (
+			appointmentStartTime < doctorStartTime ||
+			appointmentEndTime > doctorEndTime ||
+			(appointmentStartTime >= lunchBreakStart &&
+				appointmentEndTime <= lunchBreakEnd)
+		) {
+			return (hasConflict = true);
+		}
+
+		return null;
 	}
 
 	function checkConfirmation() {
-		const appointmentData = { status: "Scheduled" };
-		setConfirmation(true);
-		dispatch(editAppointment({ appointmentId, appointmentData }));
-		if (isSuccess && message) {
-			toast.message(message);
+		const hasConflict = checkScheduleConflict(schedule, appointmentData);
+		if (!hasConflict) {
+			const appointmentData = { status: "Scheduled" };
+			dispatch(editAppointment({ appointmentId, appointmentData }));
+			if (isSuccess && message) {
+				toast.message(message);
+			}
+		} else {
+			toast.error("Can't accept due to schedule conflicts!");
 		}
+
 		setIsOpen(false);
 	}
 
@@ -91,7 +151,7 @@ function ViewPending() {
 		{
 			label: "Accept",
 			handler: (details) => {
-				openModal(details._id);
+				openModal(details);
 			},
 		},
 	];
