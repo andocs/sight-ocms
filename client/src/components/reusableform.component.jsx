@@ -1,4 +1,4 @@
-import { useState, useRef, createRef, useEffect } from "react";
+import { useState, useRef, createRef, useEffect, Fragment } from "react";
 import ListBoxInput from "./listboxinput.component";
 import ImageInput from "./imageinput.component";
 import PasswordInput from "./passwordinput.component";
@@ -54,7 +54,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 
 	for (let hour = 9; hour <= 17; hour++) {
 		for (let minute = 0; minute <= 30; minute += 30) {
-			if (hour == 17 && minute == 30) {
+			if (hour == 17) {
 				break;
 			} else {
 				const ampm = hour < 12 ? "AM" : "PM";
@@ -71,10 +71,10 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	const formGroupRef = useRef(null);
 	const customSearchInputRef = createRef(null);
 
-	const getTomorrow = () => {
+	const getLeadDate = () => {
 		const today = new Date();
 		const tomorrow = new Date(today);
-		tomorrow.setDate(today.getDate() + 1);
+		tomorrow.setDate(today.getDate() + 3);
 
 		return tomorrow;
 	};
@@ -129,7 +129,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	}
 
 	function calculateAvailableTimeSlots(selectedDate, doctorSchedule) {
-		if (doctorSchedule && selectedDate) {
+		if (doctorSchedule.length > 0 && selectedDate) {
 			const selectedDayOfWeek = selectedDate.toLocaleDateString("en-US", {
 				weekday: "long",
 			});
@@ -177,6 +177,8 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			} else {
 				return [];
 			}
+		} else {
+			return timeSlots;
 		}
 	}
 
@@ -675,10 +677,10 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 									selected={
 										formData[field.name] !== ""
 											? formData[field.name]
-											: getTomorrow()
+											: getLeadDate()
 									}
 									onChange={(value) => handleChange(field.name, value)}
-									minDate={getTomorrow()}
+									minDate={getLeadDate()}
 									filterDate={filterDate}
 								/>
 								<div className="w-6 h-6 absolute top-4 right-5 z-10">
@@ -836,9 +838,10 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 
 	useEffect(() => {
 		if (
-			formData.appointmentStart === "" &&
-			appointmentStartOptions &&
-			appointmentStartOptions.length > 0
+			(formData.appointmentStart === "" &&
+				appointmentStartOptions &&
+				appointmentStartOptions.length > 0) ||
+			!appointmentStartOptions.includes(formData.appointmentStart)
 		) {
 			setFormData((prevData) => ({
 				...prevData,
@@ -1005,13 +1008,10 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 													key={subFieldsIndex}
 												>
 													{subFields.map((field, fieldIndex) => (
-														<>
+														<Fragment key={fieldIndex}>
 															{field.name === "piecesPerBox" &&
 															formData.unit !== "box" ? null : (
-																<div
-																	className={`mb-4 px-8 ${field.size}`}
-																	key={fieldIndex}
-																>
+																<div className={`mb-4 px-8 ${field.size}`}>
 																	<label
 																		htmlFor={field.name}
 																		className="text-l uppercase text-start block w-full mb-4 text-sm font-medium truncate text-sky-800"
@@ -1022,7 +1022,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 																	{renderInput(field)}
 																</div>
 															)}
-														</>
+														</Fragment>
 													))}
 												</div>
 											))}

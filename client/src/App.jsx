@@ -11,6 +11,7 @@ import About from "./pages/Landing_Page/About";
 import Technology from "./pages/Landing_Page/Technology";
 import Login from "./pages/Landing_Page/Login";
 import Register from "./pages/Landing_Page/Register";
+import Profile from "./pages/Landing_Page/Profile";
 
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import PatientDashboard from "./pages/Patient/PatientDashboard";
@@ -20,6 +21,10 @@ import TechnicianDashboard from "./pages/Technician/TechnicianDashboard";
 //PATIENT
 import ViewPatientOrders from "./pages/Patient/ViewOrders";
 import ViewRecords from "./pages/Patient/ViewRecords";
+import ViewPendingAppointments from "./pages/Patient/ViewPendingAppointments";
+import ViewPatientAppointments from "./pages/Patient/ViewPatientAppointments";
+import AddAppointment from "./pages/Patient/AddAppointment";
+import ViewDoctors from "./pages/Patient/ViewDoctors";
 
 //ADMIN
 import AddStaff from "./pages/Admin/AddStaffAccount";
@@ -32,12 +37,16 @@ import ItemDetails from "./pages/Admin/ItemDetails";
 import EditItem from "./pages/Admin/EditItem";
 import RemoveItems from "./pages/Admin/RemoveItems";
 import ViewAuditLogs from "./pages/Admin/ViewAuditLogs";
+import ViewPendingRequests from "./pages/Admin/ViewPendingRequests";
+import ViewRequests from "./pages/Admin/ViewRequests";
+import RequestDetails from "./pages/Admin/RequestDetails";
 
 //DOCTOR
 import AddRecords from "./pages/Doctor/AddRecords";
 import WalkInConsult from "./pages/Doctor/WalkInConsult";
 import RegisteredConsult from "./pages/Doctor/RegisteredConsult";
 import ViewEyeRecords from "./pages/Doctor/ViewRecords";
+import ViewPending from "./pages/Doctor/ViewPending";
 import ViewAppointments from "./pages/Doctor/ViewAppointments";
 import AddAppointments from "./pages/Doctor/AddAppointments";
 import ViewOrders from "./pages/Doctor/ViewOrders";
@@ -61,14 +70,6 @@ import CreateMaintenanceRequest from "./pages/Technician/CreateMaintenanceReques
 import ViewTechInventory from "./pages/Technician/ViewTechInventory";
 import EditRequest from "./pages/Technician/EditRequest";
 import TechItemDetails from "./pages/Technician/ItemDetails";
-import ViewPending from "./pages/Doctor/ViewPending";
-import ViewPendingAppointments from "./pages/Patient/ViewPendingAppointments";
-import ViewPatientAppointments from "./pages/Patient/ViewPatientAppointments";
-import AddAppointment from "./pages/Patient/AddAppointment";
-import Profile from "./pages/Landing_Page/Profile";
-import ViewPendingRequests from "./pages/Admin/ViewPendingRequests";
-import ViewRequests from "./pages/Admin/ViewRequests";
-import RequestDetails from "./pages/Admin/RequestDetails";
 
 function App() {
 	return (
@@ -105,11 +106,13 @@ function App() {
 						<Route path="view-records" element={<ViewRecords />} />
 						<Route path="view-orders" element={<ViewPatientOrders />} />
 						<Route path="add-appointment" element={<AddAppointment />} />
+						<Route path="add-appointment/:id" element={<AddAppointment />} />
 						<Route path="view-pending" element={<ViewPendingAppointments />} />
 						<Route
 							path="view-appointments"
 							element={<ViewPatientAppointments />}
 						/>
+						<Route path="view-doctors" element={<ViewDoctors />} />
 					</Route>
 
 					<Route path="/doctor" element={<DoctorDashboard />}>

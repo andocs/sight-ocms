@@ -155,10 +155,10 @@ function AddAppointments() {
 		return <Spinner />;
 	}
 
-	const getTomorrow = () => {
+	const getLeadDate = () => {
 		const today = new Date();
 		const tomorrow = new Date(today);
-		tomorrow.setDate(today.getDate() + 1);
+		tomorrow.setDate(today.getDate() + 3);
 		return tomorrow;
 	};
 
@@ -171,7 +171,7 @@ function AddAppointments() {
 					{
 						label: "Appointment Date *",
 						type: "date",
-						value: getTomorrow(),
+						value: getLeadDate(),
 						name: "appointmentDate",
 						size: "w-full",
 						disabled: daysOfWeek,

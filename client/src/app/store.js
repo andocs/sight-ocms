@@ -17,7 +17,16 @@ import reportReducer from "../features/report/reportSlice";
 function getReducerByUserRole() {
 	const token = localStorage.getItem("user");
 	if (!token) {
-		return { auth: authReducer, audit: auditReducer };
+		return {
+			auth: authReducer,
+			audit: auditReducer,
+			appointment: appointmentReducer,
+			staff: staffReducer,
+			order: orderReducer,
+			record: recordReducer,
+			inventory: inventoryReducer,
+			maintenance: maintenanceReducer,
+		};
 	}
 
 	const decodedToken = decode(token);
@@ -56,6 +65,7 @@ function getReducerByUserRole() {
 			auth: authReducer,
 			audit: auditReducer,
 			record: recordReducer,
+			staff: staffReducer,
 			order: orderReducer,
 			appointment: appointmentReducer,
 			schedule: scheduleReducer,

@@ -164,7 +164,7 @@ function ViewPending() {
 					closeModal={closeViewModal}
 					dataFields={appointmentData}
 					columnHeaders={columns}
-					modalTitle="View Order Details"
+					modalTitle="View Appointment Details"
 				/>
 			)}
 

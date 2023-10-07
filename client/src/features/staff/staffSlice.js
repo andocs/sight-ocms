@@ -117,6 +117,35 @@ export const deleteStaffAccount = createAsyncThunk(
 	}
 );
 
+// Get doctor list
+export const getDoctorList = createAsyncThunk(
+	"staff/getDoctorList",
+	async (_, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			const staffArray = await staffService.getDoctorList(token);
+			const staffData = Object.keys(staffArray).map((key) => ({
+				...staffArray[key].personalInfo,
+				_id: staffArray[key]._id,
+				email: staffArray[key].email,
+				role: staffArray[key].role,
+				createdAt: staffArray[key].createdAt,
+				updatedAt: staffArray[key].updatedAt,
+				image: staffArray[key].image,
+			}));
+			return staffData;
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
 const staffSlice = createSlice({
 	name: "staff",
 	initialState,
@@ -209,6 +238,20 @@ const staffSlice = createSlice({
 				state.isError = true;
 				state.isSuccess = false;
 				state.message = action.payload;
+			})
+			.addCase(getDoctorList.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(getDoctorList.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.staff = action.payload;
+			})
+			.addCase(getDoctorList.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.message = action.payload;
+				state.staff = null;
 			});
 	},
 });

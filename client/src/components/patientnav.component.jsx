@@ -15,6 +15,22 @@ const dashboardsvg = (
 	</svg>
 );
 
+const doctorsvg = (
+	<svg
+		fill="none"
+		stroke="currentColor"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		strokeWidth={2}
+		viewBox="0 0 24 24"
+		className="ml-0.5 -mr-0.5 w-9 h-9 text-sky-800"
+	>
+		<path d="M4.8 2.3A.3.3 0 105 2H4a2 2 0 00-2 2v5a6 6 0 006 6v0a6 6 0 006-6V4a2 2 0 00-2-2h-1a.2.2 0 10.3.3" />
+		<path d="M8 15v1a6 6 0 006 6v0a6 6 0 006-6v-4" />
+		<path d="M22 10 A2 2 0 0 1 20 12 A2 2 0 0 1 18 10 A2 2 0 0 1 22 10 z" />
+	</svg>
+);
+
 const eyerecordmgtsvg = (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
@@ -76,6 +92,11 @@ const mainMenu = [
 		label: "Dashboard",
 		href: "/patient",
 		svg: dashboardsvg,
+	},
+	{
+		label: "View Doctors",
+		href: "/patient/view-doctors",
+		svg: doctorsvg,
 	},
 	{
 		label: "Eye Records Management",

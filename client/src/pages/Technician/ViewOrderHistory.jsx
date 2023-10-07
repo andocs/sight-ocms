@@ -25,7 +25,7 @@ function ViewOrderHistory() {
 	const [orderData, setOrderData] = useState("");
 
 	const dispatch = useDispatch();
-	const { order, isLoading, isSuccess, isError, message } = useSelector(
+	const { orderHistory, isLoading, isSuccess, isError, message } = useSelector(
 		(state) => state.order
 	);
 
@@ -177,7 +177,7 @@ function ViewOrderHistory() {
 			</div>
 			<div className="p-8">
 				<div className="xl:w-5/6 flex flex-row">
-					<Table data={order} columns={columns} actions={actions} />
+					<Table data={orderHistory} columns={columns} actions={actions} />
 				</div>
 			</div>
 		</>

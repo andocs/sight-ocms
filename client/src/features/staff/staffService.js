@@ -56,12 +56,27 @@ const deleteStaffAccount = async (staffId, token) => {
 	return res.data;
 };
 
+// Get doctor list
+const getDoctorList = async (token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const res = await axios.get(
+		"http://localhost:5001/api/patient/doctor",
+		config
+	);
+	return res.data;
+};
+
 const staffService = {
 	createStaffAccount,
 	getStaffAccounts,
 	getStaffDetails,
 	editStaffAccount,
 	deleteStaffAccount,
+	getDoctorList,
 };
 
 export default staffService;

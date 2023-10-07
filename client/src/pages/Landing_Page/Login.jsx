@@ -31,8 +31,8 @@ function Login() {
 		if (isSuccess) {
 			const decodedToken = decode(token);
 			const role = decodedToken.user.role;
-			toast.success(message);
 			navigate(`/${role}`);
+			toast.success(message);
 		}
 
 		if (!isSuccess && token) {

@@ -6,6 +6,7 @@ const initialState = {
 	newOrder: null,
 	orderUpdate: null,
 	order: [],
+	orderHistory: [],
 	isLoading: false,
 	isError: false,
 	isSuccess: false,
@@ -180,6 +181,7 @@ const orderSlice = createSlice({
 			state.newOrder = null;
 			state.orderUpdate = null;
 			state.order = [];
+			state.orderHistory = [];
 		},
 	},
 	extraReducers: (builder) => {
@@ -221,13 +223,13 @@ const orderSlice = createSlice({
 			.addCase(getOrderHistory.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.order = action.payload;
+				state.orderHistory = action.payload;
 			})
 			.addCase(getOrderHistory.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.order = null;
+				state.orderHistory = null;
 			})
 			.addCase(getOrderList.pending, (state) => {
 				state.isLoading = true;

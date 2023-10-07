@@ -17,23 +17,6 @@ import Spinner from "../../components/spinner.component";
 const text =
 	"Hey there, admin! Welcome to your dashboard. You can manage your staff, inventory, and maintenance requests here.";
 
-const staffsvg = (
-	<svg
-		xmlns="http://www.w3.org/2000/svg"
-		fill="none"
-		viewBox="0 0 24 24"
-		strokeWidth={2}
-		stroke="currentColor"
-		className="w-6 h-6"
-	>
-		<path
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
-		/>
-	</svg>
-);
-
 const inventorysvg = (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
@@ -84,9 +67,27 @@ const doctorsvg = (
 	</svg>
 );
 
+const requestsvg = (
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		fill="none"
+		viewBox="0 0 24 24"
+		strokeWidth={2}
+		stroke="currentColor"
+		className="w-6 h-6"
+	>
+		<path
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z"
+		/>
+	</svg>
+);
+
 function AdminHome() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
+
 	const { item, isLoading } = useSelector((state) => state.inventory);
 	const { staff } = useSelector((state) => state.staff);
 	const { maintenance } = useSelector((state) => state.maintenance);
@@ -133,7 +134,7 @@ function AdminHome() {
 		};
 	}, [dispatch]);
 
-	if (isLoading) {
+	if (isLoading || !item || !staff || !maintenance) {
 		return <Spinner />;
 	}
 
@@ -156,9 +157,10 @@ function AdminHome() {
 		{
 			number: Object.keys(maintenance).length,
 			text: "Pending Maintenance Requests",
-			svg: staffsvg,
+			svg: requestsvg,
 		},
 	];
+
 	const columns = [
 		{ header: "Item", field: "itemName" },
 		{ header: "Vendor", field: "vendor" },

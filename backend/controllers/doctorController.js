@@ -269,11 +269,6 @@ const getVisitList = asyncHandler(async (req, res) => {
 			},
 		},
 		{
-			$match: {
-				doctor: doctorId,
-			},
-		},
-		{
 			$project: {
 				visitDate: 1,
 				patientType: 1,
@@ -527,13 +522,7 @@ const createOrder = asyncHandler(async (req, res) => {
 //@route GET /api/doctor/order
 //@access private (doctor only)
 const getAllOrders = asyncHandler(async (req, res) => {
-	const doctorId = new ObjectId(req.user.id);
 	const orders = await Order.aggregate([
-		{
-			$match: {
-				doctor: doctorId,
-			},
-		},
 		{
 			$lookup: {
 				from: "userDetails",
@@ -594,12 +583,10 @@ const getAllOrders = asyncHandler(async (req, res) => {
 //@access private (doctor only)
 const getOrderDetails = asyncHandler(async (req, res) => {
 	const orderId = new ObjectId(req.params.id);
-	const doctorId = new ObjectId(req.user.id);
 
 	const order = await Order.aggregate([
 		{
 			$match: {
-				doctor: doctorId,
 				_id: orderId,
 			},
 		},
@@ -887,7 +874,6 @@ const addRecord = asyncHandler(async (req, res) => {
 //@route GET /api/doctor/records
 //@access private (doctor only)
 const getAllRecords = asyncHandler(async (req, res) => {
-	const doctorId = new ObjectId(req.user.id);
 	const records = await EyeRecord.aggregate([
 		{
 			$lookup: {
@@ -895,11 +881,6 @@ const getAllRecords = asyncHandler(async (req, res) => {
 				localField: "patient",
 				foreignField: "_id",
 				as: "userDetails",
-			},
-		},
-		{
-			$match: {
-				doctor: doctorId,
 			},
 		},
 		{
@@ -920,11 +901,9 @@ const getAllRecords = asyncHandler(async (req, res) => {
 //@access private (doctor only)
 const getRecordDetails = asyncHandler(async (req, res) => {
 	const recordId = req.params.id;
-	const doctorId = req.user.id;
 
 	const record = await EyeRecord.findOne({
 		_id: recordId,
-		doctor: doctorId,
 	});
 
 	if (!record) {
@@ -1143,7 +1122,6 @@ const createAppointment = async (req, res) => {
 //@route GET /api/doctor/appointments
 //@access private (doctor only)
 const getAllAppointments = asyncHandler(async (req, res) => {
-	const doctorId = new ObjectId(req.user.id);
 	const appointment = await Appointment.aggregate([
 		{
 			$lookup: {
@@ -1151,11 +1129,6 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 				localField: "patient",
 				foreignField: "_id",
 				as: "userDetails",
-			},
-		},
-		{
-			$match: {
-				doctor: doctorId,
 			},
 		},
 		{
@@ -1171,7 +1144,7 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 		},
 		{
 			$sort: {
-				appointmentDate: 1, // Sort by appointmentDate in ascending order
+				appointmentDate: 1,
 			},
 		},
 	]);
@@ -1194,6 +1167,7 @@ const getPendingAppointments = asyncHandler(async (req, res) => {
 		},
 		{
 			$match: {
+				doctor: null,
 				status: "Pending",
 				appointmentDate: { $gte: currentDate },
 			},
@@ -1267,11 +1241,9 @@ const getScheduledAppointments = asyncHandler(async (req, res) => {
 //@access private (doctor only)
 const getAppointmentDetails = asyncHandler(async (req, res) => {
 	const appointmentId = req.params.id;
-	const doctorId = req.user.id;
 
 	const appointment = await Appointment.findOne({
 		_id: appointmentId,
-		doctor: doctorId,
 	});
 
 	if (!appointment) {

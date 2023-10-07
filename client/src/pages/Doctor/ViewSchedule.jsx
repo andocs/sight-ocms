@@ -58,7 +58,6 @@ function ViewSchedule() {
 	function closeModal() {
 		setIsOpen(false);
 	}
-	console.log(schedule);
 
 	function openModal(scheduleId) {
 		setIsOpen(true);

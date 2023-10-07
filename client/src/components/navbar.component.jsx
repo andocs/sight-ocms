@@ -42,6 +42,7 @@ export default function Navbar() {
 		dispatch(reset());
 		dispatch(logout());
 		navigate("/");
+		window.location.reload();
 	};
 
 	const token = localStorage.getItem("user");

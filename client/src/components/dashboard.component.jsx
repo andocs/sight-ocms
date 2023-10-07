@@ -5,15 +5,16 @@ function DashComponent({ props, headerClick, displayClick, status, table }) {
 
 	useEffect(() => {
 		const wrapper = document.getElementById("status");
-		const header = document.getElementById("header");
-		const headHeight = header.clientHeight;
+		const header =
+			document.getElementById("header") && document.getElementById("header");
+		const headHeight = header && header.clientHeight;
 		const wrapperHeight = wrapper.clientHeight;
 		if (wrapperHeight && headHeight) {
 			setDivHeight(wrapperHeight - headHeight);
+		} else {
+			setDivHeight(wrapperHeight);
 		}
 	}, []);
-
-	console.log(`max-h-[${divHeight}px]`);
 
 	const onHeaderClick = (e) => {
 		e.preventDefault();
@@ -26,7 +27,7 @@ function DashComponent({ props, headerClick, displayClick, status, table }) {
 
 	return (
 		<>
-			<div className="w-full bg-white">
+			<div className="w-full bg-white shadow-sm border-b border-gray-200">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>
 						<p className="font-medium text-5xl">{props.header.title}</p>
@@ -47,7 +48,7 @@ function DashComponent({ props, headerClick, displayClick, status, table }) {
 				className={`xl:w-5/6 w-full p-8 flex flex-col ${props.textcolor} space-y-8 mb-16`}
 			>
 				<div
-					className={`p-8 rounded-md w-full ${props.display.role}bg bg-cover space-y-6 shadow-xl`}
+					className={`p-8 rounded-md w-full ${props.display.role}bg space-y-6 shadow-xl border-gray-200 border`}
 				>
 					<div className="w-full">
 						<p className="font-medium text-2xl">Welcome!</p>
@@ -70,7 +71,7 @@ function DashComponent({ props, headerClick, displayClick, status, table }) {
 					</div>
 				</div>
 
-				<div className="flex flex-row space-x-8 w-full">
+				<div className="flex flex-row space-x-8 w-full text-sky-800">
 					<div className="flex flex-col w-1/2">
 						<div className="w-full mb-4 px-4">
 							<p className="font-medium text-2xl">Status</p>
@@ -82,7 +83,7 @@ function DashComponent({ props, headerClick, displayClick, status, table }) {
 							{status.map((field, fieldIndex) => (
 								<div
 									key={fieldIndex}
-									className="p-6 flex flex-row border border-gray-100 shadow-lg rounded-md bg-white justify-between"
+									className="p-6 flex flex-row border-gray-200 border shadow-lg rounded-md bg-white justify-between"
 								>
 									<div className="flex flex-col w-1/2 justify-center">
 										<div>
@@ -91,7 +92,7 @@ function DashComponent({ props, headerClick, displayClick, status, table }) {
 											</p>
 										</div>
 										<div className="w-auto">
-											<p className="font-medium text-base text-sky-800 word-break">
+											<p className="font-medium text-base text-sky-800 truncate">
 												{field.text}
 											</p>
 										</div>
@@ -108,12 +109,12 @@ function DashComponent({ props, headerClick, displayClick, status, table }) {
 						</div>
 					</div>
 
-					<div>
+					<div className="w-2/3 text-sky-800">
 						<div className="w-full mb-4">
 							<p className="font-medium text-2xl">{table.header}</p>
 						</div>
 
-						<div className="w-full max-w-full overflow-hidden rounded-md shadow-xl">
+						<div className="w-full overflow-hidden rounded-md shadow-xl border-gray-200 border">
 							<div className="bg-white">
 								<table
 									id="header"
@@ -134,27 +135,49 @@ function DashComponent({ props, headerClick, displayClick, status, table }) {
 									</thead>
 								</table>
 							</div>
-							<div
-								style={{ maxHeight: `${divHeight}px` }}
-								className="bg-white overflow-y-auto overflow-x-hidden"
-							>
-								<table className="w-full">
-									<tbody>
-										{table.data.map((item, index) => (
-											<tr key={index}>
-												{table.columns.map((column) => (
-													<td
-														key={column.field}
-														className="min-w-[115px] max-w-[115px]  p-4 text-left"
-													>
-														{item[column.field]}
-													</td>
-												))}
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
+							{table.data.length > 0 ? (
+								<div
+									style={{ maxHeight: `${divHeight}px` }}
+									className="bg-white overflow-y-auto overflow-x-hidden"
+								>
+									<table className="w-full">
+										<tbody>
+											{table.data.map((item, index) => (
+												<tr key={index}>
+													{table.columns.map((column) => (
+														<td
+															key={column.field}
+															className="min-w-[115px] max-w-[115px]  p-4 text-left"
+														>
+															{item[column.field] || "N/A"}
+														</td>
+													))}
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							) : (
+								<>
+									<div
+										className="flex flex-row-reverse justify-evenly items-center bg-white p-8"
+										style={{
+											height: `${divHeight}px`,
+											maxHeight: `${divHeight}px`,
+										}}
+									>
+										<div className="flex flex-col">
+											<div className="text-center text-5xl font-bold z-50">
+												<p>Oops!</p>
+											</div>
+											<div className="text-center text-xl z-50">
+												<p>There is no data to display.</p>
+											</div>
+										</div>
+										<img className="h-full" src="images/nodata.svg" alt="" />
+									</div>
+								</>
+							)}
 						</div>
 					</div>
 				</div>

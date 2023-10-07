@@ -129,6 +129,25 @@ export const deleteSchedule = createAsyncThunk(
 	}
 );
 
+// Get all schedule records
+export const getDoctorSchedule = createAsyncThunk(
+	"schedule/getDoctorSchedule",
+	async (_, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			return await scheduleService.getDoctorSchedule(token);
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
 const scheduleSlice = createSlice({
 	name: "schedule",
 	initialState,
@@ -237,6 +256,20 @@ const scheduleSlice = createSlice({
 				state.isError = true;
 				state.isSuccess = false;
 				state.message = action.payload;
+			})
+			.addCase(getDoctorSchedule.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(getDoctorSchedule.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.schedule = action.payload;
+			})
+			.addCase(getDoctorSchedule.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.message = action.payload;
+				state.schedule = null;
 			});
 	},
 });

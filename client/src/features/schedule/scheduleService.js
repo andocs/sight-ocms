@@ -74,6 +74,18 @@ const deleteSchedule = async (scheduleId, token) => {
 	return res.data;
 };
 
+// Get all schedule records
+const getDoctorSchedule = async (token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/patient/schedule`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
 const getUserRole = (token) => {
 	const decodedToken = jwt_decode(token);
 	const userRole = decodedToken.user.role;
@@ -87,6 +99,7 @@ const scheduleService = {
 	getScheduleDetails,
 	editSchedule,
 	deleteSchedule,
+	getDoctorSchedule,
 };
 
 export default scheduleService;

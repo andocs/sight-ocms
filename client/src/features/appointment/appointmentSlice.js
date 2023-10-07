@@ -4,7 +4,7 @@ import appointmentService from "./appointmentService";
 const initialState = {
 	newAppointment: null,
 	appointmentUpdate: null,
-	appointment: null,
+	appointment: [],
 	isLoading: false,
 	isError: false,
 	isSuccess: false,

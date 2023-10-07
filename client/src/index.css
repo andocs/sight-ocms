@@ -100,5 +100,88 @@ tbody{
 
 .adminbg{
     background-image: url("../images/admin.jpg");
-    object-fit: cover;
+    background-size: cover;
 }
+
+.doctorbg{
+    background-image: url("../images/doctor.jpg");
+    background-size: 65%;
+    background-color: rgb(232,237,240);
+    background-repeat: no-repeat;
+    background-position: 80%    
+}
+
+.technicianbg{
+    background-image: url("../images/technician.jpg");
+    background-size: 65%;
+    background-color: rgb(196,216,215);
+    background-repeat: no-repeat;
+    background-position: right   
+}
+
+.patientbg{
+    background-image: url("../images/patient.jpg");
+    background-size: 70%;
+    background-color: rgb(101,171,230);
+    background-repeat: no-repeat;
+    background-position: 90%   
+}
+
+.doc1{
+    background-image: url("../images/doc1.jpg");
+    background-size: cover;
+    background-position: center;
+}
+.doc2{
+    background-image: url("../images/doc2.jpg");
+    background-size: cover;
+    background-position: center;
+}
+.doc3{
+    background-image: url("../images/doc3.jpg");
+    background-size: cover;
+    background-position: 37%;
+}
+
+/* Add this CSS to your stylesheet or a separate CSS file */
+
+/* Apply perspective to create a 3D effect */
+.card-container {
+  perspective: 1000px;
+}
+
+/* The card div with flip animation */
+.card {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+
+/* Front side of the card */
+.card-front {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+
+}
+
+/* Back side of the card */
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+
+}
+
+/* Apply this class to the card when flipped */
+.card.flip {
+  transform: rotateY(180deg);
+}
+
+
+
+

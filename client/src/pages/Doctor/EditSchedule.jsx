@@ -216,7 +216,7 @@ function EditSchedule() {
 			<ReusableForm
 				key={scheduleUpdate ? scheduleUpdate._id : "default"}
 				header={{
-					title: "Edit Visit Record",
+					title: "Edit Doctor Schedule",
 					buttontext: "Update Record",
 				}}
 				fields={formGroups}

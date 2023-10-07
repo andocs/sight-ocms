@@ -4,6 +4,8 @@ const AuditLog = require("../models/auditLogModel");
 const EyeRecord = require("../models/eyeRecordsModel");
 const Order = require("../models/orderModel");
 const Appointment = require("../models/appointmentModel");
+const User = require("../models/userModel");
+const Schedule = require("../models/scheduleModel");
 
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
@@ -260,7 +262,10 @@ const getOrderDetails = asyncHandler(async (req, res) => {
 //@access private (patient only)
 const scheduleAppointment = async (req, res) => {
 	const patientId = req.user.id;
-	const { appointmentDate, appointmentStart, appointmentEnd } = req.body;
+	const { doctor, appointmentDate, appointmentStart, appointmentEnd } =
+		req.body;
+
+	console.log(req.body);
 
 	if (!appointmentDate || !appointmentStart || !appointmentEnd) {
 		return res
@@ -268,21 +273,23 @@ const scheduleAppointment = async (req, res) => {
 			.json({ message: "Please fill in all the required fields!" });
 	}
 
+	const appointmentData = {
+		patient: patientId,
+		appointmentDate,
+		appointmentStart,
+		appointmentEnd,
+	};
+	if (doctor) {
+		appointmentData.doctor = doctor;
+	}
+
 	const session = await Appointment.startSession(sessionOptions);
 	try {
 		session.startTransaction();
 
-		const appointment = await Appointment.create(
-			[
-				{
-					patient: patientId,
-					appointmentDate,
-					appointmentStart,
-					appointmentEnd,
-				},
-			],
-			{ session }
-		);
+		const appointment = await Appointment.create([appointmentData], {
+			session,
+		});
 
 		await AuditLog.create(
 			[
@@ -420,6 +427,72 @@ const getAppointmentDetails = asyncHandler(async (req, res) => {
 	res.json(appointment);
 });
 
+/**
+##### STAFF (READ ONLY) #####
+**/
+
+//@desc GET LIST OF ALL STAFF
+//@route GET /api/patient/doctor
+//@access private (patient only)
+const getDoctorList = asyncHandler(async (req, res) => {
+	const staff = await User.find({ role: "doctor" });
+	res.json(staff);
+});
+
+//@desc GET LIST OF DOCTOR'S SCHEDULE
+//@route GET /api/patient/schedule
+//@access private (patient only)
+const getDoctorSchedule = asyncHandler(async (req, res) => {
+	const allSchedules = await Schedule.find();
+
+	const schedulesByDoctor = {};
+
+	for (const schedules of allSchedules) {
+		const doctorId = schedules.doctor;
+		if (!schedulesByDoctor[doctorId]) {
+			schedulesByDoctor[doctorId] = {
+				id: doctorId,
+				name: "",
+				email: "",
+				contact: "",
+				schedule: [],
+			};
+		}
+		const userDetails = await User.findOne({ _id: doctorId });
+		if (userDetails) {
+			const { personalInfo } = userDetails;
+			schedulesByDoctor[
+				doctorId
+			].name = `${personalInfo.fname} ${personalInfo.lname}`;
+			schedulesByDoctor[doctorId].contact = `${personalInfo.contact}`;
+			schedulesByDoctor[doctorId].email = userDetails.email;
+		}
+
+		schedulesByDoctor[doctorId].schedule.push(schedules);
+	}
+
+	const schedule = Object.values(schedulesByDoctor);
+
+	for (const doctorSchedule of schedule) {
+		const daysOfWeek = [
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
+			"Sunday",
+		];
+		doctorSchedule.schedule.sort((a, b) => {
+			const dayA = daysOfWeek.indexOf(a.dayOfWeek);
+			const dayB = daysOfWeek.indexOf(b.dayOfWeek);
+			return dayA - dayB;
+		});
+	}
+
+	res.json(schedule);
+});
+
 module.exports = {
 	getRecords,
 	getRecordDetails,
@@ -431,4 +504,7 @@ module.exports = {
 	getAllAppointments,
 	getPendingAppointments,
 	getAppointmentDetails,
+
+	getDoctorList,
+	getDoctorSchedule,
 };

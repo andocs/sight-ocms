@@ -12,6 +12,9 @@ const {
 	getAllAppointments,
 	getPendingAppointments,
 	getAppointmentDetails,
+
+	getDoctorList,
+	getDoctorSchedule,
 } = require("../controllers/patientController");
 
 const validateToken = require("../middleware/validateTokenHandler");
@@ -30,5 +33,8 @@ router.route("/appointments").post(scheduleAppointment).get(getAllAppointments);
 router.route("/appointments/:id").get(getAppointmentDetails);
 
 router.route("/pending").get(getPendingAppointments);
+
+router.route("/doctor").get(getDoctorList);
+router.route("/schedule").get(getDoctorSchedule);
 
 module.exports = router;
