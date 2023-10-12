@@ -1,9 +1,9 @@
 import { Fragment, useState } from "react";
 
-const ReusableTable = ({ data, columns, actions }) => {
+const ReusableTable = ({ data, columns, actions, initialFilters = [] }) => {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
-	const rowsPerPage = 6; // Number of rows to display per page
+	const rowsPerPage = 6;
 
 	const startIndex = (currentPage - 1) * rowsPerPage;
 	const endIndex = startIndex + rowsPerPage;

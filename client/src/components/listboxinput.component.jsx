@@ -2,7 +2,7 @@ import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
 import { Fragment, useState } from "react";
 
-function ListBoxInput({ options, initialValue, onChange }) {
+function ListBoxInput({ options, initialValue, onChange, disabled }) {
 	const [selectedValue, setSelectedValue] = useState(initialValue);
 
 	const handleValueChange = (newValue) => {
@@ -26,45 +26,48 @@ function ListBoxInput({ options, initialValue, onChange }) {
 					</Listbox.Button>
 				</div>
 				{/* Listbox options */}
-				<div className="w-full relative">
-					<Transition
-						as={Fragment}
-						leave="transition ease-in duration-100"
-						leaveFrom="opacity-100"
-						leaveTo="opacity-0"
-					>
-						<Listbox.Options className="absolute bg-white w-full shadow-lg max-h-60 z-50 overflow-auto rounded-b-xl">
-							{options.map((option, i) => (
-								<Listbox.Option
-									key={i}
-									value={option}
-									className={({ active }) =>
-										`relative cursor-default select-none py-2 pl-10 pr-4 ${
-											active ? "bg-sky-100 text-sky-800" : "text-sky-900"
-										}`
-									}
-								>
-									{({ selected }) => (
-										<>
-											<span
-												className={`block truncate ${
-													selected ? "font-medium" : "font-normal"
-												}`}
-											>
-												{option}
-											</span>
-											{selected ? (
-												<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sky-700">
-													<CheckIcon className="h-5 w-5" aria-hidden="true" />
+				{!disabled && (
+					<div className="w-full relative">
+						<Transition
+							as={Fragment}
+							leave="transition ease-in duration-100"
+							leaveFrom="opacity-100"
+							leaveTo="opacity-0"
+						>
+							<Listbox.Options className="absolute bg-white w-full shadow-lg max-h-60 z-50 overflow-auto rounded-b-xl">
+								{options.map((option, i) => (
+									<Listbox.Option
+										key={i}
+										value={option}
+										disabled={disabled}
+										className={({ active }) =>
+											`relative cursor-default select-none py-2 pl-10 pr-4 ${
+												active ? "bg-sky-100 text-sky-800" : "text-sky-900"
+											}`
+										}
+									>
+										{({ selected }) => (
+											<>
+												<span
+													className={`block truncate ${
+														selected ? "font-medium" : "font-normal"
+													}`}
+												>
+													{option}
 												</span>
-											) : null}
-										</>
-									)}
-								</Listbox.Option>
-							))}
-						</Listbox.Options>
-					</Transition>
-				</div>
+												{selected ? (
+													<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sky-700">
+														<CheckIcon className="h-5 w-5" aria-hidden="true" />
+													</span>
+												) : null}
+											</>
+										)}
+									</Listbox.Option>
+								))}
+							</Listbox.Options>
+						</Transition>
+					</div>
+				)}
 			</Listbox>
 		</div>
 	);

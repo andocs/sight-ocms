@@ -62,6 +62,18 @@ const getScheduledAppointments = async (token) => {
 	return res.data;
 };
 
+// Get all confirmed appointments
+const getConfirmedAppointments = async (token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/confirmed`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
 // Get appointment record details
 const getAppointmentDetails = async (appointmentId, token) => {
 	const config = {
@@ -110,6 +122,7 @@ const appointmentService = {
 	getAppointmentList,
 	getPendingAppointments,
 	getScheduledAppointments,
+	getConfirmedAppointments,
 	getAppointmentDetails,
 	editAppointment,
 	deleteAppointment,

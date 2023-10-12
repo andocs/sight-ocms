@@ -26,6 +26,7 @@ function getReducerByUserRole() {
 			record: recordReducer,
 			inventory: inventoryReducer,
 			maintenance: maintenanceReducer,
+			patient: patientReducer,
 		};
 	}
 
@@ -69,6 +70,14 @@ function getReducerByUserRole() {
 			order: orderReducer,
 			appointment: appointmentReducer,
 			schedule: scheduleReducer,
+		};
+	} else if (userRole === "staff") {
+		return {
+			auth: authReducer,
+			audit: auditReducer,
+			appointment: appointmentReducer,
+			patient: patientReducer,
+			visit: visitReducer,
 		};
 	}
 }

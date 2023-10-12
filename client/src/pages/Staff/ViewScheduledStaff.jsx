@@ -3,13 +3,11 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
 import {
-	getPendingAppointments,
+	getScheduledAppointments,
 	editAppointment,
 	reset,
 	clear,
 } from "../../features/appointment/appointmentSlice";
-
-import { getScheduleList } from "../../features/schedule/scheduleSlice";
 
 import Spinner from "../../components/spinner.component";
 import AcceptConfirmation from "../../components/acceptconfirmation.component";
@@ -17,22 +15,16 @@ import ViewModal from "../../components/viewmodal.component";
 
 import Table from "../../components/table.component";
 
-function ViewPending() {
-	let [isOpen, setIsOpen] = useState(false);
-	let [isViewOpen, setViewOpen] = useState(false);
+function ViewScheduledStaff() {
+	const [isOpen, setIsOpen] = useState(false);
+	const [isViewOpen, setViewOpen] = useState(false);
 	const [appointmentId, setAppointmentId] = useState("");
 	const [appointmentData, setAppointmentData] = useState("");
 
 	const dispatch = useDispatch();
-	const { pending, isLoading, isSuccess, isError, message } = useSelector(
+	const { scheduled, isLoading, isSuccess, isError, message } = useSelector(
 		(state) => state.appointment
 	);
-
-	const { schedule } = useSelector((state) => state.schedule);
-
-	useEffect(() => {
-		dispatch(getScheduleList());
-	}, [dispatch]);
 
 	useEffect(() => {
 		if (isError) {
@@ -41,7 +33,7 @@ function ViewPending() {
 		if (isSuccess && message !== "") {
 			toast.success(message);
 		}
-		dispatch(getPendingAppointments());
+		dispatch(getScheduledAppointments());
 
 		return () => {
 			dispatch(reset());
@@ -70,61 +62,11 @@ function ViewPending() {
 		setAppointmentId(appointment._id);
 	}
 
-	function checkScheduleConflict(schedule, appointment) {
-		let hasConflict = false;
-		const appointmentDate = new Date(appointment.appointmentDate);
-
-		const appointmentDayOfWeek = appointmentDate.toLocaleDateString("en-US", {
-			weekday: "long",
-		});
-
-		// Find the doctor's schedule for the appointment day of the week
-		const doctorSchedule = schedule.find(
-			(day) => day.dayOfWeek === appointmentDayOfWeek
-		);
-
-		if (!doctorSchedule) {
-			return (hasConflict = true);
-		}
-
-		const doctorStartTime = new Date("01/01/2000 " + doctorSchedule.startTime);
-		const doctorEndTime = new Date("01/01/2000 " + doctorSchedule.endTime);
-		const lunchBreakStart = new Date(
-			"01/01/2000 " + doctorSchedule.lunchBreakStart
-		);
-		const lunchBreakEnd = new Date(
-			"01/01/2000 " + doctorSchedule.lunchBreakEnd
-		);
-		const appointmentStartTime = new Date(
-			"01/01/2000 " + appointment.appointmentStart
-		);
-		const appointmentEndTime = new Date(
-			"01/01/2000 " + appointment.appointmentEnd
-		);
-		console.log(appointmentEndTime, lunchBreakEnd);
-
-		if (
-			appointmentStartTime < doctorStartTime ||
-			appointmentEndTime > doctorEndTime ||
-			(appointmentStartTime >= lunchBreakStart &&
-				appointmentEndTime <= lunchBreakEnd)
-		) {
-			return (hasConflict = true);
-		}
-
-		return null;
-	}
-
-	function checkConfirmation() {
-		const hasConflict = checkScheduleConflict(schedule, appointmentData);
-		if (!hasConflict) {
-			const appointmentData = { status: "Scheduled" };
-			dispatch(editAppointment({ appointmentId, appointmentData }));
-			if (isSuccess && message) {
-				toast.message(message);
-			}
-		} else {
-			toast.error("Can't accept due to schedule conflicts!");
+	function updateConfirmation() {
+		const appointmentData = { status: "Confirmed" };
+		dispatch(editAppointment({ appointmentId, appointmentData }));
+		if (isSuccess && message) {
+			toast.message(message);
 		}
 
 		setIsOpen(false);
@@ -149,7 +91,7 @@ function ViewPending() {
 			},
 		},
 		{
-			label: "Accept",
+			label: "Confirm",
 			handler: (details) => {
 				openModal(details);
 			},
@@ -169,23 +111,23 @@ function ViewPending() {
 			)}
 
 			<AcceptConfirmation
-				text={"Accept"}
+				text={"Confirm"}
 				isOpen={isOpen}
 				closeModal={closeModal}
-				onConfirm={checkConfirmation}
+				onConfirm={updateConfirmation}
 			/>
 
 			<div className="w-full bg-white bappointment-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>
-						<p className="font-medium text-5xl">View Pending Appointments</p>
+						<p className="font-medium text-5xl">View Scheduled Appointments</p>
 					</div>
 				</div>
 			</div>
 			<div className="p-8">
 				<div className="xl:w-5/6 flex flex-row">
-					{pending && (
-						<Table data={pending} columns={columns} actions={actions} />
+					{scheduled && (
+						<Table data={scheduled} columns={columns} actions={actions} />
 					)}
 				</div>
 			</div>
@@ -193,4 +135,4 @@ function ViewPending() {
 	);
 }
 
-export default ViewPending;
+export default ViewScheduledStaff;

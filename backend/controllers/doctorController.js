@@ -167,6 +167,201 @@ const getPatientDetails = asyncHandler(async (req, res) => {
 	res.json(patient);
 });
 
+//@desc GET PATIENT HISTORY
+//@route GET /api/doctor/patient/history/:id
+//@access Private (doctor only)
+const getPatientHistory = asyncHandler(async (req, res) => {
+	const patientId = new ObjectId(req.params.id);
+	const patient = await User.findById(patientId);
+	if (!patient) {
+		return res.status(404).json({ message: "User not found." });
+	}
+	const history = [];
+	history.push({ patient });
+	const visit = await Visit.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "doctor",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				patient: patientId,
+			},
+		},
+		{
+			$project: {
+				visitDate: 1,
+				patientType: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				visitType: 1,
+				reason: 1,
+				additionalInfo: 1,
+			},
+		},
+		{
+			$sort: {
+				visitDate: -1,
+			},
+		},
+	]);
+	history.push({ visit });
+
+	const order = await Order.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "doctor",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "technician",
+				foreignField: "_id",
+				as: "techDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "lens",
+				foreignField: "_id",
+				as: "lensDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "frame",
+				foreignField: "_id",
+				as: "frameDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "otherItems.item",
+				foreignField: "_id",
+				as: "itemDetails",
+			},
+		},
+		{
+			$match: {
+				patient: patientId,
+			},
+		},
+
+		{
+			$project: {
+				orderTime: 1,
+				status: 1,
+				amount: 1,
+				doctorLastName: {
+					$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
+				},
+				doctorFirstName: {
+					$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
+				},
+				technicianLastName: {
+					$arrayElemAt: ["$techDetails.personalInfo.lname", 0],
+				},
+				technicianFirstName: {
+					$arrayElemAt: ["$techDetails.personalInfo.fname", 0],
+				},
+				lens: 1,
+				lensName: { $arrayElemAt: ["$lensDetails.itemName", 0] },
+				lensPrice: 1,
+				lensQuantity: 1,
+				frame: 1,
+				frameName: { $arrayElemAt: ["$frameDetails.itemName", 0] },
+				framePrice: 1,
+				frameQuantity: 1,
+				otherItems: 1,
+			},
+		},
+		{
+			$sort: {
+				orderTime: -1,
+			},
+		},
+	]);
+	history.push({ order });
+
+	const record = await EyeRecord.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "doctor",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				patient: patientId,
+			},
+		},
+
+		{
+			$project: {
+				createdAt: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				rightEye: 1,
+				leftEye: 1,
+			},
+		},
+		{
+			$sort: {
+				createdAt: -1,
+			},
+		},
+	]);
+	history.push({ record });
+
+	const appointments = await Appointment.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "doctor",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				patient: patientId,
+			},
+		},
+		{
+			$project: {
+				appointmentDate: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				appointmentStart: 1,
+				appointmentEnd: 1,
+				notes: 1,
+				status: 1,
+			},
+		},
+		{
+			$sort: {
+				appointmentDate: -1,
+			},
+		},
+	]);
+	history.push({ appointments });
+
+	res.json(history);
+});
+
 /**
 ##### VISIT (CRUD) #####
 **/
@@ -257,8 +452,6 @@ const createVisit = asyncHandler(async (req, res) => {
 //@route GET /api/doctor/visit
 //@access private (doctor only)
 const getVisitList = asyncHandler(async (req, res) => {
-	const doctorId = new ObjectId(req.user.id);
-
 	const visits = await Visit.aggregate([
 		{
 			$lookup: {
@@ -277,6 +470,11 @@ const getVisitList = asyncHandler(async (req, res) => {
 				visitType: 1,
 				reason: 1,
 				additionalInfo: 1,
+			},
+		},
+		{
+			$sort: {
+				visitDate: -1,
 			},
 		},
 	]);
@@ -555,7 +753,6 @@ const getAllOrders = asyncHandler(async (req, res) => {
 				as: "itemDetails",
 			},
 		},
-
 		{
 			$project: {
 				orderTime: 1,
@@ -574,6 +771,11 @@ const getAllOrders = asyncHandler(async (req, res) => {
 				otherItems: 1,
 			},
 		},
+		{
+			$sort: {
+				orderTime: -1,
+			},
+		},
 	]);
 	res.json(orders);
 });
@@ -583,7 +785,6 @@ const getAllOrders = asyncHandler(async (req, res) => {
 //@access private (doctor only)
 const getOrderDetails = asyncHandler(async (req, res) => {
 	const orderId = new ObjectId(req.params.id);
-
 	const order = await Order.aggregate([
 		{
 			$match: {
@@ -892,6 +1093,11 @@ const getAllRecords = asyncHandler(async (req, res) => {
 				leftEye: 1,
 			},
 		},
+		{
+			$sort: {
+				createdAt: -1,
+			},
+		},
 	]);
 	res.json(records);
 });
@@ -1144,7 +1350,7 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 		},
 		{
 			$sort: {
-				appointmentDate: 1,
+				appointmentDate: -1,
 			},
 		},
 	]);
@@ -1185,7 +1391,7 @@ const getPendingAppointments = asyncHandler(async (req, res) => {
 		},
 		{
 			$sort: {
-				appointmentDate: 1, // Sort by appointmentDate in ascending order
+				appointmentDate: -1,
 			},
 		},
 	]);
@@ -1229,7 +1435,51 @@ const getScheduledAppointments = asyncHandler(async (req, res) => {
 		},
 		{
 			$sort: {
+				appointmentDate: -1,
+			},
+		},
+	]);
+	res.json(appointment);
+});
+
+//@desc GET LIST OF DOCTOR'S CONFIRMED APPOINTMENTS
+//@route GET /api/doctor/scheduled
+//@access private (doctor only)
+const getConfirmedAppointments = asyncHandler(async (req, res) => {
+	const doctorId = new ObjectId(req.user.id);
+	const currentDate = new Date();
+	const appointment = await Appointment.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				doctor: doctorId,
+				status: "Confirmed",
+				appointmentDate: {
+					$gte: currentDate,
+				},
+			},
+		},
+		{
+			$project: {
 				appointmentDate: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				appointmentStart: 1,
+				appointmentEnd: 1,
+				notes: 1,
+				status: 1,
+			},
+		},
+		{
+			$sort: {
+				appointmentDate: -1,
 			},
 		},
 	]);
@@ -1684,10 +1934,15 @@ const getInventoryList = asyncHandler(async (req, res) => {
 	res.json(inventoryList);
 });
 
+/**
+##### REPAIR (CRUD) #####
+**/
+
 module.exports = {
 	createPatient,
 	getAllPatients,
 	getPatientDetails,
+	getPatientHistory,
 
 	createVisit,
 	getVisitList,
@@ -1711,6 +1966,7 @@ module.exports = {
 	getAllAppointments,
 	getPendingAppointments,
 	getScheduledAppointments,
+	getConfirmedAppointments,
 	getAppointmentDetails,
 	updateAppointment,
 	deleteAppointment,

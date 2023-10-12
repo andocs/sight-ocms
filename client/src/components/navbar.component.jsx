@@ -75,6 +75,7 @@ export default function Navbar() {
 		"/patient",
 		"/doctor",
 		"/technician",
+		"/staff",
 	].some((route) => location.pathname.startsWith(route));
 
 	return (

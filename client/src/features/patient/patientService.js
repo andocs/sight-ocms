@@ -1,5 +1,7 @@
 import axios from "axios";
-const BASE_URL = "http://localhost:5001/api/doctor";
+import jwt_decode from "jwt-decode";
+
+const BASE_URL = "http://localhost:5001/api";
 
 // Create patient record
 const createPatientRecord = async (patientData, token) => {
@@ -8,7 +10,7 @@ const createPatientRecord = async (patientData, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/patient`;
+	const url = `${BASE_URL}/${getUserRole(token)}/patient`;
 	const res = await axios.post(url, patientData, config);
 	return res.data;
 };
@@ -20,7 +22,7 @@ const getPatientList = async (token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/patient`;
+	const url = `${BASE_URL}/${getUserRole(token)}/patient`;
 	const res = await axios.get(url, config);
 	return res.data;
 };
@@ -32,15 +34,34 @@ const getPatientDetails = async (patientId, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
-	const url = `${BASE_URL}/${patientId}`;
+	const url = `${BASE_URL}/${getUserRole(token)}/patient/${patientId}`;
 	const res = await axios.get(url, config);
 	return res.data;
+};
+
+// Get patient history
+const getPatientHistory = async (patientId, token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/patient/history/${patientId}`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
+const getUserRole = (token) => {
+	const decodedToken = jwt_decode(token);
+	const userRole = decodedToken.user.role;
+	return userRole;
 };
 
 const patientService = {
 	createPatientRecord,
 	getPatientList,
 	getPatientDetails,
+	getPatientHistory,
 };
 
 export default patientService;

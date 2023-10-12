@@ -5,6 +5,7 @@ const {
 	createPatient,
 	getAllPatients,
 	getPatientDetails,
+	getPatientHistory,
 
 	createVisit,
 	getVisitList,
@@ -28,6 +29,7 @@ const {
 	getAllAppointments,
 	getPendingAppointments,
 	getScheduledAppointments,
+	getConfirmedAppointments,
 	getAppointmentDetails,
 	updateAppointment,
 	deleteAppointment,
@@ -49,6 +51,7 @@ router.use(restrictToDoctor);
 
 router.route("/patient").post(createPatient).get(getAllPatients);
 router.route("/patient/:id").get(getPatientDetails);
+router.route("/patient/history/:id").get(getPatientHistory);
 
 router.route("/visit").get(getVisitList);
 
@@ -81,6 +84,7 @@ router.route("/appointments").get(getAllAppointments);
 
 router.route("/pending").get(getPendingAppointments);
 router.route("/scheduled").get(getScheduledAppointments);
+router.route("/confirmed").get(getConfirmedAppointments);
 
 router
 	.route("/appointments/:id")

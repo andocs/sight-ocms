@@ -127,6 +127,14 @@ tbody{
     background-position: 90%   
 }
 
+.staffbg{
+    background-image: url("../images/staff.jpg");
+    background-size: 65%;
+    background-color: rgb(225,229,232);
+    background-repeat: no-repeat;
+    background-position: right   
+}
+
 .doc1{
     background-image: url("../images/doc1.jpg");
     background-size: cover;

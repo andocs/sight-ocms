@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
 		},
 		role: {
 			type: String,
-			enum: ["admin", "patient", "doctor", "technician"],
+			enum: ["admin", "patient", "doctor", "technician", "staff"],
 			default: "patient",
 		},
 		isPersonalInfoComplete: {

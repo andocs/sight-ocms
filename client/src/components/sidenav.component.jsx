@@ -2,6 +2,7 @@ import AdminNav from "./adminnav.component";
 import PatientNav from "./patientnav.component";
 import DoctorNav from "./doctornav.component";
 import TechnicianNav from "./techniciannav.component";
+import StaffNav from "./staffnav.component";
 import decode from "jwt-decode";
 
 function Sidenav() {
@@ -26,6 +27,7 @@ function Sidenav() {
 						{role === "patient" && <PatientNav />}
 						{role === "doctor" && <DoctorNav />}
 						{role === "technician" && <TechnicianNav />}
+						{role === "staff" && <StaffNav />}
 					</div>
 
 					<div className="border-t">

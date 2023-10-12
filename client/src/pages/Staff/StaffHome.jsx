@@ -4,19 +4,20 @@ import { useDispatch, useSelector } from "react-redux";
 
 import {
 	getPendingAppointments,
+	getScheduledAppointments,
 	getConfirmedAppointments,
 	reset,
 	clear,
 } from "../../features/appointment/appointmentSlice";
-import { getOrderList } from "../../features/order/orderSlice";
-import { getEyeRecords } from "../../features/record/recordSlice";
+
+import { getPatientList } from "../../features/patient/patientSlice";
 
 import decode from "jwt-decode";
 import DashComponent from "../../components/dashboard.component";
 import Spinner from "../../components/spinner.component";
 
 const text =
-	"Hey there, doctor! Welcome to your dashboard. All you need to manage your patients and their records can be found here.";
+	"Greetings! Welcome to your dashboard. All you need to manage patients and appointments can be found here.";
 
 const pendingsvg = (
 	<svg
@@ -31,6 +32,23 @@ const pendingsvg = (
 			strokeLinecap="round"
 			strokeLinejoin="round"
 			d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+		/>
+	</svg>
+);
+
+const scheduledsvg = (
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		fill="none"
+		viewBox="0 0 24 24"
+		strokeWidth={2}
+		stroke="currentColor"
+		className="w-6 h-6"
+	>
+		<path
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
 		/>
 	</svg>
 );
@@ -52,7 +70,7 @@ const appointmentsvg = (
 	</svg>
 );
 
-const ordersvg = (
+const patientsvg = (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
 		fill="none"
@@ -64,51 +82,28 @@ const ordersvg = (
 		<path
 			strokeLinecap="round"
 			strokeLinejoin="round"
-			d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"
+			d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
 		/>
 	</svg>
 );
 
-const recordsvg = (
-	<svg
-		xmlns="http://www.w3.org/2000/svg"
-		fill="none"
-		viewBox="0 0 24 24"
-		strokeWidth={2}
-		stroke="currentColor"
-		className="w-6 h-6"
-	>
-		<path
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
-		/>
-		<path
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-		/>
-	</svg>
-);
-
-function DoctorHome() {
+function StaffHome() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 
-	const { pending, confirmed, isLoading } = useSelector(
+	const { pending, confirmed, scheduled, isLoading } = useSelector(
 		(state) => state.appointment
 	);
-	const { order } = useSelector((state) => state.order);
-	const { record } = useSelector((state) => state.record);
+	const { patient } = useSelector((state) => state.patient);
 
 	const token = localStorage.getItem("user");
 
 	const decodedToken = decode(token);
-	const name = decodedToken.user.name;
 	const role = decodedToken.user.role;
+	const name = decodedToken.user.name;
 
 	const onHeaderClick = () => {
-		navigate("/doctor/add-record");
+		navigate("/staff/view-confirmed");
 	};
 	const onDisplayClick = () => {
 		navigate("/doctor/view-appointments");
@@ -117,7 +112,7 @@ function DoctorHome() {
 	const header = {
 		title: "Dashboard",
 		color: "blue",
-		button: "Add Records",
+		button: "View Confirmed Appointments",
 	};
 
 	const display = {
@@ -130,26 +125,33 @@ function DoctorHome() {
 		textcolor: "text-sky-800",
 		header,
 		display,
-		username: `Dr. ${name}`,
+		username: name,
 		text,
 	};
 
 	useEffect(() => {
 		dispatch(getPendingAppointments());
+
 		dispatch(getConfirmedAppointments());
-		dispatch(getEyeRecords());
-		dispatch(getOrderList());
+
+		dispatch(getScheduledAppointments());
+
+		dispatch(getPatientList());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
 		};
 	}, [dispatch]);
 
+	if (isLoading) {
+		return <Spinner />;
+	}
+
 	const status = [
 		{
-			number: Object.keys(pending).length,
-			text: "Pending Appointments",
-			svg: pendingsvg,
+			number: Object.keys(patient).length,
+			text: "Registered Patients",
+			svg: patientsvg,
 		},
 		{
 			number: confirmed.filter((date) => date.appointmentDate === new Date())
@@ -158,20 +160,16 @@ function DoctorHome() {
 			svg: appointmentsvg,
 		},
 		{
-			number: order.filter((status) => status.status === "In Progress").length,
-			text: "Orders In Progress",
-			svg: ordersvg,
+			number: Object.keys(pending).length,
+			text: "Pending Appointments",
+			svg: pendingsvg,
 		},
 		{
-			number: Object.keys(record).length,
-			text: "Total Eye Records",
-			svg: recordsvg,
+			number: Object.keys(scheduled).length,
+			text: "Scheduled Appointments",
+			svg: scheduledsvg,
 		},
 	];
-
-	if (isLoading) {
-		return <Spinner />;
-	}
 
 	const columns = [
 		{ header: "Start Time", field: `appointmentStart` },
@@ -189,7 +187,7 @@ function DoctorHome() {
 
 	return (
 		<>
-			{confirmed && record && order && (
+			{pending && confirmed && scheduled && (
 				<DashComponent
 					props={props}
 					status={status}
@@ -202,4 +200,4 @@ function DoctorHome() {
 	);
 }
 
-export default DoctorHome;
+export default StaffHome;

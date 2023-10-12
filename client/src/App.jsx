@@ -61,6 +61,8 @@ import EditRecord from "./pages/Doctor/EditRecord";
 import EditOrders from "./pages/Doctor/EditOrders";
 import EditAppointment from "./pages/Doctor/EditAppointment";
 import EditSchedule from "./pages/Doctor/EditSchedule";
+import ViewPatients from "./pages/Doctor/ViewPatients";
+import ViewPatientHistory from "./pages/Doctor/ViewPatientHistory";
 
 //TECHNICIAN
 import ViewPendingOrders from "./pages/Technician/ViewPendingOrders";
@@ -70,6 +72,15 @@ import CreateMaintenanceRequest from "./pages/Technician/CreateMaintenanceReques
 import ViewTechInventory from "./pages/Technician/ViewTechInventory";
 import EditRequest from "./pages/Technician/EditRequest";
 import TechItemDetails from "./pages/Technician/ItemDetails";
+
+//STAFF
+import StaffDashboard from "./pages/Staff/StaffDashboard";
+import ViewPatientStaff from "./pages/Staff/ViewPatientStaff";
+import ViewPatientHistoryStaff from "./pages/Staff/ViewPatientHistoryStaff";
+import ViewVisitStaff from "./pages/Staff/ViewVisitStaff";
+import ViewScheduledStaff from "./pages/Staff/ViewScheduledStaff";
+import ViewConfirmedStaff from "./pages/Staff/ViewConfirmedStaff";
+import ViewAppointmentStaff from "./pages/Staff/ViewAppointmentStaff";
 
 function App() {
 	return (
@@ -139,6 +150,11 @@ function App() {
 						<Route path="view-pending" element={<ViewPending />} />
 						<Route path="edit-schedule/:id" element={<EditSchedule />} />
 						<Route path="add-patient" element={<AddPatient />} />
+						<Route path="view-patients" element={<ViewPatients />} />
+						<Route
+							path="view-patient-history/:id"
+							element={<ViewPatientHistory />}
+						/>
 					</Route>
 
 					<Route path="/technician" element={<TechnicianDashboard />}>
@@ -149,6 +165,21 @@ function App() {
 						<Route path="edit-request/:id" element={<EditRequest />} />
 						<Route path="view-inventory" element={<ViewTechInventory />} />
 						<Route path="item-details" element={<TechItemDetails />} />
+					</Route>
+
+					<Route path="/staff" element={<StaffDashboard />}>
+						<Route path="view-patients" element={<ViewPatientStaff />} />
+						<Route
+							path="view-patient-history/:id"
+							element={<ViewPatientHistoryStaff />}
+						/>
+						<Route path="view-visits" element={<ViewVisitStaff />} />
+						<Route path="view-scheduled" element={<ViewScheduledStaff />} />
+						<Route path="view-confirmed" element={<ViewConfirmedStaff />} />
+						<Route
+							path="view-appointments"
+							element={<ViewAppointmentStaff />}
+						/>
 					</Route>
 				</Routes>
 			</BrowserRouter>

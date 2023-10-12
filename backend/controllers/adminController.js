@@ -173,7 +173,9 @@ const registerStaff = asyncHandler(async (req, res) => {
 //@route GET /api/admin/staff
 //@access private (admin only)
 const getStaffList = asyncHandler(async (req, res) => {
-	const staff = await User.find({ role: { $in: ["doctor", "technician"] } });
+	const staff = await User.find({
+		role: { $in: ["doctor", "technician", "staff"] },
+	});
 	if (staff.length === 0) {
 		res.json({ message: "No staff currently registered." });
 	}
@@ -205,7 +207,7 @@ const updateStaff = asyncHandler(async (req, res) => {
 
 	const staff = await User.findOne({
 		_id: staffId,
-		role: { $in: ["doctor", "technician"] },
+		role: { $in: ["doctor", "technician", "staff"] },
 	});
 
 	if (!staff) {
@@ -293,7 +295,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 		const staff = await User.findOneAndDelete(
 			{
 				_id: userId,
-				role: { $in: ["doctor", "technician"] },
+				role: { $in: ["doctor", "technician", "staff"] },
 			},
 			{ session }
 		);
@@ -770,7 +772,7 @@ const getMaintenanceList = asyncHandler(async (req, res) => {
 		},
 		{
 			$sort: {
-				createdAt: 1,
+				createdAt: -1,
 			},
 		},
 	]);
@@ -809,7 +811,7 @@ const getPendingRequests = asyncHandler(async (req, res) => {
 		},
 		{
 			$sort: {
-				createdAt: 1,
+				createdAt: -1,
 			},
 		},
 	]);
@@ -920,6 +922,11 @@ const getAuditLogs = asyncHandler(async (req, res) => {
 				entity: 1,
 				entityId: 1,
 				additionalInfo: 1,
+			},
+		},
+		{
+			$sort: {
+				createdAt: -1,
 			},
 		},
 	]);

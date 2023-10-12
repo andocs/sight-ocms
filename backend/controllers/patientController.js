@@ -51,6 +51,11 @@ const getRecords = asyncHandler(async (req, res) => {
 				leftEye: 1,
 			},
 		},
+		{
+			$sort: {
+				createdAt: -1,
+			},
+		},
 	]);
 	res.json(records);
 });
@@ -155,6 +160,11 @@ const getAllOrders = asyncHandler(async (req, res) => {
 				framePrice: 1,
 				frameQuantity: 1,
 				otherItems: 1,
+			},
+		},
+		{
+			$sort: {
+				orderTime: -1,
 			},
 		},
 	]);
@@ -366,6 +376,11 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 				status: 1,
 			},
 		},
+		{
+			$sort: {
+				appointmentDate: -1,
+			},
+		},
 	]);
 	res.json(appointment);
 });
@@ -403,6 +418,11 @@ const getPendingAppointments = asyncHandler(async (req, res) => {
 				appointmentEnd: 1,
 				notes: 1,
 				status: 1,
+			},
+		},
+		{
+			$sort: {
+				appointmentDate: -1,
 			},
 		},
 	]);

@@ -17,7 +17,12 @@ const genders = [
 	{ gender: "Others" },
 ];
 
-const roles = [{ role: "Admin" }, { role: "Doctor" }, { role: "Technician" }];
+const roles = [
+	{ role: "Admin" },
+	{ role: "Doctor" },
+	{ role: "Technician" },
+	{ role: "Staff" },
+];
 
 const header = { title: "Edit Staff Account", buttontext: "Update Account" };
 

@@ -5,6 +5,9 @@ const initialState = {
 	newAppointment: null,
 	appointmentUpdate: null,
 	appointment: [],
+	pending: [],
+	confirmed: [],
+	scheduled: [],
 	isLoading: false,
 	isError: false,
 	isSuccess: false,
@@ -93,12 +96,32 @@ export const getPendingAppointments = createAsyncThunk(
 	}
 );
 
+// Get all scheduled appointments
 export const getScheduledAppointments = createAsyncThunk(
 	"appointment/getScheduledAppointments",
 	async (_, thunkAPI) => {
 		try {
 			const token = thunkAPI.getState().auth.user;
 			return await appointmentService.getScheduledAppointments(token);
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
+// Get all confirmed appointments
+export const getConfirmedAppointments = createAsyncThunk(
+	"appointment/getConfirmedAppointments",
+	async (_, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			return await appointmentService.getConfirmedAppointments(token);
 		} catch (error) {
 			const message =
 				(error.response &&
@@ -242,13 +265,13 @@ const appointmentSlice = createSlice({
 			.addCase(getPendingAppointments.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.appointment = action.payload;
+				state.pending = action.payload;
 			})
 			.addCase(getPendingAppointments.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.appointment = null;
+				state.pending = null;
 			})
 			.addCase(getScheduledAppointments.pending, (state) => {
 				state.isLoading = true;
@@ -256,13 +279,27 @@ const appointmentSlice = createSlice({
 			.addCase(getScheduledAppointments.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.appointment = action.payload;
+				state.scheduled = action.payload;
 			})
 			.addCase(getScheduledAppointments.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.appointment = null;
+				state.scheduled = null;
+			})
+			.addCase(getConfirmedAppointments.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(getConfirmedAppointments.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.confirmed = action.payload;
+			})
+			.addCase(getConfirmedAppointments.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.message = action.payload;
+				state.confirmed = null;
 			})
 			.addCase(getAppointmentDetails.pending, (state) => {
 				state.isLoading = true;

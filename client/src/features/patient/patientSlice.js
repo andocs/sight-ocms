@@ -78,6 +78,25 @@ export const getPatientDetails = createAsyncThunk(
 	}
 );
 
+// Get patient history
+export const getPatientHistory = createAsyncThunk(
+	"patient/getPatientHistory",
+	async (patientId, thunkAPI) => {
+		try {
+			const token = thunkAPI.getState().auth.user;
+			return await patientService.getPatientHistory(patientId, token);
+		} catch (error) {
+			const message =
+				(error.response &&
+					error.response.data &&
+					error.response.data.message) ||
+				error.message ||
+				error.toString();
+			return thunkAPI.rejectWithValue(message);
+		}
+	}
+);
+
 const patientSlice = createSlice({
 	name: "patient",
 	initialState,
@@ -133,6 +152,20 @@ const patientSlice = createSlice({
 				state.isError = true;
 				state.message = action.payload;
 				state.patientUpdate = null;
+			})
+			.addCase(getPatientHistory.pending, (state) => {
+				state.isLoading = true;
+			})
+			.addCase(getPatientHistory.fulfilled, (state, action) => {
+				state.isLoading = false;
+				state.isSuccess = true;
+				state.patient = action.payload;
+			})
+			.addCase(getPatientHistory.rejected, (state, action) => {
+				state.isLoading = false;
+				state.isError = true;
+				state.message = action.payload;
+				state.patient = null;
 			});
 	},
 });
