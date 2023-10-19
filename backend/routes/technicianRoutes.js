@@ -31,6 +31,11 @@ const {
 	getMaintenanceRequestDetails,
 	updateMaintenanceRequest,
 	deleteRequest,
+
+	getRepairHistory,
+	getPendingRepairs,
+	getRepairDetails,
+	updateRepairRequest,
 } = require("../controllers/technicianController");
 
 const validateToken = require("../middleware/validateTokenHandler");
@@ -63,5 +68,9 @@ router
 	.get(getMaintenanceRequestDetails)
 	.put(upload, updateMaintenanceRequest)
 	.delete(deleteRequest);
+
+router.route("/repair").get(getRepairHistory);
+router.route("/pending/repair").get(getPendingRepairs);
+router.route("/repair/:id").get(getRepairDetails).put(updateRepairRequest);
 
 module.exports = router;

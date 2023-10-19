@@ -3,11 +3,11 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
 import {
-	getOrderHistory,
-	editOrder,
+	getRepairList,
+	updateRepairRequest,
 	reset,
 	clear,
-} from "../../features/order/orderSlice";
+} from "../../features/repair/repairSlice";
 
 import Spinner from "../../components/spinner.component";
 import AcceptConfirmation from "../../components/acceptconfirmation.component";
@@ -15,16 +15,17 @@ import ViewModal from "../../components/viewmodal.component";
 
 import Table from "../../components/table.component";
 
-function ViewOrderHistory() {
+function ViewRepairHistory() {
+	const [requestId, setRequestId] = useState("");
+	const [requestData, setRequestData] = useState("");
+
+	const [isViewOpen, setViewOpen] = useState(false);
 	const [isCancelOpen, setCancelOpen] = useState(false);
 	const [isCompleteOpen, setCompleteOpen] = useState(false);
-	const [orderId, setOrderId] = useState("");
-	const [isViewOpen, setViewOpen] = useState(false);
-	const [orderData, setOrderData] = useState("");
 
 	const dispatch = useDispatch();
-	const { orderHistory, isLoading, isSuccess, isError, message } = useSelector(
-		(state) => state.order
+	const { repair, isLoading, isSuccess, isError, message } = useSelector(
+		(state) => state.repair
 	);
 
 	useEffect(() => {
@@ -34,7 +35,7 @@ function ViewOrderHistory() {
 		if (isSuccess && message !== "") {
 			toast.success(message);
 		}
-		dispatch(getOrderHistory());
+		dispatch(getRepairList());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
@@ -47,17 +48,17 @@ function ViewOrderHistory() {
 
 	function closeCancelModal() {
 		setCancelOpen(false);
-		setOrderId("");
+		setRequestId("");
 	}
 
-	function openCancelModal(orderId) {
+	function openCancelModal(requestId) {
 		setCancelOpen(true);
-		setOrderId(orderId);
+		setRequestId(requestId);
 	}
 
 	function checkCancelConfirmation() {
-		const orderData = { status: "Cancelled" };
-		dispatch(editOrder({ orderId, orderData }));
+		const requestData = { status: "Cancelled" };
+		dispatch(updateRepairRequest({ requestId, requestData }));
 		if (isSuccess && message) {
 			toast.message(message);
 		}
@@ -66,17 +67,17 @@ function ViewOrderHistory() {
 
 	function closeCompletedModal() {
 		setCompleteOpen(false);
-		setOrderId("");
+		setRequestId("");
 	}
 
-	function openCompletedModal(orderId) {
+	function openCompletedModal(requestId) {
 		setCompleteOpen(true);
-		setOrderId(orderId);
+		setRequestId(requestId);
 	}
 
 	function checkCompletedConfirmation() {
-		const orderData = { status: "Completed" };
-		dispatch(editOrder({ orderId, orderData }));
+		const requestData = { status: "Completed" };
+		dispatch(updateRepairRequest({ requestId, requestData }));
 		if (isSuccess && message) {
 			toast.message(message);
 		}
@@ -88,39 +89,19 @@ function ViewOrderHistory() {
 	}
 
 	const columns = [
-		{ header: "Order Time", field: "orderTime" },
+		{ header: "Created Time", field: "createdAt" },
 		{ header: "Status", field: "status" },
 		{ header: "Last Name", field: "userLastName" },
 		{ header: "First Name", field: "userFirstName" },
-		{ header: "Lens", field: `lensName` },
-		{ header: "Frame", field: "frameName" },
-		{ header: "Other Items", field: "otherItems" },
-	];
-
-	const viewColumns = [
-		{ header: "Order Time", field: "orderTime" },
-		{ header: "Accepted Time", field: "acceptTime" },
-		{ header: "Completed Time", field: "completeTime" },
-		{ header: "Status", field: "status" },
-		{ header: "Total Amount", field: "amount" },
-		{ header: "Doctor FName", field: "doctorLastName" },
-		{ header: "Doctor LName", field: "doctorFirstName" },
-		{ header: "Last Name", field: "userLastName" },
-		{ header: "First Name", field: "userFirstName" },
-		{ header: "Lens", field: "lensName" },
-		{ header: "Lens Price", field: "lensPrice" },
-		{ header: "Lens Quantity", field: "lensQuantity" },
-		{ header: "Frame", field: "frameName" },
-		{ header: "Frame Price", field: "framePrice" },
-		{ header: "Frame Quantity", field: "frameQuantity" },
-		{ header: "Other Items", field: "otherItems" },
+		{ header: "Item Type", field: `itemType` },
+		{ header: "Amount", field: "amount" },
 	];
 
 	const actions = [
 		{
 			label: "View",
 			handler: (details) => {
-				setOrderData(details);
+				setRequestData(details);
 				setViewOpen(true);
 			},
 		},
@@ -144,9 +125,9 @@ function ViewOrderHistory() {
 				<ViewModal
 					isOpen={isViewOpen}
 					closeModal={closeViewModal}
-					dataFields={orderData}
-					columnHeaders={viewColumns}
-					modalTitle="View Order Details"
+					dataFields={requestData}
+					columnHeaders={columns}
+					modalTitle="View Request Details"
 				/>
 			)}
 
@@ -164,20 +145,22 @@ function ViewOrderHistory() {
 				onConfirm={checkCancelConfirmation}
 			/>
 
-			<div className="w-full bg-white border-b">
+			<div className="w-full bg-white bappointment-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>
-						<p className="font-medium text-5xl">View Order History</p>
+						<p className="font-medium text-5xl">Repair List</p>
 					</div>
 				</div>
 			</div>
 			<div className="p-8">
 				<div className="xl:w-5/6 flex flex-row">
-					<Table data={orderHistory} columns={columns} actions={actions} />
+					{repair && (
+						<Table data={repair} columns={columns} actions={actions} />
+					)}
 				</div>
 			</div>
 		</>
 	);
 }
 
-export default ViewOrderHistory;
+export default ViewRepairHistory;

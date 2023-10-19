@@ -2,109 +2,63 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { createVisitRecord, reset } from "../../features/visit/visitSlice";
+
+import { addRepairRequest, reset } from "../../features/repair/repairSlice";
 import { getPatientList } from "../../features/patient/patientSlice";
 
 import ReusableForm from "../../components/reusableform.component";
 import Table from "../../components/table.component";
 import ViewModal from "../../components/viewmodal.component";
-import ProceedConfirmation from "../../components/proceedconfirmation.component";
 
-const header = { title: "Create Visit Record", buttontext: "Add Visit" };
-
-const patientType = [{ type: "Walk-In" }, { type: "Registered" }];
-
-const visitType = [
-	{ type: "Appointment" },
-	{ type: "First Visit" },
-	{ type: "Follow-Up" },
+const categories = [
+	{ category: "Frame" },
+	{ category: "Lens" },
+	{ category: "Others" },
 ];
 
-function AddVisit() {
+const header = { title: "Create Repair Request", buttontext: "Add Request" };
+
+function CreateRepair() {
 	const location = useLocation();
 
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const [isOpen, setIsOpen] = useState(false);
-	const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-	const [isConfirmed, setConfirmation] = useState(false);
-	const [isRejected, setRejection] = useState(false);
 	const [patientData, setPatientData] = useState(null);
 
 	function closeModal() {
 		setIsOpen(false);
 	}
-	function closeConfirmation() {
-		setIsConfirmationOpen(false);
-	}
-
-	function openModal() {
-		setIsConfirmationOpen(true);
-	}
-
-	function checkConfirmation() {
-		setConfirmation(true);
-	}
-	function checkRejection() {
-		setRejection(true);
-	}
 
 	const patientDetails = location.state;
-	const { newVisit, isLoading, isError, isSuccess, message } = useSelector(
-		(state) => state.visit
+
+	const { newRepair, isLoading, isError, isSuccess, message } = useSelector(
+		(state) => state.repair
 	);
+
 	const { patient } = useSelector((state) => state.patient);
 
 	const formGroups = [
 		{
-			label: "Visit Information",
+			label: "Repair Request Information",
 			size: "w-full",
 			fields: [
 				[
 					{
-						label: "Patient Type *",
+						label: "Item Type",
 						type: "listbox",
-						value: patientDetails?.patientType || patientType[0].type,
-						options: patientType.map((type) => type.type),
-						name: "patientType",
+						value: categories[0].category,
+						options: categories.map((category) => category.category),
+						name: "itemType",
 						size: "w-full",
+						clearOnAdd: true,
 					},
 					{
-						label: "Visit Type *",
-						type: "listbox",
-						value: visitType[0].type,
-						options: visitType.map((type) => type.type),
-						name: "visitType",
-						size: "w-full",
-					},
-				],
-				[
-					{
-						label: "Reason for Visit *",
-						type: "text",
-						value: "",
-						name: "reason",
-						placeholder: "Reason for Visit",
-						size: "w-full",
-					},
-				],
-				[
-					{
-						label: "Medical History",
-						type: "textarea",
-						value: "",
-						name: "medicalHistory",
-						placeholder: "Relevant medical history here...",
-						size: "w-full",
-					},
-				],
-				[
-					{
-						label: "Additional Information",
-						type: "textarea",
-						value: "",
-						name: "additionalInfo",
-						placeholder: "Additional information here...",
+						label: "Amount",
+						type: "number",
+						value: 1,
+						min: 1,
+						name: "amount",
 						size: "w-full",
 					},
 				],
@@ -130,8 +84,8 @@ function AddVisit() {
 		{
 			label: "Confirm",
 			handler: (details) => {
-				navigate(`/doctor/add-visit/${details._id}`, {
-					state: { details, patientType: "Registered" },
+				navigate(`/doctor/add-repair/${details._id}`, {
+					state: { details },
 				});
 			},
 		},
@@ -155,34 +109,17 @@ function AddVisit() {
 			}
 		}
 
-		if (isSuccess && newVisit !== null && message !== "") {
+		if (isSuccess && newRepair !== null && message !== "") {
 			toast.success(message);
-			openModal();
-		}
-		if (isConfirmed === true) {
-			navigate(`/doctor/add-records/`, { state: { patientDetails } });
-		}
-		if (isRejected === true) {
 			navigate("/doctor");
 		}
-
 		dispatch(reset());
-	}, [
-		newVisit,
-		isConfirmed,
-		isRejected,
-		isLoading,
-		isError,
-		isSuccess,
-		message,
-		navigate,
-		dispatch,
-	]);
+	}, [newRepair, isLoading, isError, isSuccess, message, dispatch]);
 
 	const onSubmit = (formData) => {
-		const visitData = formData;
+		const requestData = formData;
 		const patientId = patientDetails.details._id;
-		dispatch(createVisitRecord({ patientId, visitData }));
+		dispatch(addRepairRequest({ patientId, requestData }));
 	};
 
 	return (
@@ -194,15 +131,6 @@ function AddVisit() {
 					dataFields={patientData}
 					columnHeaders={columns}
 					modalTitle="Patient Details"
-				/>
-			)}
-			{isConfirmationOpen && (
-				<ProceedConfirmation
-					isOpen={isConfirmationOpen}
-					closeModal={closeConfirmation}
-					onConfirm={checkConfirmation}
-					onReject={checkRejection}
-					destination={"Add Eye Records"}
 				/>
 			)}
 			<div>
@@ -241,4 +169,4 @@ function AddVisit() {
 	);
 }
 
-export default AddVisit;
+export default CreateRepair;

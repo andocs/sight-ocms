@@ -11,6 +11,7 @@ const Visit = require("../models/visitModel");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 const Inventory = require("../models/inventoryModel");
+const Repair = require("../models/repairModel");
 
 const sessionOptions = {
 	readConcern: { level: "snapshot" },
@@ -464,6 +465,7 @@ const getVisitList = asyncHandler(async (req, res) => {
 		{
 			$project: {
 				visitDate: 1,
+				doctor: 1,
 				patientType: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
@@ -758,6 +760,7 @@ const getAllOrders = asyncHandler(async (req, res) => {
 				orderTime: 1,
 				status: 1,
 				amount: 1,
+				doctor: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
 				lens: 1,
@@ -821,6 +824,7 @@ const getOrderDetails = asyncHandler(async (req, res) => {
 				status: 1,
 				amount: 1,
 				lens: 1,
+				doctor: 1,
 				lensName: { $arrayElemAt: ["$lensDetails.itemName", 0] },
 				lensPrice: 1,
 				lensQuantity: 1,
@@ -1087,6 +1091,7 @@ const getAllRecords = asyncHandler(async (req, res) => {
 		{
 			$project: {
 				createdAt: 1,
+				doctor: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
 				rightEye: 1,
@@ -1340,6 +1345,7 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 		{
 			$project: {
 				appointmentDate: 1,
+				doctor: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
 				appointmentStart: 1,
@@ -1381,6 +1387,7 @@ const getPendingAppointments = asyncHandler(async (req, res) => {
 		{
 			$project: {
 				appointmentDate: 1,
+				doctor: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
 				appointmentStart: 1,
@@ -1425,6 +1432,7 @@ const getScheduledAppointments = asyncHandler(async (req, res) => {
 		{
 			$project: {
 				appointmentDate: 1,
+				doctor: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
 				appointmentStart: 1,
@@ -1469,6 +1477,7 @@ const getConfirmedAppointments = asyncHandler(async (req, res) => {
 		{
 			$project: {
 				appointmentDate: 1,
+				doctor: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
 				appointmentStart: 1,
@@ -1938,6 +1947,297 @@ const getInventoryList = asyncHandler(async (req, res) => {
 ##### REPAIR (CRUD) #####
 **/
 
+//@desc ADD DOCTOR SCHEDULE
+//@route POST /api/doctor/repair
+//@access private (doctor only)
+const addRepairRequest = asyncHandler(async (req, res) => {
+	const doctorId = req.user.id;
+	const patientId = req.params.id;
+	const { itemType, amount } = req.body;
+
+	if (!itemType || !amount) {
+		return res.status(400).json({ message: "All fields are mandatory!" });
+	}
+
+	const existingPatient = await User.findById(patientId);
+
+	if (!existingPatient) {
+		return res.status(404).json({ message: "Patient not found!" });
+	}
+
+	const session = await Repair.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+		const repairRequest = await Repair.create(
+			[
+				{
+					doctor: doctorId,
+					patient: patientId,
+					status: "Pending",
+					itemType,
+					amount,
+				},
+			],
+			{ session }
+		);
+
+		await AuditLog.create(
+			[
+				{
+					userId: doctorId,
+					operation: "create",
+					entity: "Repair",
+					entityId: repairRequest[0]._id,
+					oldValues: null,
+					newValues: repairRequest[0],
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "New repair request added",
+				},
+			],
+			{ session }
+		);
+
+		res.status(201).json({
+			data: repairRequest,
+			message: `Repair Request for ${itemType} successfully added!`,
+		});
+		await session.commitTransaction();
+	} catch (error) {
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
+
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		throw error;
+	}
+	session.endSession();
+});
+
+//@desc GET LIST OF DOCTOR'S SCHEDULE
+//@route GET /api/doctor/repair
+//@access private (doctor only)
+const getRepairList = asyncHandler(async (req, res) => {
+	const repairList = await Repair.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$project: {
+				createdAt: 1,
+				doctor: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				status: 1,
+				itemType: 1,
+				amount: 1,
+			},
+		},
+		{
+			$sort: {
+				createdAt: -1,
+			},
+		},
+	]);
+	res.json(repairList);
+});
+
+//@desc GET LIST OF DOCTOR'S PENDING REPAIR REQUEST
+//@route GET /api/doctor/pending/repair
+//@access private (doctor only)
+const getPendingRepairs = asyncHandler(async (req, res) => {
+	const request = await Repair.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$match: {
+				status: "Pending",
+			},
+		},
+		{
+			$project: {
+				createdAt: 1,
+				doctor: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				status: 1,
+				itemType: 1,
+				amount: 1,
+			},
+		},
+		{
+			$sort: {
+				createdAt: -1,
+			},
+		},
+	]);
+	res.json(request);
+});
+
+//@desc GET SCHEDULE DETAILS
+//@route GET /api/doctor/repair/:id
+//@access private (doctor only)
+const getRepairDetails = asyncHandler(async (req, res) => {
+	const requestId = req.params.id;
+	const doctorId = req.user.id;
+
+	const request = await Repair.findOne({
+		_id: requestId,
+		doctor: doctorId,
+	});
+
+	if (!request) {
+		return res.status(404).json({ message: "Request not found!" });
+	}
+	res.json(request);
+});
+
+//@desc UPDATE DOCTOR'S SCHEDULE
+//@route PUT /api/doctor/repair/:id
+//@access private (doctor only)
+const updateRepairRequest = asyncHandler(async (req, res) => {
+	const doctorId = req.user.id;
+	const requestId = req.params.id;
+	const updatedFields = req.body;
+
+	const request = await Repair.findOne({
+		_id: requestId,
+		doctor: doctorId,
+	});
+
+	if (!request) {
+		return res
+			.status(404)
+			.json({ message: "Repair request not found or unauthorized!" });
+	}
+
+	const session = await Repair.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+
+		const updatedRequest = await Repair.findByIdAndUpdate(
+			requestId,
+			updatedFields,
+			{ new: true, runValidators: true, session }
+		);
+
+		await AuditLog.create(
+			[
+				{
+					userId: req.user.id,
+					operation: "update",
+					entity: "Repair",
+					entityId: requestId,
+					oldValues: request,
+					newValues: updatedRequest,
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "Repair request updated",
+				},
+			],
+			{ session }
+		);
+
+		res.json({
+			data: updatedRequest,
+			message: `Repair request for ${request.itemType} successfully updated!`,
+		});
+		await session.commitTransaction();
+	} catch (error) {
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
+
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		throw error;
+	}
+	session.endSession();
+});
+
+//@desc DELETE DOCTOR'S SCHEDULE
+//@route DELETE /api/doctor/repair/:id
+//@access private (doctor only)
+const deleteRepairRequest = asyncHandler(async (req, res) => {
+	const doctorId = req.user.id;
+	const requestId = req.params.id;
+
+	const session = await Repair.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+
+		const request = await Repair.findOneAndDelete(
+			{
+				_id: requestId,
+				doctor: doctorId,
+			},
+			{ session }
+		);
+
+		if (!request) {
+			return res
+				.status(404)
+				.json({ message: "Repair request not found or unauthorized!" });
+		}
+
+		await AuditLog.create(
+			[
+				{
+					userId: req.user.id,
+					operation: "delete",
+					entity: "Repair",
+					entityId: requestId,
+					oldValues: request,
+					newValues: null,
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "Repair request deleted",
+				},
+			],
+			{ session }
+		);
+		await session.commitTransaction();
+		res.status(201).json({
+			id: requestId,
+			message: "Repair request deleted successfully",
+		});
+	} catch (error) {
+		await session.abortTransaction();
+		throw error;
+	}
+	session.endSession();
+});
+
 module.exports = {
 	createPatient,
 	getAllPatients,
@@ -1979,4 +2279,11 @@ module.exports = {
 	deleteDoctorSchedule,
 
 	getInventoryList,
+
+	addRepairRequest,
+	getRepairList,
+	getPendingRepairs,
+	getRepairDetails,
+	updateRepairRequest,
+	deleteRepairRequest,
 };

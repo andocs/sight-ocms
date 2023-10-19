@@ -1,42 +1,29 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { toast } from "react-toastify";
 
-import {
-	getAppointmentList,
-	reset,
-	clear,
-} from "../../features/appointment/appointmentSlice";
+import { getRepairList, reset, clear } from "../../features/repair/repairSlice";
 
 import Spinner from "../../components/spinner.component";
 import ViewModal from "../../components/viewmodal.component";
 
 import Table from "../../components/table.component";
 
-function ViewAppointments() {
+function ViewRepair() {
 	const [isViewOpen, setViewOpen] = useState(false);
-	const [appointmentData, setAppointmentData] = useState("");
+	const [requestData, setRequestData] = useState("");
 
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
-	const { appointment, isLoading, isSuccess, isError, message } = useSelector(
-		(state) => state.appointment
-	);
+	const { repair, isLoading } = useSelector((state) => state.repair);
 
 	useEffect(() => {
-		if (isError) {
-			toast.error(message);
-		}
-		if (isSuccess && message !== "") {
-			toast.success(message);
-		}
-		dispatch(getAppointmentList());
+		dispatch(getRepairList());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
 		};
-	}, [isError, message, dispatch]);
+	}, [dispatch]);
 
 	if (isLoading) {
 		return <Spinner />;
@@ -47,27 +34,26 @@ function ViewAppointments() {
 	}
 
 	const columns = [
-		{ header: "Date", field: "appointmentDate" },
+		{ header: "Created Time", field: "createdAt" },
 		{ header: "Status", field: "status" },
 		{ header: "Last Name", field: "userLastName" },
 		{ header: "First Name", field: "userFirstName" },
-		{ header: "Start Time", field: `appointmentStart` },
-		{ header: "End Time", field: "appointmentEnd" },
-		{ header: "Additional Notes", field: "notes" },
+		{ header: "Item Type", field: `itemType` },
+		{ header: "Amount", field: "amount" },
 	];
 
 	const actions = [
 		{
 			label: "View",
 			handler: (details) => {
-				setAppointmentData(details);
+				setRequestData(details);
 				setViewOpen(true);
 			},
 		},
 		{
 			label: "Update",
 			handler: (details) => {
-				navigate(`/doctor/edit-appointment/${details._id}`, {
+				navigate(`/doctor/edit-repair/${details._id}`, {
 					state: { details },
 				});
 			},
@@ -80,23 +66,23 @@ function ViewAppointments() {
 				<ViewModal
 					isOpen={isViewOpen}
 					closeModal={closeViewModal}
-					dataFields={appointmentData}
+					dataFields={requestData}
 					columnHeaders={columns}
-					modalTitle="View Appointment Details"
+					modalTitle="View Request Details"
 				/>
 			)}
 
 			<div className="w-full bg-white bappointment-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>
-						<p className="font-medium text-5xl">Appointment List</p>
+						<p className="font-medium text-5xl">Repair List</p>
 					</div>
 				</div>
 			</div>
 			<div className="p-8">
 				<div className="xl:w-5/6 flex flex-row">
-					{appointment && (
-						<Table data={appointment} columns={columns} actions={actions} />
+					{repair && (
+						<Table data={repair} columns={columns} actions={actions} />
 					)}
 				</div>
 			</div>
@@ -104,4 +90,4 @@ function ViewAppointments() {
 	);
 }
 
-export default ViewAppointments;
+export default ViewRepair;

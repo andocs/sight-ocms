@@ -265,6 +265,29 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 		console.log(otherItemsList);
 	};
 
+	const handleAddRepairClick = () => {
+		const _id = formData["repairItems._id"];
+		const itemName = formData["repairItems.itemName"];
+		const quantity = formData["repairItems.quantity"];
+		if (itemName && quantity) {
+			const newItem = {
+				_id,
+				itemName,
+				quantity: parseInt(quantity),
+			};
+			setRepairItemsList((prevList) => [...prevList, newItem]);
+
+			setFormData((prevData) => ({
+				...prevData,
+				"repairItems._id": "",
+				"repairItems.itemName": "",
+				"repairItems.quantity": 1,
+			}));
+			setInputValue("");
+			customSearchInputRef.current.clearInputValue();
+		}
+	};
+
 	const toggleEdit = (item) => {
 		console.log(item);
 		const updatedOtherItemsList = otherItemsList.map((i) =>
@@ -533,6 +556,21 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 					/>
 				);
 			case "button":
+				if (field.name === "addRepair") {
+					return (
+						<div className="h-[52px] flex items-center justify-center">
+							<button
+								type="button"
+								onClick={handleAddRepairClick}
+								className={`${
+									field.size ? `${field.size}` : ""
+								} bg-sky-800 text-l rounded-full w-fit uppercase text-center text-sm font-medium truncate text-white`}
+							>
+								{field.icon}
+							</button>
+						</div>
+					);
+				}
 				return (
 					<div className="h-[52px] flex items-center justify-center">
 						<button
@@ -841,7 +879,8 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			(formData.appointmentStart === "" &&
 				appointmentStartOptions &&
 				appointmentStartOptions.length > 0) ||
-			!appointmentStartOptions.includes(formData.appointmentStart)
+			(appointmentStartOptions.length > 0 &&
+				!appointmentStartOptions.includes(formData.appointmentStart))
 		) {
 			setFormData((prevData) => ({
 				...prevData,
@@ -849,6 +888,8 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			}));
 		}
 	}, [appointmentStartOptions]);
+
+	console.log(formData);
 
 	useEffect(() => {
 		if (appointmentEndOptions && appointmentEndOptions.length > 0) {

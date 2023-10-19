@@ -2,45 +2,36 @@ const mongoose = require("mongoose");
 
 const repairSchema = new mongoose.Schema(
 	{
-		technician: {
+		doctor: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "User",
 			required: true,
+		},
+		technician: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
 		},
 		patient: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "User",
 			required: true,
 		},
-		repairTime: {
+		acceptTime: {
 			type: Date,
-			required: true,
+		},
+		completeTime: {
+			type: Date,
 		},
 		status: {
 			type: String,
 			enum: ["Pending", "In Progress", "Completed", "Cancelled"],
 			required: true,
 		},
-		repairItems: [
-			{
-				_id: {
-					type: mongoose.Schema.Types.ObjectId,
-					ref: "Inventory",
-				},
-				itemName: {
-					type: String,
-				},
-				price: {
-					type: Number,
-				},
-				quantity: {
-					type: Number,
-				},
-				total: {
-					type: Number,
-				},
-			},
-		],
+		itemType: {
+			type: String,
+			enum: ["Frame", "Lens", "Others"],
+			required: true,
+		},
 		amount: {
 			type: Number,
 			required: true,

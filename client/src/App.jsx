@@ -25,6 +25,7 @@ import ViewPendingAppointments from "./pages/Patient/ViewPendingAppointments";
 import ViewPatientAppointments from "./pages/Patient/ViewPatientAppointments";
 import AddAppointment from "./pages/Patient/AddAppointment";
 import ViewDoctors from "./pages/Patient/ViewDoctors";
+import ViewRepairs from "./pages/Patient/ViewRepairs";
 
 //ADMIN
 import AddStaff from "./pages/Admin/AddStaffAccount";
@@ -40,6 +41,7 @@ import ViewAuditLogs from "./pages/Admin/ViewAuditLogs";
 import ViewPendingRequests from "./pages/Admin/ViewPendingRequests";
 import ViewRequests from "./pages/Admin/ViewRequests";
 import RequestDetails from "./pages/Admin/RequestDetails";
+import ReportGeneration from "./pages/Admin/ReportGeneration";
 
 //DOCTOR
 import AddRecords from "./pages/Doctor/AddRecords";
@@ -63,6 +65,9 @@ import EditAppointment from "./pages/Doctor/EditAppointment";
 import EditSchedule from "./pages/Doctor/EditSchedule";
 import ViewPatients from "./pages/Doctor/ViewPatients";
 import ViewPatientHistory from "./pages/Doctor/ViewPatientHistory";
+import ViewRepair from "./pages/Doctor/ViewRepair";
+import CreateRepair from "./pages/Doctor/CreateRepair";
+import ViewPendingRepair from "./pages/Doctor/ViewPendingRepair";
 
 //TECHNICIAN
 import ViewPendingOrders from "./pages/Technician/ViewPendingOrders";
@@ -72,6 +77,8 @@ import CreateMaintenanceRequest from "./pages/Technician/CreateMaintenanceReques
 import ViewTechInventory from "./pages/Technician/ViewTechInventory";
 import EditRequest from "./pages/Technician/EditRequest";
 import TechItemDetails from "./pages/Technician/ItemDetails";
+import ViewRepairHistory from "./pages/Technician/ViewRepairHistory";
+import ViewPendingTech from "./pages/Technician/ViewPendingTech";
 
 //STAFF
 import StaffDashboard from "./pages/Staff/StaffDashboard";
@@ -81,6 +88,7 @@ import ViewVisitStaff from "./pages/Staff/ViewVisitStaff";
 import ViewScheduledStaff from "./pages/Staff/ViewScheduledStaff";
 import ViewConfirmedStaff from "./pages/Staff/ViewConfirmedStaff";
 import ViewAppointmentStaff from "./pages/Staff/ViewAppointmentStaff";
+import PDFViewer from "./pages/Admin/PDFViewer";
 
 function App() {
 	return (
@@ -111,6 +119,7 @@ function App() {
 						<Route path="view-requests" element={<ViewRequests />} />
 						<Route path="request-details" element={<RequestDetails />} />
 						<Route path="view-logs" element={<ViewAuditLogs />} />
+						<Route path="report-generation" element={<ReportGeneration />} />
 					</Route>
 
 					<Route path="/patient" element={<PatientDashboard />}>
@@ -124,6 +133,7 @@ function App() {
 							element={<ViewPatientAppointments />}
 						/>
 						<Route path="view-doctors" element={<ViewDoctors />} />
+						<Route path="view-repairs" element={<ViewRepairs />} />
 					</Route>
 
 					<Route path="/doctor" element={<DoctorDashboard />}>
@@ -155,6 +165,10 @@ function App() {
 							path="view-patient-history/:id"
 							element={<ViewPatientHistory />}
 						/>
+						<Route path="view-repair" element={<ViewRepair />} />
+						<Route path="pending-repairs" element={<ViewPendingRepair />} />
+						<Route path="add-repair" element={<CreateRepair />} />
+						<Route path="add-repair/:id" element={<CreateRepair />} />
 					</Route>
 
 					<Route path="/technician" element={<TechnicianDashboard />}>
@@ -165,6 +179,8 @@ function App() {
 						<Route path="edit-request/:id" element={<EditRequest />} />
 						<Route path="view-inventory" element={<ViewTechInventory />} />
 						<Route path="item-details" element={<TechItemDetails />} />
+						<Route path="view-repair-history" element={<ViewRepairHistory />} />
+						<Route path="pending-repairs" element={<ViewPendingTech />} />
 					</Route>
 
 					<Route path="/staff" element={<StaffDashboard />}>
@@ -181,6 +197,7 @@ function App() {
 							element={<ViewAppointmentStaff />}
 						/>
 					</Route>
+					<Route exact path="view-pdf/:id" element={<PDFViewer />} />
 				</Routes>
 			</BrowserRouter>
 			<ToastContainer />

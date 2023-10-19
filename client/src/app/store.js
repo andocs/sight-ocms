@@ -13,6 +13,7 @@ import scheduleReducer from "../features/schedule/scheduleSlice";
 import patientReducer from "../features/patient/patientSlice";
 import maintenanceReducer from "../features/maintenance/maintenanceSlice";
 import reportReducer from "../features/report/reportSlice";
+import repairReducer from "../features/repair/repairSlice";
 
 function getReducerByUserRole() {
 	const token = localStorage.getItem("user");
@@ -52,6 +53,7 @@ function getReducerByUserRole() {
 			order: orderReducer,
 			schedule: scheduleReducer,
 			patient: patientReducer,
+			repair: repairReducer,
 		};
 	} else if (userRole === "technician") {
 		return {
@@ -60,6 +62,7 @@ function getReducerByUserRole() {
 			order: orderReducer,
 			inventory: inventoryReducer,
 			maintenance: maintenanceReducer,
+			repair: repairReducer,
 		};
 	} else if (userRole === "patient") {
 		return {
@@ -70,6 +73,7 @@ function getReducerByUserRole() {
 			order: orderReducer,
 			appointment: appointmentReducer,
 			schedule: scheduleReducer,
+			repair: repairReducer,
 		};
 	} else if (userRole === "staff") {
 		return {

@@ -3,11 +3,11 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
 import {
-	getPendingOrders,
-	editOrder,
+	getPendingRepairs,
+	updateRepairRequest,
 	reset,
 	clear,
-} from "../../features/order/orderSlice";
+} from "../../features/repair/repairSlice";
 
 import Spinner from "../../components/spinner.component";
 import AcceptConfirmation from "../../components/acceptconfirmation.component";
@@ -15,15 +15,15 @@ import ViewModal from "../../components/viewmodal.component";
 
 import Table from "../../components/table.component";
 
-function ViewPendingOrders() {
+function ViewPendingTech() {
 	const [isOpen, setIsOpen] = useState(false);
-	const [orderId, setOrderId] = useState("");
 	const [isViewOpen, setViewOpen] = useState(false);
-	const [orderData, setOrderData] = useState("");
+	const [requestId, setRequestId] = useState("");
+	const [requestData, setRequestData] = useState("");
 
 	const dispatch = useDispatch();
-	const { order, isLoading, isSuccess, isError, message } = useSelector(
-		(state) => state.order
+	const { repair, isLoading, isSuccess, isError, message } = useSelector(
+		(state) => state.repair
 	);
 
 	useEffect(() => {
@@ -33,7 +33,7 @@ function ViewPendingOrders() {
 		if (isSuccess && message !== "") {
 			toast.success(message);
 		}
-		dispatch(getPendingOrders());
+		dispatch(getPendingRepairs());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
@@ -46,16 +46,17 @@ function ViewPendingOrders() {
 
 	function closeModal() {
 		setIsOpen(false);
+		setRequestId("");
 	}
 
-	function openModal(orderId) {
+	function openModal(requestId) {
 		setIsOpen(true);
-		setOrderId(orderId);
+		setRequestId(requestId);
 	}
 
 	function checkConfirmation() {
-		const orderData = { status: "In Progress" };
-		dispatch(editOrder({ orderId, orderData }));
+		const requestData = { status: "In Progress" };
+		dispatch(updateRepairRequest({ requestId, requestData }));
 		if (isSuccess && message) {
 			toast.message(message);
 		}
@@ -67,37 +68,19 @@ function ViewPendingOrders() {
 	}
 
 	const columns = [
-		{ header: "Order Time", field: "orderTime" },
+		{ header: "Created Time", field: "createdAt" },
 		{ header: "Status", field: "status" },
 		{ header: "Last Name", field: "userLastName" },
 		{ header: "First Name", field: "userFirstName" },
-		{ header: "Lens", field: `lensName` },
-		{ header: "Frame", field: "frameName" },
-		{ header: "Other Items", field: "otherItems" },
-	];
-
-	const viewColumns = [
-		{ header: "Order Time", field: "orderTime" },
-		{ header: "Status", field: "status" },
-		{ header: "Total Amount", field: "amount" },
-		{ header: "Doctor FName", field: "doctorLastName" },
-		{ header: "Doctor LName", field: "doctorFirstName" },
-		{ header: "Last Name", field: "userLastName" },
-		{ header: "First Name", field: "userFirstName" },
-		{ header: "Lens", field: "lensName" },
-		{ header: "Lens Price", field: "lensPrice" },
-		{ header: "Lens Quantity", field: "lensQuantity" },
-		{ header: "Frame", field: "frameName" },
-		{ header: "Frame Price", field: "framePrice" },
-		{ header: "Frame Quantity", field: "frameQuantity" },
-		{ header: "Other Items", field: "otherItems" },
+		{ header: "Item Type", field: `itemType` },
+		{ header: "Amount", field: "amount" },
 	];
 
 	const actions = [
 		{
 			label: "View",
 			handler: (details) => {
-				setOrderData(details);
+				setRequestData(details);
 				setViewOpen(true);
 			},
 		},
@@ -108,15 +91,16 @@ function ViewPendingOrders() {
 			},
 		},
 	];
+
 	return (
 		<>
 			{isViewOpen && (
 				<ViewModal
 					isOpen={isViewOpen}
 					closeModal={closeViewModal}
-					dataFields={orderData}
-					columnHeaders={viewColumns}
-					modalTitle="View Order Details"
+					dataFields={requestData}
+					columnHeaders={columns}
+					modalTitle="View Request Details"
 				/>
 			)}
 
@@ -127,20 +111,22 @@ function ViewPendingOrders() {
 				onConfirm={checkConfirmation}
 			/>
 
-			<div className="w-full bg-white border-b">
+			<div className="w-full bg-white bappointment-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>
-						<p className="font-medium text-5xl">Pending Orders</p>
+						<p className="font-medium text-5xl">View Pending Repairs</p>
 					</div>
 				</div>
 			</div>
 			<div className="p-8">
 				<div className="xl:w-5/6 flex flex-row">
-					<Table data={order} columns={columns} actions={actions} />
+					{repair && (
+						<Table data={repair} columns={columns} actions={actions} />
+					)}
 				</div>
 			</div>
 		</>
 	);
 }
 
-export default ViewPendingOrders;
+export default ViewPendingTech;

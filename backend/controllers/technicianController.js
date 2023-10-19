@@ -5,6 +5,7 @@ const AuditLog = require("../models/auditLogModel");
 const Order = require("../models/orderModel");
 const Inventory = require("../models/inventoryModel");
 const Maintenance = require("../models/maintenanceModel");
+const Repair = require("../models/repairModel");
 
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
@@ -779,6 +780,202 @@ const deleteRequest = asyncHandler(async (req, res) => {
 	session.endSession();
 });
 
+/**
+##### REPAIR (READ AND UPDATE) #####
+**/
+
+//@desc GET LIST OF TECHNICIAN'S PREVIOUS REPAIRS
+//@route GET /api/technician/repair
+//@access private (technician only)
+const getRepairHistory = asyncHandler(async (req, res) => {
+	const technicianId = new ObjectId(req.user.id);
+	const repairList = await Repair.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "doctor",
+				foreignField: "_id",
+				as: "docDetails",
+			},
+		},
+		{
+			$match: { technician: technicianId },
+		},
+		{
+			$project: {
+				createdAt: 1,
+				doctor: 1,
+				technician: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				docLastName: { $arrayElemAt: ["$docDetails.personalInfo.lname", 0] },
+				docFirstName: { $arrayElemAt: ["$docDetails.personalInfo.fname", 0] },
+				status: 1,
+				itemType: 1,
+				amount: 1,
+			},
+		},
+		{
+			$sort: {
+				createdAt: -1,
+			},
+		},
+	]);
+	res.json(repairList);
+});
+
+//@desc GET LIST OF PENDING REPAIR REQUEST
+//@route GET /api/technician/pending/repair
+//@access private (technician only)
+const getPendingRepairs = asyncHandler(async (req, res) => {
+	const request = await Repair.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "doctor",
+				foreignField: "_id",
+				as: "docDetails",
+			},
+		},
+		{
+			$match: {
+				status: "Pending",
+			},
+		},
+		{
+			$project: {
+				createdAt: 1,
+				doctor: 1,
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				docLastName: { $arrayElemAt: ["$docDetails.personalInfo.lname", 0] },
+				docFirstName: { $arrayElemAt: ["$docDetails.personalInfo.fname", 0] },
+				status: 1,
+				itemType: 1,
+				amount: 1,
+			},
+		},
+		{
+			$sort: {
+				createdAt: -1,
+			},
+		},
+	]);
+	res.json(request);
+});
+
+//@desc GET REPAIR REQUEST DETAILS
+//@route GET /api/technician/repair/:id
+//@access private (technician only)
+const getRepairDetails = asyncHandler(async (req, res) => {
+	const requestId = req.params.id;
+
+	const request = await Repair.findOne({
+		_id: requestId,
+	});
+
+	if (!request) {
+		return res.status(404).json({ message: "Request not found!" });
+	}
+	res.json(request);
+});
+
+//@desc UPDATE DOCTOR'S SCHEDULE
+//@route PUT /api/technician/repair/:id
+//@access private (technician only)
+const updateRepairRequest = asyncHandler(async (req, res) => {
+	const technicianId = req.user.id;
+	const requestId = req.params.id;
+	const updates = req.body;
+
+	const request = await Repair.findOne({
+		_id: requestId,
+	});
+
+	if (!request) {
+		return res
+			.status(404)
+			.json({ message: "Repair request not found or unauthorized!" });
+	}
+
+	const session = await Repair.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+
+		if (updates.status === "In Progress") {
+			updates.technician = technicianId;
+			updates.acceptTime = new Date();
+		}
+
+		if (updates.status === "Completed") {
+			updates.completeTime = new Date();
+		}
+
+		const updatedRequest = await Repair.findByIdAndUpdate(requestId, updates, {
+			new: true,
+			runValidators: true,
+			session,
+		});
+
+		await AuditLog.create(
+			[
+				{
+					userId: req.user.id,
+					operation: "update",
+					entity: "Repair",
+					entityId: requestId,
+					oldValues: request,
+					newValues: updatedRequest,
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "Repair request updated",
+				},
+			],
+			{ session }
+		);
+
+		res.json({
+			data: updatedRequest,
+			message: `Repair request for ${request.itemType} successfully updated!`,
+		});
+		await session.commitTransaction();
+	} catch (error) {
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
+
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		throw error;
+	}
+	session.endSession();
+});
+
 module.exports = {
 	getPendingOrders,
 	getOrderHistory,
@@ -794,4 +991,9 @@ module.exports = {
 	getMaintenanceRequestDetails,
 	updateMaintenanceRequest,
 	deleteRequest,
+
+	getRepairHistory,
+	getPendingRepairs,
+	getRepairDetails,
+	updateRepairRequest,
 };

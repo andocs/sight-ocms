@@ -96,7 +96,7 @@ function ViewDetails({ header, props, onClick, batches }) {
 			</div>
 
 			<div className="p-8 xl:w-5/6">
-				{props ? (
+				{props && (
 					<div className="flex flex-row space-x-12 justify-center">
 						<div
 							key={divHeight}
@@ -206,8 +206,17 @@ function ViewDetails({ header, props, onClick, batches }) {
 															{detail.label}
 															{": "}
 														</p>
-														<p className="mx-1 font-medium">
-															{" "}
+														<p
+															className={`mx-1 font-medium ${
+																detail.label === "Quantity" &&
+																detail.value <= field.details[7].value
+																	? "text-red-500"
+																	: detail.label === "Quantity" &&
+																	  detail.value <= field.details[6].value &&
+																	  "text-yellow-500"
+															}`}
+														>
+															{console.log(field.details)}
 															{detail.label === "Created At"
 																? formatDateandTime(detail.value)
 																: detail.value}{" "}
@@ -315,7 +324,7 @@ function ViewDetails({ header, props, onClick, batches }) {
 							)}
 						</div>
 					</div>
-				) : null}
+				)}
 			</div>
 		</>
 	);

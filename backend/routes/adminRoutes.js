@@ -34,8 +34,10 @@ const {
 	updateRequestStatus,
 	getAuditLogs,
 	getAuditLogDetails,
-	generateWeeklyStaffReports,
-	generateMonthlyStaffReports,
+	generateWeeklyTechnicianReport,
+	generateMonthlyTechnicianReport,
+	generateWeeklyDoctorReport,
+	generateMonthlyDoctorReport,
 	generateInventoryReport,
 } = require("../controllers/adminController");
 
@@ -75,8 +77,10 @@ router.get("/log", getAuditLogs);
 
 router.get("/log/:id", getAuditLogDetails);
 
-router.get("/report/staff/weekly", generateWeeklyStaffReports);
-router.get("/report/staff/monthly", generateMonthlyStaffReports);
+router.get("/report/technician/weekly", generateWeeklyTechnicianReport);
+router.get("/report/technician/monthly", generateMonthlyTechnicianReport);
+router.get("/report/doctor/weekly", generateWeeklyDoctorReport);
+router.get("/report/doctor/monthly", generateMonthlyDoctorReport);
 router.get("/report/inventory", generateInventoryReport);
 
 module.exports = router;

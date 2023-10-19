@@ -8,6 +8,10 @@ const User = require("../models/userModel");
 const Inventory = require("../models/inventoryModel");
 const Order = require("../models/orderModel");
 const Maintenance = require("../models/maintenanceModel");
+const Appointment = require("../models/appointmentModel");
+
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 
 const sessionOptions = {
 	readConcern: { level: "snapshot" },
@@ -21,24 +25,35 @@ function calculateCompletionRate(completedOrders, totalOrders) {
 }
 
 // Function to calculate average processing time
-function calculateAverageProcessingTime(orders, staffId) {
-	if (orders.length === 0) return 0;
+function calculateAverageCompletionTime(orders) {
+	if (orders.length === 0) {
+		return 0; // Return 0 if there are no completed orders to calculate an average.
+	}
 
-	const totalTime = orders.reduce((total, order) => {
-		const doctorString = order.doctor.toString();
-		const techString = order.technician && order.technician.toString();
-		const start =
-			doctorString === staffId
-				? new Date(order.orderTime)
-				: techString === staffId
-				? new Date(order.acceptTime)
-				: new Date(order.orderTime);
-		const end = new Date(order.completeTime || new Date());
-		const duration = (end - start) / (1000 * 60 * 60);
-		return total + duration;
-	}, 0);
+	let totalCompletionTime = 0;
+	for (const order of orders) {
+		const completionTime = order.completeTime - order.acceptTime;
+		totalCompletionTime += completionTime;
+	}
 
-	return totalTime / orders.length;
+	// Calculate the average completion time in milliseconds
+	const averageCompletionTime = totalCompletionTime / orders.length;
+
+	// Convert the average completion time to hours and minutes
+	const hours = Math.floor(averageCompletionTime / (1000 * 60 * 60));
+	const minutes = Math.floor(
+		(averageCompletionTime % (1000 * 60 * 60)) / (1000 * 60)
+	);
+	return `${hours}h. ${minutes}m.`;
+}
+
+// Function to calculate revenue generated
+function calculateTotalRevenue(orders) {
+	let totalRevenue = 0;
+	for (const order of orders) {
+		totalRevenue += order.amount;
+	}
+	return totalRevenue;
 }
 
 /**
@@ -1097,6 +1112,489 @@ const generateMonthlyStaffReports = asyncHandler(async (req, res) => {
 	}
 });
 
+// Generate weekly technician reports
+const generateWeeklyTechnicianReport = asyncHandler(async (req, res) => {
+	try {
+		const now = new Date();
+		const oneMonthAgo = new Date(now);
+		oneMonthAgo.setMonth(now.getMonth() - 1);
+		const oneWeekAgo = new Date(now);
+		oneWeekAgo.setDate(now.getDate() - 7);
+
+		// Find all users with the role "technician"
+		const technicians = await User.find({ role: "technician" });
+
+		const technicianReports = [];
+
+		for (const technician of technicians) {
+			// Find completed orders for the technician within the past week
+			const weeklyOrders = await Order.find({
+				orderTime: { $gte: oneWeekAgo, $lte: now },
+				technician: technician._id,
+				status: "Completed",
+			});
+
+			// Calculate the total order count for the technician
+			const technicianId = new ObjectId(technician._id);
+			const totalOrders = await Order.aggregate([
+				{
+					$lookup: {
+						from: "userDetails",
+						localField: "patient",
+						foreignField: "_id",
+						as: "userDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "lens",
+						foreignField: "_id",
+						as: "lensDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "frame",
+						foreignField: "_id",
+						as: "frameDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "otherItems.item",
+						foreignField: "_id",
+						as: "itemDetails",
+					},
+				},
+				{
+					$match: {
+						technician: technicianId,
+						orderTime: { $gte: oneWeekAgo, $lte: now },
+					},
+				},
+
+				{
+					$project: {
+						orderTime: 1,
+						status: 1,
+						amount: 1,
+						patientLastName: {
+							$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
+						},
+						patientFirstName: {
+							$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
+						},
+						lens: 1,
+						lensName: { $arrayElemAt: ["$lensDetails.itemName", 0] },
+						lensPrice: 1,
+						lensQuantity: 1,
+						frame: 1,
+						frameName: { $arrayElemAt: ["$frameDetails.itemName", 0] },
+						framePrice: 1,
+						frameQuantity: 1,
+						otherItems: 1,
+					},
+				},
+				{
+					$sort: {
+						orderTime: -1,
+					},
+				},
+			]);
+
+			if (
+				weeklyOrders.length === 0 &&
+				totalOrders.length === 0 &&
+				calculateTotalRevenue(weeklyOrders) === 0 &&
+				calculateAverageCompletionTime(weeklyOrders) === 0 &&
+				calculateCompletionRate(weeklyOrders.length, totalOrders.length) === 0
+			) {
+				// Skip this technician if all values except the name are 0
+				continue;
+			}
+
+			// Process the weeklyOrders to generate the technician's report
+			const technicianWeeklyReport = {
+				technician:
+					technician.personalInfo.fname + " " + technician.personalInfo.lname,
+				completedOrders: weeklyOrders.length,
+				totalOrders: totalOrders.length,
+				totalRevenue: calculateTotalRevenue(weeklyOrders),
+				avgCompletionTime: calculateAverageCompletionTime(weeklyOrders),
+				completionRate: calculateCompletionRate(
+					weeklyOrders.length,
+					totalOrders.length
+				),
+				orders: totalOrders,
+			};
+
+			technicianReports.push(technicianWeeklyReport);
+		}
+
+		res.json(technicianReports);
+	} catch (error) {
+		console.error("Error generating weekly technician reports:", error);
+		res
+			.status(500)
+			.json({ message: "Error generating weekly technician reports" });
+	}
+});
+
+// Generate monthly technician reports
+const generateMonthlyTechnicianReport = asyncHandler(async (req, res) => {
+	try {
+		const now = new Date();
+		const oneMonthAgo = new Date(now);
+		oneMonthAgo.setMonth(now.getMonth() - 1);
+
+		// Find all users with the role "technician"
+		const technicians = await User.find({ role: "technician" });
+
+		const technicianReports = [];
+
+		for (const technician of technicians) {
+			// Find completed orders for the technician within the past month
+			const monthlyOrders = await Order.find({
+				orderTime: { $gte: oneMonthAgo, $lte: now },
+				technician: technician._id,
+				status: "Completed",
+			});
+
+			// Calculate the total order count for the technician within the past month
+			// Calculate the total order count for the technician
+			const technicianId = new ObjectId(technician._id);
+			const totalOrders = await Order.aggregate([
+				{
+					$lookup: {
+						from: "userDetails",
+						localField: "patient",
+						foreignField: "_id",
+						as: "userDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "lens",
+						foreignField: "_id",
+						as: "lensDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "frame",
+						foreignField: "_id",
+						as: "frameDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "otherItems.item",
+						foreignField: "_id",
+						as: "itemDetails",
+					},
+				},
+				{
+					$match: {
+						technician: technicianId,
+						orderTime: { $gte: oneMonthAgo, $lte: now },
+					},
+				},
+
+				{
+					$project: {
+						orderTime: 1,
+						status: 1,
+						amount: 1,
+						patientLastName: {
+							$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
+						},
+						patientFirstName: {
+							$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
+						},
+						lens: 1,
+						lensName: { $arrayElemAt: ["$lensDetails.itemName", 0] },
+						lensPrice: 1,
+						lensQuantity: 1,
+						frame: 1,
+						frameName: { $arrayElemAt: ["$frameDetails.itemName", 0] },
+						framePrice: 1,
+						frameQuantity: 1,
+						otherItems: 1,
+					},
+				},
+				{
+					$sort: {
+						orderTime: -1,
+					},
+				},
+			]);
+
+			if (
+				monthlyOrders.length === 0 &&
+				totalOrders.length === 0 &&
+				calculateTotalRevenue(monthlyOrders) === 0 &&
+				calculateAverageCompletionTime(monthlyOrders) === 0 &&
+				calculateCompletionRate(monthlyOrders.length, totalOrders.length) === 0
+			) {
+				// Skip this technician if all values except the name are 0
+				continue;
+			}
+
+			// Process the monthlyOrders to generate the technician's report
+			const technicianMonthlyReport = {
+				technician:
+					technician.personalInfo.fname + " " + technician.personalInfo.lname,
+				completedOrders: monthlyOrders.length,
+				totalOrders: totalOrders.length,
+				totalRevenue: calculateTotalRevenue(monthlyOrders),
+				avgCompletionTime: calculateAverageCompletionTime(monthlyOrders),
+				completionRate: calculateCompletionRate(
+					monthlyOrders.length,
+					totalOrders.length
+				),
+				orders: totalOrders,
+			};
+
+			technicianReports.push(technicianMonthlyReport);
+		}
+
+		res.json(technicianReports);
+	} catch (error) {
+		console.error("Error generating monthly technician reports:", error);
+		res
+			.status(500)
+			.json({ message: "Error generating monthly technician reports" });
+	}
+});
+
+// Generate weekly doctor reports
+const generateWeeklyDoctorReport = asyncHandler(async (req, res) => {
+	try {
+		const now = new Date();
+		const oneWeekAgo = new Date(now);
+		oneWeekAgo.setDate(now.getDate() - 7);
+
+		// Find all users with the role "doctor"
+		const doctors = await User.find({ role: "doctor" });
+
+		const doctorReports = [];
+
+		for (const doctor of doctors) {
+			// Find completed appointments for the doctor within the past week
+			const weeklyAppointments = await Appointment.find({
+				appointmentDate: { $gte: oneWeekAgo, $lte: now },
+				status: "Completed",
+				doctor: doctor._id,
+			});
+
+			// Find total appointments for the doctor within the past week
+			const doctorId = new ObjectId(doctor._id);
+			const totalWeeklyAppointments = await Appointment.aggregate([
+				{
+					$lookup: {
+						from: "userDetails",
+						localField: "patient",
+						foreignField: "_id",
+						as: "userDetails",
+					},
+				},
+				{
+					$match: {
+						doctor: doctorId,
+						appointmentDate: { $gte: oneWeekAgo, $lte: now },
+					},
+				},
+				{
+					$project: {
+						appointmentDate: 1,
+						userLastName: {
+							$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
+						},
+						userFirstName: {
+							$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
+						},
+						appointmentStart: 1,
+						appointmentEnd: 1,
+						notes: 1,
+						status: 1,
+					},
+				},
+				{
+					$sort: {
+						appointmentDate: -1,
+					},
+				},
+			]);
+
+			// Calculate the total appointment count within the past week
+			const totalAppointments = await Appointment.find({
+				appointmentDate: { $gte: oneWeekAgo, $lte: now },
+			});
+
+			// Format the date in your application code
+			const formattedAppointments = totalWeeklyAppointments.map(
+				(appointment) => ({
+					...appointment,
+					appointmentDate: formatAppointmentDate(appointment.appointmentDate),
+				})
+			);
+
+			// Function to format the date
+			function formatAppointmentDate(dateStr) {
+				const date = new Date(dateStr);
+				const options = { year: "numeric", month: "short", day: "2-digit" };
+				return date.toLocaleDateString("en-US", options);
+			}
+
+			if (
+				weeklyAppointments.length === 0 &&
+				totalWeeklyAppointments.length === 0 &&
+				totalAppointments.length === 0 &&
+				formattedAppointments.length === 0
+			) {
+				continue;
+			}
+
+			// Process the weeklyAppointments to generate the doctor's report
+			const doctorWeeklyReport = {
+				doctor: `Dr. ${
+					doctor.personalInfo.fname + " " + doctor.personalInfo.lname
+				}`,
+				weeklyAppointments: weeklyAppointments.length,
+				totalAppointments: totalWeeklyAppointments.length,
+				percentageofAppointments:
+					(totalWeeklyAppointments.length / totalAppointments.length) * 100,
+				appointments: formattedAppointments,
+			};
+
+			doctorReports.push(doctorWeeklyReport);
+		}
+
+		res.json(doctorReports);
+	} catch (error) {
+		console.error("Error generating weekly doctor reports:", error);
+		res.status(500).json({ message: "Error generating weekly doctor reports" });
+	}
+});
+
+// Generate monthly doctor reports
+const generateMonthlyDoctorReport = asyncHandler(async (req, res) => {
+	try {
+		const now = new Date();
+		const oneMonthAgo = new Date(now);
+		oneMonthAgo.setMonth(now.getMonth() - 1);
+
+		// Find all users with the role "doctor"
+		const doctors = await User.find({ role: "doctor" });
+
+		const doctorReports = [];
+
+		for (const doctor of doctors) {
+			// Find completed appointments for the doctor within the past month
+			const monthlyAppointments = await Appointment.find({
+				appointmentDate: { $gte: oneMonthAgo, $lte: now },
+				status: "Completed",
+				doctor: doctor._id,
+			});
+
+			// Find total appointments for the doctor within the past month
+			const doctorId = new ObjectId(doctor._id);
+			const totalMonthlyAppointments = await Appointment.aggregate([
+				{
+					$lookup: {
+						from: "userDetails",
+						localField: "patient",
+						foreignField: "_id",
+						as: "userDetails",
+					},
+				},
+				{
+					$match: {
+						doctor: doctorId,
+						appointmentDate: { $gte: oneMonthAgo, $lte: now },
+					},
+				},
+				{
+					$project: {
+						appointmentDate: 1,
+						userLastName: {
+							$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
+						},
+						userFirstName: {
+							$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
+						},
+						appointmentStart: 1,
+						appointmentEnd: 1,
+						notes: 1,
+						status: 1,
+					},
+				},
+				{
+					$sort: {
+						appointmentDate: -1,
+					},
+				},
+			]);
+
+			// Format the date in your application code
+			const formattedAppointments = totalMonthlyAppointments.map(
+				(appointment) => ({
+					...appointment,
+					appointmentDate: formatAppointmentDate(appointment.appointmentDate),
+				})
+			);
+
+			// Function to format the date
+			function formatAppointmentDate(dateStr) {
+				const date = new Date(dateStr);
+				const options = { year: "numeric", month: "short", day: "2-digit" };
+				return date.toLocaleDateString("en-US", options);
+			}
+
+			// Calculate the total appointment count within the past month
+			const totalAppointments = await Appointment.find({
+				appointmentDate: { $gte: oneMonthAgo, $lte: now },
+			});
+
+			if (
+				monthlyAppointments.length === 0 &&
+				totalMonthlyAppointments.length === 0 &&
+				totalAppointments.length === 0 &&
+				formattedAppointments.length === 0
+			) {
+				continue;
+			}
+
+			// Process the monthlyAppointments to generate the doctor's report
+			const doctorMonthlyReport = {
+				doctor: `Dr. ${
+					doctor.personalInfo.fname + " " + doctor.personalInfo.lname
+				}`,
+				monthlyAppointments: monthlyAppointments.length,
+				totalAppointments: totalMonthlyAppointments.length,
+				percentageofAppointments:
+					(totalMonthlyAppointments.length / totalAppointments.length) * 100,
+				appointments: formattedAppointments,
+			};
+
+			doctorReports.push(doctorMonthlyReport);
+		}
+
+		res.json(doctorReports);
+	} catch (error) {
+		console.error("Error generating monthly doctor reports:", error);
+		res
+			.status(500)
+			.json({ message: "Error generating monthly doctor reports" });
+	}
+});
+
 // Generate inventory report
 const generateInventoryReport = asyncHandler(async (req, res) => {
 	const inventoryList = await Inventory.find();
@@ -1151,7 +1649,9 @@ module.exports = {
 	getAuditLogs,
 	getAuditLogDetails,
 
-	generateWeeklyStaffReports,
-	generateMonthlyStaffReports,
+	generateWeeklyTechnicianReport,
+	generateMonthlyTechnicianReport,
+	generateWeeklyDoctorReport,
+	generateMonthlyDoctorReport,
 	generateInventoryReport,
 };

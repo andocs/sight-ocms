@@ -6,6 +6,7 @@ const Order = require("../models/orderModel");
 const Appointment = require("../models/appointmentModel");
 const User = require("../models/userModel");
 const Schedule = require("../models/scheduleModel");
+const Repair = require("../models/repairModel");
 
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
@@ -513,6 +514,74 @@ const getDoctorSchedule = asyncHandler(async (req, res) => {
 	res.json(schedule);
 });
 
+/**
+##### REPAIR (READ ONLY) #####
+**/
+
+//@desc GET LIST OF PATIENT'S REPAIRS
+//@route GET /api/patient/repair
+//@access private (patient only)
+const getRepairHistory = asyncHandler(async (req, res) => {
+	const patientId = new ObjectId(req.user.id);
+	const repairList = await Repair.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "technician",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "doctor",
+				foreignField: "_id",
+				as: "docDetails",
+			},
+		},
+		{
+			$match: { patient: patientId },
+		},
+		{
+			$project: {
+				createdAt: 1,
+				acceptTime: 1,
+				completeTime: 1,
+				docLastName: { $arrayElemAt: ["$docDetails.personalInfo.lname", 0] },
+				docFirstName: { $arrayElemAt: ["$docDetails.personalInfo.fname", 0] },
+				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
+				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				status: 1,
+				itemType: 1,
+				amount: 1,
+			},
+		},
+		{
+			$sort: {
+				createdAt: -1,
+			},
+		},
+	]);
+	res.json(repairList);
+});
+
+//@desc GET REPAIR REQUEST DETAILS
+//@route GET /api/patient/repair/:id
+//@access private (patient only)
+const getRepairDetails = asyncHandler(async (req, res) => {
+	const requestId = req.params.id;
+
+	const request = await Repair.findOne({
+		_id: requestId,
+	});
+
+	if (!request) {
+		return res.status(404).json({ message: "Request not found!" });
+	}
+	res.json(request);
+});
+
 module.exports = {
 	getRecords,
 	getRecordDetails,
@@ -527,4 +596,7 @@ module.exports = {
 
 	getDoctorList,
 	getDoctorSchedule,
+
+	getRepairHistory,
+	getRepairDetails,
 };

@@ -40,7 +40,15 @@ const {
 	getScheduleDetails,
 	updateDoctorSchedule,
 	deleteDoctorSchedule,
+
 	getInventoryList,
+
+	addRepairRequest,
+	getRepairList,
+	getPendingRepairs,
+	getRepairDetails,
+	updateRepairRequest,
+	deleteRepairRequest,
 } = require("../controllers/doctorController");
 
 const validateToken = require("../middleware/validateTokenHandler");
@@ -104,5 +112,14 @@ router
 router.route("/available").get(getDoctorScheduleDays);
 
 router.route("/inventory").get(getInventoryList);
+
+router.route("/repair").get(getRepairList);
+router.route("/pending/repair").get(getPendingRepairs);
+router
+	.route("/repair/:id")
+	.post(addRepairRequest)
+	.get(getRepairDetails)
+	.put(updateRepairRequest)
+	.delete(deleteRepairRequest);
 
 module.exports = router;

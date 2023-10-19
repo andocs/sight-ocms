@@ -15,6 +15,9 @@ const {
 
 	getDoctorList,
 	getDoctorSchedule,
+
+	getRepairHistory,
+	getRepairDetails,
 } = require("../controllers/patientController");
 
 const validateToken = require("../middleware/validateTokenHandler");
@@ -37,4 +40,6 @@ router.route("/pending").get(getPendingAppointments);
 router.route("/doctor").get(getDoctorList);
 router.route("/schedule").get(getDoctorSchedule);
 
+router.route("/repair").get(getRepairHistory);
+router.route("/repair/:id").get(getRepairDetails);
 module.exports = router;

@@ -1,6 +1,13 @@
 import { Fragment, useState } from "react";
+import decode from "jwt-decode";
 
 const ReusableTable = ({ data, columns, actions, initialFilters = [] }) => {
+	const token = localStorage.getItem("user");
+
+	const decodedToken = decode(token);
+	const role = decodedToken.user.role;
+	const user = decodedToken.user.id;
+
 	const [searchQuery, setSearchQuery] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
 	const rowsPerPage = 6;
@@ -159,22 +166,50 @@ const ReusableTable = ({ data, columns, actions, initialFilters = [] }) => {
 																</button>
 															)
 														) : (
-															<button
-																key={actionIndex}
-																onClick={() => action.handler(item)}
-																className="flex-1 bg-white rounded-lg shadow-lg truncate"
-															>
-																{action.label}
-															</button>
+															<>
+																{item[role] && item[role] !== user ? (
+																	action.label === "View" && (
+																		<button
+																			key={actionIndex}
+																			onClick={() => action.handler(item)}
+																			className="flex-1 bg-white rounded-lg shadow-lg truncate"
+																		>
+																			{action.label}
+																		</button>
+																	)
+																) : (
+																	<button
+																		key={actionIndex}
+																		onClick={() => action.handler(item)}
+																		className="flex-1 bg-white rounded-lg shadow-lg truncate"
+																	>
+																		{action.label}
+																	</button>
+																)}
+															</>
 														)
 													) : (
-														<button
-															key={actionIndex}
-															onClick={() => action.handler(item)}
-															className="flex-1 bg-white rounded-lg shadow-lg truncate"
-														>
-															{action.label}
-														</button>
+														<>
+															{item[role] && item[role] !== user ? (
+																action.label === "View" && (
+																	<button
+																		key={actionIndex}
+																		onClick={() => action.handler(item)}
+																		className="flex-1 bg-white rounded-lg shadow-lg truncate"
+																	>
+																		{action.label}
+																	</button>
+																)
+															) : (
+																<button
+																	key={actionIndex}
+																	onClick={() => action.handler(item)}
+																	className="flex-1 bg-white rounded-lg shadow-lg truncate"
+																>
+																	{action.label}
+																</button>
+															)}
+														</>
 													)}
 												</Fragment>
 											))}
