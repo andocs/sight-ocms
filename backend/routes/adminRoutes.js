@@ -39,6 +39,11 @@ const {
 	generateWeeklyDoctorReport,
 	generateMonthlyDoctorReport,
 	generateInventoryReport,
+	generateWeeklyOrderReport,
+	generateMonthlyOrderReport,
+	generateBatchesExpirationReport,
+	generateQuarterlySalesVelocityReport,
+	generateMonthlySalesVelocityReport,
 } = require("../controllers/adminController");
 
 const validateToken = require("../middleware/validateTokenHandler");
@@ -81,6 +86,12 @@ router.get("/report/technician/weekly", generateWeeklyTechnicianReport);
 router.get("/report/technician/monthly", generateMonthlyTechnicianReport);
 router.get("/report/doctor/weekly", generateWeeklyDoctorReport);
 router.get("/report/doctor/monthly", generateMonthlyDoctorReport);
+
 router.get("/report/inventory", generateInventoryReport);
+router.get("/report/order/weekly", generateWeeklyOrderReport);
+router.get("/report/order/monthly", generateMonthlyOrderReport);
+router.get("/report/batches", generateBatchesExpirationReport);
+router.get("/report/sales/monthly", generateMonthlySalesVelocityReport);
+router.get("/report/sales/quarterly", generateQuarterlySalesVelocityReport);
 
 module.exports = router;

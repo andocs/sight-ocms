@@ -142,6 +142,7 @@ const getScheduledAppointments = asyncHandler(async (req, res) => {
 				appointmentDate: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				userContact: { $arrayElemAt: ["$userDetails.personalInfo.contact", 0] },
 				docLastName: { $arrayElemAt: ["$docDetails.personalInfo.lname", 0] },
 				docFirstName: { $arrayElemAt: ["$docDetails.personalInfo.fname", 0] },
 				appointmentStart: 1,
@@ -245,11 +246,11 @@ const updateAppointment = async (req, res) => {
 			.json({ message: "Appointment not found or unauthorized!" });
 	}
 
-	if (updatedFields.status === "Confirmed") {
-		updatedFields.staff = staffId;
-	}
-
-	if (updatedFields.status === "Cancelled") {
+	if (
+		updatedFields.status === "Confirmed" ||
+		updatedFields.status === "Cancelled" ||
+		updatedFields.status === "For Reschedule"
+	) {
 		updatedFields.staff = staffId;
 	}
 

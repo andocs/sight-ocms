@@ -50,11 +50,12 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	const [appointmentEndOptions, setAppointmentEndOptions] = useState("");
 
 	let doctorSchedule = [];
+	let doctorAppointments = [];
 	const timeSlots = [];
 
 	for (let hour = 9; hour <= 17; hour++) {
 		for (let minute = 0; minute <= 30; minute += 30) {
-			if (hour == 17) {
+			if (hour == 17 && minute == 30) {
 				break;
 			} else {
 				const ampm = hour < 12 ? "AM" : "PM";
@@ -128,8 +129,19 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 		return lunchBreakEndOptions;
 	}
 
-	function calculateAvailableTimeSlots(selectedDate, doctorSchedule) {
-		if (doctorSchedule.length > 0 && selectedDate) {
+	function isEqualTime(time1, time2) {
+		return (
+			time1.getHours() === time2.getHours() &&
+			time1.getMinutes() === time2.getMinutes()
+		);
+	}
+
+	function calculateAvailableTimeSlots(
+		selectedDate,
+		doctorSchedule,
+		doctorAppointments
+	) {
+		if (doctorSchedule.length > 0 && doctorAppointments && selectedDate) {
 			const selectedDayOfWeek = selectedDate.toLocaleDateString("en-US", {
 				weekday: "long",
 			});
@@ -138,12 +150,25 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 				(entry) => entry.dayOfWeek === selectedDayOfWeek
 			);
 
-			if (schedule) {
+			if (schedule && doctorAppointments) {
 				const doctorStartTime = parseTime(schedule.startTime);
 				const doctorEndTime = parseTime(schedule.endTime);
 
 				const appointmentEndTime = new Date(doctorStartTime);
 				appointmentEndTime.setMinutes(appointmentEndTime.getMinutes() + 30);
+
+				const bookedTimeSlots = doctorAppointments
+					.filter((appointment) => {
+						const appointmentDate = new Date(appointment.appointmentDate);
+						return (
+							appointmentDate.toDateString() === selectedDate.toDateString()
+						);
+					})
+					.map((appointment) => {
+						const appointmentTime = parseTime(appointment.appointmentStart);
+						return appointmentTime;
+					});
+
 				const availableTimeSlots = [];
 				let currentTime = new Date(doctorStartTime);
 
@@ -152,7 +177,12 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 					schedule.lunchBreakEnd === "N/A"
 				) {
 					while (currentTime < doctorEndTime) {
-						if (currentTime >= doctorStartTime) {
+						if (
+							currentTime >= doctorStartTime &&
+							!bookedTimeSlots.some((bookedTime) =>
+								isEqualTime(currentTime, bookedTime)
+							)
+						) {
 							availableTimeSlots.push(formatTime(currentTime));
 						}
 						currentTime.setMinutes(currentTime.getMinutes() + 30);
@@ -165,7 +195,10 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 					while (currentTime < doctorEndTime) {
 						if (
 							currentTime >= doctorStartTime &&
-							(currentTime < lunchBreakStart || currentTime >= lunchBreakEnd)
+							(currentTime < lunchBreakStart || currentTime >= lunchBreakEnd) &&
+							!bookedTimeSlots.some((bookedTime) =>
+								isEqualTime(currentTime, bookedTime)
+							)
 						) {
 							availableTimeSlots.push(formatTime(currentTime));
 						}
@@ -249,7 +282,6 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 				price: parseInt(price),
 				total: price * quantity,
 			};
-			console.log(newItem);
 			setOtherItemsList((prevList) => [...prevList, newItem]);
 
 			setFormData((prevData) => ({
@@ -262,7 +294,6 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			setInputValue("");
 			customSearchInputRef.current.clearInputValue();
 		}
-		console.log(otherItemsList);
 	};
 
 	const handleAddRepairClick = () => {
@@ -289,7 +320,6 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	};
 
 	const toggleEdit = (item) => {
-		console.log(item);
 		const updatedOtherItemsList = otherItemsList.map((i) =>
 			i === item ? { ...i, isEditing: !i.isEditing } : i
 		);
@@ -316,7 +346,6 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			editedItem.total = totalAmount;
 
 			setOtherItemsList(updatedOtherItemsList);
-			console.log(otherItemsList);
 
 			editedItem.isEditing = false;
 			setItemID("");
@@ -636,11 +665,14 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 						/>
 					);
 				}
-
 			case "date":
 				const schedule = field?.available;
+				const appointment = field?.appointment;
 				if (schedule) {
 					doctorSchedule = schedule;
+				}
+				if (appointment) {
+					doctorAppointments = appointment;
 				}
 
 				let filterDate = null;
@@ -799,7 +831,8 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 		} else {
 			const availableTimeSlots = calculateAvailableTimeSlots(
 				formData.appointmentDate,
-				doctorSchedule
+				doctorSchedule,
+				doctorAppointments
 			);
 			setAppointmentStartOptions(availableTimeSlots);
 		}
@@ -839,7 +872,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 		if (lunchBreakStartOptions && lunchBreakStartOptions.length > 0) {
 			if (
 				timeSlots.indexOf(formData["lunchBreakStart"]) >=
-				timeSlots.indexOf(formData["endTime"]) - 2
+					timeSlots.indexOf(formData["endTime"]) - 2 ||
+				timeSlots.indexOf(formData["lunchBreakStart"]) <=
+					timeSlots.indexOf(formData["startTime"])
 			) {
 				setFormData((prevData) => ({
 					...prevData,
@@ -859,10 +894,12 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 
 	useEffect(() => {
 		if (lunchBreakEndOptions && lunchBreakEndOptions.length > 0) {
-			setFormData((prevData) => ({
-				...prevData,
-				lunchBreakEnd: lunchBreakEndOptions[0],
-			}));
+			if (!lunchBreakEndOptions.includes(formData["lunchBreakEnd"])) {
+				setFormData((prevData) => ({
+					...prevData,
+					lunchBreakEnd: lunchBreakEndOptions[0],
+				}));
+			}
 		} else if (
 			lunchBreakEndOptions !== "" &&
 			lunchBreakEndOptions.length === 0
@@ -888,8 +925,6 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			}));
 		}
 	}, [appointmentStartOptions]);
-
-	console.log(formData);
 
 	useEffect(() => {
 		if (appointmentEndOptions && appointmentEndOptions.length > 0) {

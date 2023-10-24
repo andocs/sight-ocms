@@ -1532,7 +1532,6 @@ const updateAppointment = async (req, res) => {
 	if (appointment.doctor) {
 		const doctor = new ObjectId(req.user.id);
 		if (appointment.doctor.toString() !== doctor.toString()) {
-			console.log(appointment.doctor, doctorId);
 			return res.status(404).json({ message: "Unauthorized Access!" });
 		}
 	}
@@ -1926,7 +1925,7 @@ const deleteDoctorSchedule = asyncHandler(async (req, res) => {
 		await session.commitTransaction();
 		res.status(201).json({
 			id: scheduleId,
-			message: "Doctor appointment deleted successfully",
+			message: "Doctor schedule deleted successfully",
 		});
 	} catch (error) {
 		await session.abortTransaction();

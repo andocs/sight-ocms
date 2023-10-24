@@ -1,7 +1,7 @@
 import { Fragment, useState } from "react";
 import decode from "jwt-decode";
 
-const ReusableTable = ({ data, columns, actions, initialFilters = [] }) => {
+const ReusableTable = ({ data, columns, actions }) => {
 	const token = localStorage.getItem("user");
 
 	const decodedToken = decode(token);
@@ -167,7 +167,9 @@ const ReusableTable = ({ data, columns, actions, initialFilters = [] }) => {
 															)
 														) : (
 															<>
-																{item[role] && item[role] !== user ? (
+																{item[role] &&
+																role !== "staff" &&
+																item[role] !== user ? (
 																	action.label === "View" && (
 																		<button
 																			key={actionIndex}
@@ -190,7 +192,9 @@ const ReusableTable = ({ data, columns, actions, initialFilters = [] }) => {
 														)
 													) : (
 														<>
-															{item[role] && item[role] !== user ? (
+															{item[role] &&
+															role !== "staff" &&
+															item[role] !== user ? (
 																action.label === "View" && (
 																	<button
 																		key={actionIndex}

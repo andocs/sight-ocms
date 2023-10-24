@@ -276,8 +276,6 @@ const scheduleAppointment = async (req, res) => {
 	const { doctor, appointmentDate, appointmentStart, appointmentEnd } =
 		req.body;
 
-	console.log(req.body);
-
 	if (!appointmentDate || !appointmentStart || !appointmentEnd) {
 		return res
 			.status(404)
@@ -292,6 +290,7 @@ const scheduleAppointment = async (req, res) => {
 	};
 	if (doctor) {
 		appointmentData.doctor = doctor;
+		appointmentData.status = "Scheduled";
 	}
 
 	const session = await Appointment.startSession(sessionOptions);
@@ -477,6 +476,7 @@ const getDoctorSchedule = asyncHandler(async (req, res) => {
 				email: "",
 				contact: "",
 				schedule: [],
+				appointments: [],
 			};
 		}
 		const userDetails = await User.findOne({ _id: doctorId });
@@ -490,6 +490,16 @@ const getDoctorSchedule = asyncHandler(async (req, res) => {
 		}
 
 		schedulesByDoctor[doctorId].schedule.push(schedules);
+	}
+
+	for (const doctorId in schedulesByDoctor) {
+		const currentDate = new Date();
+		const appointments = await Appointment.find({
+			doctor: doctorId,
+			status: { $in: ["Scheduled", "Confirmed"] },
+			appointmentDate: { $gte: currentDate },
+		});
+		schedulesByDoctor[doctorId].appointments = appointments;
 	}
 
 	const schedule = Object.values(schedulesByDoctor);

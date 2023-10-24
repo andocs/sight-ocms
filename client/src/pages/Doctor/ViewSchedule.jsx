@@ -19,7 +19,6 @@ import ViewCards from "../../components/viewcards.component";
 
 function ViewSchedule() {
 	let [isOpen, setIsOpen] = useState(false);
-	const [isConfirmed, setConfirmation] = useState(false);
 	const [scheduleId, setScheduleId] = useState("");
 
 	const navigate = useNavigate();
@@ -29,13 +28,11 @@ function ViewSchedule() {
 		(state) => state.schedule
 	);
 
-	const { appointment } = useSelector((state) => state.appointment);
+	const { scheduled } = useSelector((state) => state.appointment);
 
 	useEffect(() => {
-		if (!appointment) {
-			dispatch(getScheduledAppointments());
-		}
-	}, [dispatch, appointment]);
+		dispatch(getScheduledAppointments());
+	}, [dispatch, scheduled]);
 
 	useEffect(() => {
 		if (isError) {
@@ -64,7 +61,6 @@ function ViewSchedule() {
 		setScheduleId(scheduleId);
 	}
 	function checkConfirmation() {
-		setConfirmation(true);
 		dispatch(deleteSchedule(scheduleId));
 		if (isSuccess && message) {
 			toast.message(message);
@@ -114,7 +110,7 @@ function ViewSchedule() {
 		{
 			label: "Edit",
 			handler: (details) => {
-				const hasConflict = checkForConflicts(details, appointment);
+				const hasConflict = checkForConflicts(details, scheduled);
 				if (!hasConflict) {
 					navigate(`/doctor/edit-schedule/${details._id}`, {
 						state: { details },
@@ -128,7 +124,7 @@ function ViewSchedule() {
 			label: "Delete",
 			css: "red",
 			handler: (details) => {
-				const hasConflict = checkForConflicts(details, appointment);
+				const hasConflict = checkForConflicts(details, scheduled);
 				if (!hasConflict) {
 					openModal(details._id);
 				} else {

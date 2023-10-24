@@ -61,6 +61,12 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 	},
 	dateText: {
+		position: "absolute",
+		bottom: 20,
+		right: 20,
+		fontSize: 10,
+	},
+	coveredDate: {
 		fontSize: 10,
 	},
 	table: {
@@ -181,7 +187,7 @@ const ReportPDF = (data) => {
 
 	return (
 		<Document>
-			<Page size="A4" style={styles.page}>
+			<Page wrap={false} size="LEGAL" style={styles.page}>
 				<View style={styles.section}>
 					<Text style={styles.headerText}>Maderal Optical</Text>
 					<Text style={styles.infoText}>Pinagbuhatan, Pasig City</Text>
@@ -204,10 +210,12 @@ const ReportPDF = (data) => {
 						<View style={styles.horizontalLine}></View>
 						<View style={styles.headerContainer}>
 							<Text style={styles.reportName}>{data.data[0].headerText}</Text>
-							<Text style={styles.dateText}>
-								Date Generated: {new Date().toLocaleDateString()}
-								{" | "}
-								{new Date().toLocaleTimeString()}
+							<Text style={styles.coveredDate}>
+								{data.data[0].dateEnd
+									? `Covered Date: ` + data.data[0].dateEnd
+									: "as of "}
+								{data.data[0].dateEnd && " - "}
+								{data.data[0].dateStart}
 							</Text>
 						</View>
 					</View>
@@ -241,38 +249,19 @@ const ReportPDF = (data) => {
 															key={chunkIndex}
 															style={{
 																flexDirection: "row",
-																justifyContent: "space-between",
+																justifyContent: "center",
 																marginBottom: 20,
 															}}
 														>
 															{chunk.map(([key, value], index) => (
 																<View style={styles.headerCol} key={index}>
-																	<Text style={styles.dateText}>
+																	<Text style={styles.coveredDate}>
 																		{key}: {value}
 																	</Text>
 																</View>
 															))}
 														</View>
 													))}
-
-												{/* <View
-													style={{
-														flexDirection: "row",
-														justifyContent: "space-between",
-														marginBottom: 20,
-													}}
-												>
-													{Object.entries(row.header[0]).map(
-														([key, value], index) =>
-															index > 0 && (
-																<View style={styles.headerCol}>
-																	<Text style={styles.dateText}>
-																		{key}: {value}
-																	</Text>
-																</View>
-															)
-													)}
-												</View> */}
 											</View>
 										)}
 
@@ -303,6 +292,13 @@ const ReportPDF = (data) => {
 							})),
 							totalWidth
 						)}
+					<View style={{ marginTop: 30 }}>
+						<Text style={styles.dateText}>
+							Date Generated: {new Date().toLocaleDateString()}
+							{" | "}
+							{new Date().toLocaleTimeString()}
+						</Text>
+					</View>
 				</View>
 			</Page>
 		</Document>

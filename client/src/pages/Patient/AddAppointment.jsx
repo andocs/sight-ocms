@@ -138,6 +138,8 @@ function AddAppointment() {
 						size: "w-full",
 						disabled: daysOfWeek && daysOfWeek,
 						available: doctorDetails?.details && doctorDetails.details.schedule,
+						appointment:
+							doctorDetails?.details && doctorDetails.details.appointments,
 					},
 					{
 						label: "Start Time *",
@@ -178,7 +180,6 @@ function AddAppointment() {
 		if (doctorDetails.details && doctorDetails.details !== "") {
 			appointmentData.doctor = doctorDetails.details.id;
 		}
-		console.log(appointmentData);
 		dispatch(scheduleAppointment(appointmentData));
 	};
 	return (

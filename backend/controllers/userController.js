@@ -159,7 +159,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 	const user = await User.findOne({ email });
 	if (!user) {
-		return res.status(401).json({ message: "User not found!" });
+		return res.status(401).json({ message: "Wrong email!" });
 	}
 
 	if (user && !user.password) {
@@ -198,7 +198,7 @@ const loginUser = asyncHandler(async (req, res) => {
 				});
 			}
 		} else {
-			return res.status(401).json({ message: "Wrong email or password!" });
+			return res.status(401).json({ message: "Wrong password!" });
 		}
 	}
 });

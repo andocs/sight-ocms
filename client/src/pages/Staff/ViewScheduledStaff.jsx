@@ -10,17 +10,16 @@ import {
 } from "../../features/appointment/appointmentSlice";
 
 import Spinner from "../../components/spinner.component";
-import AcceptConfirmation from "../../components/acceptconfirmation.component";
 import ViewModal from "../../components/viewmodal.component";
+import StatusModal from "../../components/statusmodal.component";
 
 import Table from "../../components/table.component";
 
 function ViewScheduledStaff() {
-	const [isOpen, setIsOpen] = useState(false);
 	const [isViewOpen, setViewOpen] = useState(false);
-	const [appointmentId, setAppointmentId] = useState("");
 	const [appointmentData, setAppointmentData] = useState("");
-
+	const [isStatusModalOpen, setStatusModalOpen] = useState(false);
+	const [selectedAppointment, setSelectedAppointment] = useState(null);
 	const dispatch = useDispatch();
 	const { scheduled, isLoading, isSuccess, isError, message } = useSelector(
 		(state) => state.appointment
@@ -44,32 +43,10 @@ function ViewScheduledStaff() {
 	if (isLoading) {
 		return <Spinner />;
 	}
-	function closeModal() {
-		setIsOpen(false);
-		setAppointmentData("");
-		setAppointmentId("");
-	}
 
 	function closeViewModal() {
 		setViewOpen(false);
 		setAppointmentData("");
-		setAppointmentId("");
-	}
-
-	function openModal(appointment) {
-		setIsOpen(true);
-		setAppointmentData(appointment);
-		setAppointmentId(appointment._id);
-	}
-
-	function updateConfirmation() {
-		const appointmentData = { status: "Confirmed" };
-		dispatch(editAppointment({ appointmentId, appointmentData }));
-		if (isSuccess && message) {
-			toast.message(message);
-		}
-
-		setIsOpen(false);
 	}
 
 	const columns = [
@@ -77,6 +54,7 @@ function ViewScheduledStaff() {
 		{ header: "Status", field: "status" },
 		{ header: "Last Name", field: "userLastName" },
 		{ header: "First Name", field: "userFirstName" },
+		{ header: "Contact", field: `userContact` },
 		{ header: "Start Time", field: `appointmentStart` },
 		{ header: "End Time", field: "appointmentEnd" },
 		{ header: "Additional Notes", field: "notes" },
@@ -91,12 +69,18 @@ function ViewScheduledStaff() {
 			},
 		},
 		{
-			label: "Confirm",
+			label: "Update",
 			handler: (details) => {
-				openModal(details);
+				setSelectedAppointment(details);
+				setStatusModalOpen(true);
 			},
 		},
 	];
+	const handleStatus = (updates) => {
+		const appointmentId = selectedAppointment._id;
+		const appointmentData = { status: updates };
+		dispatch(editAppointment({ appointmentId, appointmentData }));
+	};
 
 	return (
 		<>
@@ -110,12 +94,14 @@ function ViewScheduledStaff() {
 				/>
 			)}
 
-			<AcceptConfirmation
-				text={"Confirm"}
-				isOpen={isOpen}
-				closeModal={closeModal}
-				onConfirm={updateConfirmation}
-			/>
+			{isStatusModalOpen && (
+				<StatusModal
+					appointment={selectedAppointment}
+					isOpen={isStatusModalOpen}
+					closeModal={() => setStatusModalOpen(false)}
+					handleStatusChange={handleStatus}
+				/>
+			)}
 
 			<div className="w-full bg-white bappointment-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">

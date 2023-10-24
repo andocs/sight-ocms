@@ -18,7 +18,6 @@ import RestockModal from "../../components/restockmodal.component";
 function ViewInventory() {
 	const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
-	const [isConfirmed, setConfirmation] = useState(false);
 	const [itemId, setItemId] = useState("");
 	const [selectedItem, setSelectedItem] = useState("");
 
@@ -42,7 +41,6 @@ function ViewInventory() {
 	}
 
 	function checkConfirmation() {
-		setConfirmation(true);
 		dispatch(deleteInventoryItem(itemId));
 		setIsOpen(false);
 	}

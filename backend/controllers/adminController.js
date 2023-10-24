@@ -24,10 +24,48 @@ function calculateCompletionRate(completedOrders, totalOrders) {
 	return (completedOrders / totalOrders) * 100;
 }
 
+const calculateSalesVelocity = async (item, category, startDate) => {
+	const now = new Date();
+
+	try {
+		const itemField =
+			category === "Frame"
+				? "frame"
+				: category === "Lens"
+				? "lens"
+				: "otherItems._id"; // Use the path to the _id field in otherItems
+
+		const query = {
+			completeTime: { $gte: startDate, $lte: now },
+		};
+
+		if (itemField === "otherItems._id") {
+			query["otherItems._id"] = item._id;
+		} else {
+			query[itemField] = item._id;
+		}
+
+		const relevantOrders = await Order.find(query);
+
+		// Calculate the number of orders and the number of days in the period
+		const numOrders = relevantOrders.length;
+		const timeDifferenceInMs = now - startDate;
+		const numDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
+
+		// Calculate the sales velocity (average orders per day)
+		const salesVelocity = numOrders / numDays;
+
+		return salesVelocity;
+	} catch (error) {
+		console.error("Error calculating sales velocity:", error);
+		return 0; // Return 0 in case of an error or no orders
+	}
+};
+
 // Function to calculate average processing time
 function calculateAverageCompletionTime(orders) {
 	if (orders.length === 0) {
-		return 0; // Return 0 if there are no completed orders to calculate an average.
+		return 0;
 	}
 
 	let totalCompletionTime = 0;
@@ -55,6 +93,118 @@ function calculateTotalRevenue(orders) {
 	}
 	return totalRevenue;
 }
+
+function formatPrice(price) {
+	// Check if the price is a valid number
+	if (typeof price !== "number" || isNaN(price)) {
+		return price; // Return as is if not a valid number
+	}
+
+	// Check if the price has decimal places
+	const formattedPrice = price.toLocaleString("en-US", {
+		style: "currency",
+		currency: "PHP",
+		minimumFractionDigits: 0, // Minimum fraction digits to display
+		maximumFractionDigits: 2, // Maximum fraction digits to display
+	});
+
+	return formattedPrice;
+}
+
+function formatDate(dateStr) {
+	const date = new Date(dateStr);
+
+	const monthNames = [
+		"Jan",
+		"Feb",
+		"Mar",
+		"Apr",
+		"May",
+		"Jun",
+		"Jul",
+		"Aug",
+		"Sep",
+		"Oct",
+		"Nov",
+		"Dec",
+	];
+
+	const day = date.getDate();
+	const monthIndex = date.getMonth();
+	const year = date.getFullYear();
+	const hours = date.getHours();
+	const minutes = date.getMinutes();
+	const period = hours >= 12 ? "PM" : "AM";
+
+	// Adjust hours to 12-hour format
+	const formattedHours = hours % 12 || 12;
+
+	// Ensure that single-digit minutes have a leading zero
+	const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+	const formattedDate = `${monthNames[monthIndex]} ${day}, ${year} at ${formattedHours}:${formattedMinutes} ${period}`;
+
+	return formattedDate;
+}
+
+function formatOrderDate(dateStr) {
+	const date = new Date(dateStr);
+	const options = { year: "numeric", month: "short", day: "2-digit" };
+	return date.toLocaleDateString("en-US", options);
+}
+
+// Create a function to find the number of sales of a specific item within a category
+const findItemSales = async (itemId, category, startDate) => {
+	const now = new Date();
+
+	let sales;
+	let itemsSold = 0;
+
+	switch (category) {
+		case "Frame":
+			sales = await Order.find({
+				orderTime: { $gte: startDate, $lte: now },
+				status: "Completed",
+				frame: itemId,
+			});
+			break;
+		case "Lens":
+			sales = await Order.find({
+				orderTime: { $gte: startDate, $lte: now },
+				status: "Completed",
+				lens: itemId,
+			});
+			break;
+		default:
+			sales = await Order.find({
+				orderTime: { $gte: startDate, $lte: now },
+				status: "Completed",
+				"otherItems._id": itemId,
+			});
+			break;
+	}
+
+	// Use Promise.all to await all queries and process the results
+	await Promise.all(
+		sales.map((sale) => {
+			if (category === "Frame") {
+				itemsSold += sale.frameQuantity;
+			} else if (category === "Lens") {
+				itemsSold += sale.lensQuantity;
+			} else {
+				const otherItem = sale.otherItems.find(
+					(oi) => oi._id.toString() === itemId.toString()
+				);
+
+				if (otherItem) {
+					itemsSold += otherItem.quantity;
+				}
+			}
+		})
+	);
+
+	return itemsSold;
+};
 
 /**
 ##### STAFF MANAGEMENT (CRUD) #####
@@ -510,9 +660,14 @@ const addInventoryItem = asyncHandler(async (req, res) => {
 const getInventoryList = asyncHandler(async (req, res) => {
 	const inventoryList = await Inventory.find();
 	if (inventoryList.length === 0) {
-		res.json({ message: "No items currently in inventory." });
+		res.json(inventoryList);
+	} else {
+		const formattedInventoryList = inventoryList.map((item) => ({
+			...item._doc,
+			price: formatPrice(item.price),
+		}));
+		res.json(formattedInventoryList);
 	}
-	res.json(inventoryList);
 });
 
 //@desc GET INVENTORY ITEM DETAILS
@@ -572,8 +727,6 @@ const updateItem = asyncHandler(async (req, res) => {
 			updatedFields,
 			{ new: true, runValidators: true, session }
 		);
-
-		console.log(unsetUpdate);
 
 		if (unsetUpdate) {
 			await Inventory.findByIdAndUpdate(itemId, unsetUpdate, {
@@ -961,163 +1114,13 @@ const getAuditLogDetails = asyncHandler(async (req, res) => {
 });
 
 /**
-##### REPORT GENERATION #####
+##### REPORT GENERATION (STAFF) #####
 **/
-
-// Generate weekly staff reports
-const generateWeeklyStaffReports = asyncHandler(async (req, res) => {
-	try {
-		const now = new Date();
-		const oneWeekAgo = new Date(now);
-		oneWeekAgo.setDate(now.getDate() - 7);
-
-		const weeklyOrders = await Order.find({
-			orderTime: { $gte: oneWeekAgo, $lte: now },
-			status: "Completed", // Filter for completed orders
-		});
-
-		// Group orders by doctor and technician
-		const weeklyReports = {};
-
-		weeklyOrders.forEach((order) => {
-			const doctorId = order.doctor.toString();
-			const technicianId = order.technician ? order.technician.toString() : "";
-
-			if (!weeklyReports[doctorId]) {
-				weeklyReports[doctorId] = {
-					doctor: doctorId,
-					totalOrders: 0,
-					completedOrders: 0,
-					pendingOrders: 0,
-					completionRate: 0,
-					avgProcessingTime: 0,
-					revenueGenerated: 0,
-				};
-			}
-
-			if (technicianId && !weeklyReports[technicianId]) {
-				weeklyReports[technicianId] = {
-					technician: technicianId,
-					totalOrders: 0,
-					completedOrders: 0,
-					pendingOrders: 0,
-					completionRate: 0,
-					avgCompletionTime: 0,
-					revenueGenerated: 0,
-				};
-			}
-
-			weeklyReports[doctorId].totalOrders++;
-			weeklyReports[doctorId].completedOrders++;
-			weeklyReports[doctorId].avgProcessingTime =
-				calculateAverageProcessingTime([order], doctorId);
-			weeklyReports[doctorId].revenueGenerated += order.amount;
-
-			if (technicianId) {
-				weeklyReports[technicianId].totalOrders++;
-				weeklyReports[technicianId].completedOrders++;
-				weeklyReports[technicianId].avgCompletionTime =
-					calculateAverageProcessingTime([order], technicianId);
-				weeklyReports[technicianId].revenueGenerated += order.amount;
-			}
-		});
-
-		// Calculate completion rate and pending orders for the week
-		Object.values(weeklyReports).forEach((report) => {
-			report.completionRate = calculateCompletionRate(
-				report.completedOrders,
-				report.totalOrders
-			);
-			report.pendingOrders = report.totalOrders - report.completedOrders;
-		});
-		res.json(weeklyReports);
-	} catch (error) {
-		console.error("Error generating weekly reports:", error);
-		res.status(500).json({ message: "Error generating weekly reports" });
-	}
-});
-
-// Generate monthly staff reports
-const generateMonthlyStaffReports = asyncHandler(async (req, res) => {
-	try {
-		const now = new Date();
-		const oneMonthAgo = new Date(now);
-		oneMonthAgo.setMonth(now.getMonth() - 1);
-
-		const monthlyOrders = await Order.find({
-			orderTime: { $gte: oneMonthAgo, $lte: now },
-			status: "Completed", // Filter for completed orders
-		});
-
-		// Group orders by doctor and technician
-		const monthlyReports = {};
-
-		monthlyOrders.forEach((order) => {
-			const doctorId = order.doctor.toString();
-			const technicianId = order.technician ? order.technician.toString() : "";
-
-			if (!monthlyReports[doctorId]) {
-				monthlyReports[doctorId] = {
-					doctor: doctorId,
-					totalOrders: 0,
-					completedOrders: 0,
-					pendingOrders: 0,
-					completionRate: 0,
-					avgProcessingTime: 0,
-					revenueGenerated: 0,
-				};
-			}
-
-			if (technicianId && !monthlyReports[technicianId]) {
-				monthlyReports[technicianId] = {
-					doctor: technicianId,
-					totalOrders: 0,
-					completedOrders: 0,
-					pendingOrders: 0,
-					completionRate: 0,
-					avgProcessingTime: 0,
-					revenueGenerated: 0,
-				};
-			}
-
-			monthlyReports[doctorId].totalOrders++;
-			monthlyReports[doctorId].completedOrders++;
-			monthlyReports[doctorId].avgProcessingTime =
-				calculateAverageProcessingTime([order]);
-			monthlyReports[doctorId].revenueGenerated += order.amount;
-
-			if (technicianId) {
-				monthlyReports[technicianId].totalOrders++;
-				monthlyReports[technicianId].completedOrders++;
-				monthlyReports[technicianId].avgProcessingTime =
-					calculateAverageProcessingTime([order]);
-				monthlyReports[technicianId].revenueGenerated += order.amount;
-			}
-		});
-
-		// Calculate completion rate and pending orders for the month
-		Object.values(monthlyReports).forEach((report) => {
-			report.completionRate = calculateCompletionRate(
-				report.completedOrders,
-				report.totalOrders
-			);
-			report.pendingOrders = report.totalOrders - report.completedOrders;
-		});
-
-		console.log(monthlyReports);
-		res.json(monthlyReports);
-	} catch (error) {
-		console.error("Error generating monthly reports:", error);
-		res.status(500).json({ message: "Error generating monthly reports" });
-	}
-});
 
 // Generate weekly technician reports
 const generateWeeklyTechnicianReport = asyncHandler(async (req, res) => {
 	try {
 		const now = new Date();
-		const oneMonthAgo = new Date(now);
-		oneMonthAgo.setMonth(now.getMonth() - 1);
 		const oneWeekAgo = new Date(now);
 		oneWeekAgo.setDate(now.getDate() - 7);
 
@@ -1187,13 +1190,9 @@ const generateWeeklyTechnicianReport = asyncHandler(async (req, res) => {
 						patientFirstName: {
 							$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
 						},
-						lens: 1,
 						lensName: { $arrayElemAt: ["$lensDetails.itemName", 0] },
-						lensPrice: 1,
 						lensQuantity: 1,
-						frame: 1,
 						frameName: { $arrayElemAt: ["$frameDetails.itemName", 0] },
-						framePrice: 1,
 						frameQuantity: 1,
 						otherItems: 1,
 					},
@@ -1204,6 +1203,13 @@ const generateWeeklyTechnicianReport = asyncHandler(async (req, res) => {
 					},
 				},
 			]);
+
+			// Format the date in your application code
+			const formattedOrders = totalOrders.map((order) => ({
+				...order,
+				amount: formatPrice(order.amount),
+				orderTime: formatDate(order.orderTime),
+			}));
 
 			if (
 				weeklyOrders.length === 0 &&
@@ -1228,7 +1234,7 @@ const generateWeeklyTechnicianReport = asyncHandler(async (req, res) => {
 					weeklyOrders.length,
 					totalOrders.length
 				),
-				orders: totalOrders,
+				orders: formattedOrders,
 			};
 
 			technicianReports.push(technicianWeeklyReport);
@@ -1263,7 +1269,6 @@ const generateMonthlyTechnicianReport = asyncHandler(async (req, res) => {
 				status: "Completed",
 			});
 
-			// Calculate the total order count for the technician within the past month
 			// Calculate the total order count for the technician
 			const technicianId = new ObjectId(technician._id);
 			const totalOrders = await Order.aggregate([
@@ -1335,6 +1340,13 @@ const generateMonthlyTechnicianReport = asyncHandler(async (req, res) => {
 				},
 			]);
 
+			// Format the date in your application code
+			const formattedOrders = totalOrders.map((order) => ({
+				...order,
+				amount: formatPrice(order.amount),
+				orderTime: formatDate(order.orderTime),
+			}));
+
 			if (
 				monthlyOrders.length === 0 &&
 				totalOrders.length === 0 &&
@@ -1358,7 +1370,7 @@ const generateMonthlyTechnicianReport = asyncHandler(async (req, res) => {
 					monthlyOrders.length,
 					totalOrders.length
 				),
-				orders: totalOrders,
+				orders: formattedOrders,
 			};
 
 			technicianReports.push(technicianMonthlyReport);
@@ -1375,233 +1387,227 @@ const generateMonthlyTechnicianReport = asyncHandler(async (req, res) => {
 
 // Generate weekly doctor reports
 const generateWeeklyDoctorReport = asyncHandler(async (req, res) => {
-	try {
-		const now = new Date();
-		const oneWeekAgo = new Date(now);
-		oneWeekAgo.setDate(now.getDate() - 7);
+	const now = new Date();
+	const oneWeekAgo = new Date(now);
+	oneWeekAgo.setDate(now.getDate() - 7);
 
-		// Find all users with the role "doctor"
-		const doctors = await User.find({ role: "doctor" });
+	// Find all users with the role "doctor"
+	const doctors = await User.find({ role: "doctor" });
 
-		const doctorReports = [];
+	const doctorReports = [];
 
-		for (const doctor of doctors) {
-			// Find completed appointments for the doctor within the past week
-			const weeklyAppointments = await Appointment.find({
-				appointmentDate: { $gte: oneWeekAgo, $lte: now },
-				status: "Completed",
-				doctor: doctor._id,
-			});
+	for (const doctor of doctors) {
+		// Find completed appointments for the doctor within the past week
+		const weeklyAppointments = await Appointment.find({
+			appointmentDate: { $gte: oneWeekAgo, $lte: now },
+			status: "Completed",
+			doctor: doctor._id,
+		});
 
-			// Find total appointments for the doctor within the past week
-			const doctorId = new ObjectId(doctor._id);
-			const totalWeeklyAppointments = await Appointment.aggregate([
-				{
-					$lookup: {
-						from: "userDetails",
-						localField: "patient",
-						foreignField: "_id",
-						as: "userDetails",
-					},
+		// Find total appointments for the doctor within the past week
+		const doctorId = new ObjectId(doctor._id);
+		const totalWeeklyAppointments = await Appointment.aggregate([
+			{
+				$lookup: {
+					from: "userDetails",
+					localField: "patient",
+					foreignField: "_id",
+					as: "userDetails",
 				},
-				{
-					$match: {
-						doctor: doctorId,
-						appointmentDate: { $gte: oneWeekAgo, $lte: now },
-					},
+			},
+			{
+				$match: {
+					doctor: doctorId,
+					appointmentDate: { $gte: oneWeekAgo, $lte: now },
 				},
-				{
-					$project: {
-						appointmentDate: 1,
-						userLastName: {
-							$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
-						},
-						userFirstName: {
-							$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
-						},
-						appointmentStart: 1,
-						appointmentEnd: 1,
-						notes: 1,
-						status: 1,
+			},
+			{
+				$project: {
+					appointmentDate: 1,
+					userLastName: {
+						$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
 					},
-				},
-				{
-					$sort: {
-						appointmentDate: -1,
+					userFirstName: {
+						$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
 					},
+					appointmentStart: 1,
+					appointmentEnd: 1,
+					notes: 1,
+					status: 1,
 				},
-			]);
+			},
+			{
+				$sort: {
+					appointmentDate: -1,
+				},
+			},
+		]);
 
-			// Calculate the total appointment count within the past week
-			const totalAppointments = await Appointment.find({
-				appointmentDate: { $gte: oneWeekAgo, $lte: now },
-			});
+		// Calculate the total appointment count within the past week
+		const totalAppointments = await Appointment.find({
+			appointmentDate: { $gte: oneWeekAgo, $lte: now },
+		});
 
-			// Format the date in your application code
-			const formattedAppointments = totalWeeklyAppointments.map(
-				(appointment) => ({
-					...appointment,
-					appointmentDate: formatAppointmentDate(appointment.appointmentDate),
-				})
-			);
+		// Format the date in your application code
+		const formattedAppointments = totalWeeklyAppointments.map(
+			(appointment) => ({
+				...appointment,
+				appointmentDate: formatAppointmentDate(appointment.appointmentDate),
+			})
+		);
 
-			// Function to format the date
-			function formatAppointmentDate(dateStr) {
-				const date = new Date(dateStr);
-				const options = { year: "numeric", month: "short", day: "2-digit" };
-				return date.toLocaleDateString("en-US", options);
-			}
-
-			if (
-				weeklyAppointments.length === 0 &&
-				totalWeeklyAppointments.length === 0 &&
-				totalAppointments.length === 0 &&
-				formattedAppointments.length === 0
-			) {
-				continue;
-			}
-
-			// Process the weeklyAppointments to generate the doctor's report
-			const doctorWeeklyReport = {
-				doctor: `Dr. ${
-					doctor.personalInfo.fname + " " + doctor.personalInfo.lname
-				}`,
-				weeklyAppointments: weeklyAppointments.length,
-				totalAppointments: totalWeeklyAppointments.length,
-				percentageofAppointments:
-					(totalWeeklyAppointments.length / totalAppointments.length) * 100,
-				appointments: formattedAppointments,
-			};
-
-			doctorReports.push(doctorWeeklyReport);
+		// Function to format the date
+		function formatAppointmentDate(dateStr) {
+			const date = new Date(dateStr);
+			const options = { year: "numeric", month: "short", day: "2-digit" };
+			return date.toLocaleDateString("en-US", options);
 		}
 
-		res.json(doctorReports);
-	} catch (error) {
-		console.error("Error generating weekly doctor reports:", error);
-		res.status(500).json({ message: "Error generating weekly doctor reports" });
+		if (
+			weeklyAppointments.length === 0 &&
+			totalWeeklyAppointments.length === 0 &&
+			formattedAppointments.length === 0
+		) {
+			continue;
+		}
+		const percentageValue =
+			(totalWeeklyAppointments.length / totalAppointments.length) * 100;
+
+		const formattedPercentage =
+			percentageValue % 1 === 0 ? percentageValue : percentageValue.toFixed(2);
+		// Process the weeklyAppointments to generate the doctor's report
+		const doctorWeeklyReport = {
+			doctor: `Dr. ${
+				doctor.personalInfo.fname + " " + doctor.personalInfo.lname
+			}`,
+			periodAppointments: weeklyAppointments.length,
+			totalAppointments: totalWeeklyAppointments.length,
+			percentageofAppointments: formattedPercentage,
+			appointments: formattedAppointments,
+		};
+
+		doctorReports.push(doctorWeeklyReport);
 	}
+
+	res.json(doctorReports);
 });
 
 // Generate monthly doctor reports
 const generateMonthlyDoctorReport = asyncHandler(async (req, res) => {
-	try {
-		const now = new Date();
-		const oneMonthAgo = new Date(now);
-		oneMonthAgo.setMonth(now.getMonth() - 1);
+	const now = new Date();
+	const oneMonthAgo = new Date(now);
+	oneMonthAgo.setMonth(now.getMonth() - 1);
 
-		// Find all users with the role "doctor"
-		const doctors = await User.find({ role: "doctor" });
+	// Find all users with the role "doctor"
+	const doctors = await User.find({ role: "doctor" });
 
-		const doctorReports = [];
+	const doctorReports = [];
 
-		for (const doctor of doctors) {
-			// Find completed appointments for the doctor within the past month
-			const monthlyAppointments = await Appointment.find({
-				appointmentDate: { $gte: oneMonthAgo, $lte: now },
-				status: "Completed",
-				doctor: doctor._id,
-			});
+	for (const doctor of doctors) {
+		// Find completed appointments for the doctor within the past month
+		const monthlyAppointments = await Appointment.find({
+			appointmentDate: { $gte: oneMonthAgo, $lte: now },
+			status: "Completed",
+			doctor: doctor._id,
+		});
 
-			// Find total appointments for the doctor within the past month
-			const doctorId = new ObjectId(doctor._id);
-			const totalMonthlyAppointments = await Appointment.aggregate([
-				{
-					$lookup: {
-						from: "userDetails",
-						localField: "patient",
-						foreignField: "_id",
-						as: "userDetails",
-					},
+		// Find total appointments for the doctor within the past month
+		const doctorId = new ObjectId(doctor._id);
+		const totalMonthlyAppointments = await Appointment.aggregate([
+			{
+				$lookup: {
+					from: "userDetails",
+					localField: "patient",
+					foreignField: "_id",
+					as: "userDetails",
 				},
-				{
-					$match: {
-						doctor: doctorId,
-						appointmentDate: { $gte: oneMonthAgo, $lte: now },
-					},
+			},
+			{
+				$match: {
+					doctor: doctorId,
+					appointmentDate: { $gte: oneMonthAgo, $lte: now },
 				},
-				{
-					$project: {
-						appointmentDate: 1,
-						userLastName: {
-							$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
-						},
-						userFirstName: {
-							$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
-						},
-						appointmentStart: 1,
-						appointmentEnd: 1,
-						notes: 1,
-						status: 1,
+			},
+			{
+				$project: {
+					appointmentDate: 1,
+					userLastName: {
+						$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
 					},
-				},
-				{
-					$sort: {
-						appointmentDate: -1,
+					userFirstName: {
+						$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
 					},
+					appointmentStart: 1,
+					appointmentEnd: 1,
+					notes: 1,
+					status: 1,
 				},
-			]);
+			},
+			{
+				$sort: {
+					appointmentDate: -1,
+				},
+			},
+		]);
 
-			// Format the date in your application code
-			const formattedAppointments = totalMonthlyAppointments.map(
-				(appointment) => ({
-					...appointment,
-					appointmentDate: formatAppointmentDate(appointment.appointmentDate),
-				})
-			);
+		// Format the date in your application code
+		const formattedAppointments = totalMonthlyAppointments.map(
+			(appointment) => ({
+				...appointment,
+				appointmentDate: formatAppointmentDate(appointment.appointmentDate),
+			})
+		);
 
-			// Function to format the date
-			function formatAppointmentDate(dateStr) {
-				const date = new Date(dateStr);
-				const options = { year: "numeric", month: "short", day: "2-digit" };
-				return date.toLocaleDateString("en-US", options);
-			}
-
-			// Calculate the total appointment count within the past month
-			const totalAppointments = await Appointment.find({
-				appointmentDate: { $gte: oneMonthAgo, $lte: now },
-			});
-
-			if (
-				monthlyAppointments.length === 0 &&
-				totalMonthlyAppointments.length === 0 &&
-				totalAppointments.length === 0 &&
-				formattedAppointments.length === 0
-			) {
-				continue;
-			}
-
-			// Process the monthlyAppointments to generate the doctor's report
-			const doctorMonthlyReport = {
-				doctor: `Dr. ${
-					doctor.personalInfo.fname + " " + doctor.personalInfo.lname
-				}`,
-				monthlyAppointments: monthlyAppointments.length,
-				totalAppointments: totalMonthlyAppointments.length,
-				percentageofAppointments:
-					(totalMonthlyAppointments.length / totalAppointments.length) * 100,
-				appointments: formattedAppointments,
-			};
-
-			doctorReports.push(doctorMonthlyReport);
+		// Function to format the date
+		function formatAppointmentDate(dateStr) {
+			const date = new Date(dateStr);
+			const options = { year: "numeric", month: "short", day: "2-digit" };
+			return date.toLocaleDateString("en-US", options);
 		}
 
-		res.json(doctorReports);
-	} catch (error) {
-		console.error("Error generating monthly doctor reports:", error);
-		res
-			.status(500)
-			.json({ message: "Error generating monthly doctor reports" });
+		// Calculate the total appointment count within the past month
+		const totalAppointments = await Appointment.find({
+			appointmentDate: { $gte: oneMonthAgo, $lte: now },
+		});
+
+		if (
+			monthlyAppointments.length === 0 &&
+			totalMonthlyAppointments.length === 0 &&
+			formattedAppointments.length === 0
+		) {
+			continue;
+		}
+
+		const percentageValue =
+			(totalMonthlyAppointments.length / totalAppointments.length) * 100;
+
+		const formattedPercentage =
+			percentageValue % 1 === 0 ? percentageValue : percentageValue.toFixed(2);
+
+		// Process the monthlyAppointments to generate the doctor's report
+		const doctorMonthlyReport = {
+			doctor: `Dr. ${
+				doctor.personalInfo.fname + " " + doctor.personalInfo.lname
+			}`,
+			periodAppointments: monthlyAppointments.length,
+			totalAppointments: totalMonthlyAppointments.length,
+			percentageofAppointments: formattedPercentage,
+			appointments: formattedAppointments,
+		};
+
+		doctorReports.push(doctorMonthlyReport);
 	}
+
+	res.json(doctorReports);
 });
+
+/**
+##### REPORT GENERATION (INVENTORY) #####
+**/
 
 // Generate inventory report
 const generateInventoryReport = asyncHandler(async (req, res) => {
 	const inventoryList = await Inventory.find();
-
-	if (inventoryList.length === 0) {
-		return res.json({ message: "No items currently in inventory." });
-	}
 
 	// Process the data to create the report
 	const report = inventoryList.map((item) => {
@@ -1614,17 +1620,506 @@ const generateInventoryReport = asyncHandler(async (req, res) => {
 
 		return {
 			itemName: item.itemName,
+			vendor: item.vendor,
 			category: item.category,
 			quantity: item.quantity,
-			unit: item.unit,
-			price: item.price,
-			vendor: item.vendor,
-			description: item.description,
+			value: item.price * item.quantity,
+			price: formatPrice(item.price),
 			stockStatus,
 		};
 	});
-	console.log(report);
 	res.json(report);
+});
+
+// Generate weekly order history report
+const generateWeeklyOrderReport = asyncHandler(async (req, res) => {
+	const now = new Date();
+	const oneWeekAgo = new Date(now);
+	oneWeekAgo.setDate(now.getDate() - 7);
+
+	const orders = await Order.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "lens",
+				foreignField: "_id",
+				as: "lensDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "frame",
+				foreignField: "_id",
+				as: "frameDetails",
+			},
+		},
+		{
+			$match: {
+				orderTime: { $gte: oneWeekAgo, $lte: now },
+			},
+		},
+
+		{
+			$project: {
+				orderTime: 1,
+				status: 1,
+				amount: 1,
+				patientLastName: {
+					$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
+				},
+				patientFirstName: {
+					$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
+				},
+				lensName: { $arrayElemAt: ["$lensDetails.itemName", 0] },
+				lensQuantity: 1,
+				frameName: { $arrayElemAt: ["$frameDetails.itemName", 0] },
+				frameQuantity: 1,
+				otherItems: 1,
+			},
+		},
+		{
+			$sort: {
+				orderTime: 1,
+			},
+		},
+	]);
+
+	// Format the date in your application code
+	const formattedOrders = orders.map((order) => ({
+		...order,
+		amount: formatPrice(order.amount),
+		orderTime: formatOrderDate(order.orderTime),
+	}));
+
+	// Function to format the date
+	function formatOrderDate(dateStr) {
+		const date = new Date(dateStr);
+		const options = { year: "numeric", month: "short", day: "2-digit" };
+		return date.toLocaleDateString("en-US", options);
+	}
+
+	res.json(formattedOrders);
+});
+
+// Generate monthly order history report
+const generateMonthlyOrderReport = asyncHandler(async (req, res) => {
+	const now = new Date();
+	const oneMonthAgo = new Date(now);
+	oneMonthAgo.setMonth(now.getMonth() - 1);
+
+	const orders = await Order.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "patient",
+				foreignField: "_id",
+				as: "userDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "lens",
+				foreignField: "_id",
+				as: "lensDetails",
+			},
+		},
+		{
+			$lookup: {
+				from: "inventoryDetails",
+				localField: "frame",
+				foreignField: "_id",
+				as: "frameDetails",
+			},
+		},
+		{
+			$match: {
+				orderTime: { $gte: oneMonthAgo, $lte: now },
+			},
+		},
+
+		{
+			$project: {
+				orderTime: 1,
+				status: 1,
+				amount: 1,
+				patientLastName: {
+					$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
+				},
+				patientFirstName: {
+					$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
+				},
+				lensName: { $arrayElemAt: ["$lensDetails.itemName", 0] },
+				lensQuantity: 1,
+				frameName: { $arrayElemAt: ["$frameDetails.itemName", 0] },
+				frameQuantity: 1,
+				otherItems: 1,
+			},
+		},
+		{
+			$sort: {
+				orderTime: 1,
+			},
+		},
+	]);
+
+	// Format the date in your application code
+	const formattedOrders = orders.map((order) => ({
+		...order,
+		amount: formatPrice(order.amount),
+		orderTime: formatOrderDate(order.orderTime),
+	}));
+
+	res.json(formattedOrders);
+});
+
+// Generate medicine expiration report
+const generateBatchesExpirationReport = asyncHandler(async (req, res) => {
+	const inventoryList = await Inventory.find({
+		category: "Medicine",
+	});
+
+	// Process the data to create the report
+	const report = [];
+
+	inventoryList.forEach((item) => {
+		item.batches.forEach((batch) => {
+			if (batch.batchQuantity > 0) {
+				// Filter out 0 quantity batches
+				report.push({
+					itemName: item.itemName,
+					vendor: item.vendor,
+					value: formatPrice(item.price * item.quantity),
+					batchNumber: batch.batchNumber,
+					expirationDate: formatExpDate(batch.expirationDate),
+					batchQuantity: batch.batchQuantity,
+				});
+			}
+		});
+	});
+
+	// Function to format the date
+	function formatExpDate(dateStr) {
+		const date = new Date(dateStr);
+		const options = { year: "numeric", month: "short", day: "2-digit" };
+		return date.toLocaleDateString("en-US", options);
+	}
+	res.json(report);
+});
+
+// Generate monthly sales velocity report
+const generateMonthlySalesVelocityReport = asyncHandler(async (req, res) => {
+	const now = new Date();
+	const oneMonthAgo = new Date(now);
+	oneMonthAgo.setDate(now.getMonth() - 1);
+	// Fetch all items in the inventory
+	const inventoryList = await Inventory.find();
+
+	// Process the data to create the report
+	const report = await Promise.all(
+		inventoryList.map(async (item) => {
+			const category = item.category;
+			const salesVelocity = await calculateSalesVelocity(
+				item,
+				category,
+				oneMonthAgo
+			);
+			const projectFields = {
+				orderTime: 1,
+				status: 1,
+				amount: 1,
+				patientLastName: {
+					$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
+				},
+				patientFirstName: {
+					$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
+				},
+				orders: 1,
+			};
+
+			if (category === "Lens") {
+				projectFields.itemName = {
+					$arrayElemAt: ["$lensDetails.itemName", 0],
+				};
+				projectFields.itemQuantity = "$lensQuantity";
+			} else if (category === "Frame") {
+				projectFields.itemName = {
+					$arrayElemAt: ["$frameDetails.itemName", 0],
+				};
+				projectFields.itemQuantity = "$frameQuantity";
+			} else if (category === "Medicine" || category === "Others") {
+				projectFields.itemName = {
+					$arrayElemAt: ["$itemDetails.itemName", 0],
+				};
+				projectFields.itemQuantity = {
+					$arrayElemAt: ["$otherItems.quantity", 0],
+				};
+			}
+
+			const orders = await Order.aggregate([
+				{
+					$lookup: {
+						from: "userDetails",
+						localField: "patient",
+						foreignField: "_id",
+						as: "userDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "lens",
+						foreignField: "_id",
+						as: "lensDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "frame",
+						foreignField: "_id",
+						as: "frameDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "otherItems._id",
+						foreignField: "_id",
+						as: "itemDetails",
+					},
+				},
+				{
+					$match: {
+						$or: [
+							{ frame: item._id },
+							{ lens: item._id },
+							{ "otherItems._id": item._id },
+						],
+						orderTime: { $gte: oneMonthAgo, $lte: now },
+						status: "Completed",
+					},
+				},
+
+				{
+					$project: projectFields,
+				},
+				{
+					$sort: {
+						orderTime: 1,
+					},
+				},
+			]);
+
+			// Format the date in your application code
+			const formattedOrders = orders.map((order) => ({
+				...order,
+				amount: formatPrice(order.amount),
+				orderTime: formatOrderDate(order.orderTime),
+			}));
+
+			return {
+				itemName: item.itemName,
+				itemsSold: await findItemSales(item._id, category, oneMonthAgo),
+				quantity: item.quantity,
+				salesVelocity: salesVelocity.toFixed(2),
+				totalOrders: formattedOrders.length,
+				orders: formattedOrders,
+			};
+		})
+	);
+
+	// Filter the items with itemsSold greater than 0
+	const filteredReport = report.filter((item) => item.itemsSold > 0);
+
+	// Calculate the thresholds for fast-moving and slow-moving items based on filtered items
+	const totalItems = filteredReport.length;
+	const fastMovingThreshold = Math.floor(0.2 * totalItems); // Consider top 20% as fast-moving
+	const slowMovingThreshold = Math.floor(0.2 * totalItems); // Consider bottom 20% as slow-moving
+
+	// Sort the report based on sales velocity
+	filteredReport.sort((a, b) => b.salesVelocity - a.salesVelocity);
+
+	// Categorize the items
+	const categorizedItems = filteredReport.map((item, index) => {
+		if (item.salesVelocity > 0) {
+			if (index < fastMovingThreshold) {
+				item.movementCategory = "Fast-Moving";
+			} else if (index >= totalItems - slowMovingThreshold) {
+				item.movementCategory = "Slow-Moving";
+			} else {
+				item.movementCategory = "Medium-Moving";
+			}
+			return item;
+		} else {
+			item.movementCategory = "Zero-Moving";
+			return item;
+		}
+	});
+
+	res.json(categorizedItems);
+});
+
+// Generate weekly sales velocity report
+const generateQuarterlySalesVelocityReport = asyncHandler(async (req, res) => {
+	const now = new Date();
+	const oneQuarterAgo = new Date(now);
+	oneQuarterAgo.setDate(now.getDate() - 91);
+	// Fetch all items in the inventory
+	const inventoryList = await Inventory.find();
+
+	// Process the data to create the report
+	const report = await Promise.all(
+		inventoryList.map(async (item) => {
+			const category = item.category;
+			const salesVelocity = await calculateSalesVelocity(
+				item,
+				category,
+				oneQuarterAgo
+			);
+			const projectFields = {
+				orderTime: 1,
+				status: 1,
+				amount: 1,
+				patientLastName: {
+					$arrayElemAt: ["$userDetails.personalInfo.lname", 0],
+				},
+				patientFirstName: {
+					$arrayElemAt: ["$userDetails.personalInfo.fname", 0],
+				},
+				orders: 1,
+			};
+
+			if (category === "Lens") {
+				projectFields.itemName = {
+					$arrayElemAt: ["$lensDetails.itemName", 0],
+				};
+				projectFields.itemQuantity = "$lensQuantity";
+			} else if (category === "Frame") {
+				projectFields.itemName = {
+					$arrayElemAt: ["$frameDetails.itemName", 0],
+				};
+				projectFields.itemQuantity = "$frameQuantity";
+			} else if (category === "Medicine" || category === "Others") {
+				projectFields.itemName = {
+					$arrayElemAt: ["$itemDetails.itemName", 0],
+				};
+				projectFields.itemQuantity = {
+					$arrayElemAt: ["$otherItems.quantity", 0],
+				};
+			}
+
+			const orders = await Order.aggregate([
+				{
+					$lookup: {
+						from: "userDetails",
+						localField: "patient",
+						foreignField: "_id",
+						as: "userDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "lens",
+						foreignField: "_id",
+						as: "lensDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "frame",
+						foreignField: "_id",
+						as: "frameDetails",
+					},
+				},
+				{
+					$lookup: {
+						from: "inventoryDetails",
+						localField: "otherItems._id",
+						foreignField: "_id",
+						as: "itemDetails",
+					},
+				},
+				{
+					$match: {
+						$or: [
+							{ frame: item._id },
+							{ lens: item._id },
+							{ "otherItems._id": item._id },
+						],
+						orderTime: { $gte: oneQuarterAgo, $lte: now },
+						status: "Completed",
+					},
+				},
+
+				{
+					$project: projectFields,
+				},
+				{
+					$sort: {
+						orderTime: 1,
+					},
+				},
+			]);
+
+			// Format the date in your application code
+			const formattedOrders = orders.map((order) => ({
+				...order,
+				amount: formatPrice(order.amount),
+				orderTime: formatOrderDate(order.orderTime),
+			}));
+
+			return {
+				itemName: item.itemName,
+				itemsSold: await findItemSales(item._id, category, oneQuarterAgo),
+				quantity: item.quantity,
+				salesVelocity: salesVelocity.toFixed(2),
+				totalOrders: formattedOrders.length,
+				orders: formattedOrders,
+			};
+		})
+	);
+
+	// Filter the items with itemsSold greater than 0
+	const filteredReport = report.filter((item) => item.itemsSold > 0);
+
+	// Calculate the thresholds for fast-moving and slow-moving items based on filtered items
+	const totalItems = filteredReport.length;
+	const fastMovingThreshold = Math.floor(0.2 * totalItems); // Consider top 20% as fast-moving
+	const slowMovingThreshold = Math.floor(0.2 * totalItems); // Consider bottom 20% as slow-moving
+
+	// Sort the report based on sales velocity
+	filteredReport.sort((a, b) => b.salesVelocity - a.salesVelocity);
+
+	// Categorize the items
+	const categorizedItems = filteredReport.map((item, index) => {
+		if (item.salesVelocity > 0) {
+			if (index < fastMovingThreshold) {
+				item.movementCategory = "Fast-Moving";
+			} else if (index >= totalItems - slowMovingThreshold) {
+				item.movementCategory = "Slow-Moving";
+			} else {
+				item.movementCategory = "Medium-Moving";
+			}
+			return item;
+		} else {
+			item.movementCategory = "Zero-Moving";
+			return item;
+		}
+	});
+
+	res.json(categorizedItems);
 });
 
 module.exports = {
@@ -1653,5 +2148,11 @@ module.exports = {
 	generateMonthlyTechnicianReport,
 	generateWeeklyDoctorReport,
 	generateMonthlyDoctorReport,
+
 	generateInventoryReport,
+	generateWeeklyOrderReport,
+	generateMonthlyOrderReport,
+	generateBatchesExpirationReport,
+	generateQuarterlySalesVelocityReport,
+	generateMonthlySalesVelocityReport,
 };

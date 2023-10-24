@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { toast } from "react-toastify";
 
 import {
 	getAppointmentList,
@@ -18,7 +16,6 @@ function ViewAppointmentStaff() {
 	const [isViewOpen, setViewOpen] = useState(false);
 	const [appointmentData, setAppointmentData] = useState("");
 
-	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const { appointment, isLoading } = useSelector((state) => state.appointment);
 

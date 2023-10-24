@@ -15,12 +15,12 @@ import Table from "../../components/table.component";
 function ViewConfirmedStaff() {
 	const [isViewOpen, setViewOpen] = useState(false);
 	const [appointmentData, setAppointmentData] = useState("");
+
 	const dispatch = useDispatch();
 	const { confirmed, isLoading } = useSelector((state) => state.appointment);
 
 	useEffect(() => {
 		dispatch(getConfirmedAppointments());
-
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
