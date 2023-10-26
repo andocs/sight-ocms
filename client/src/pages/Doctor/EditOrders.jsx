@@ -7,16 +7,12 @@ import {
 	editOrder,
 	reset,
 } from "../../features/order/orderSlice";
+import { getInventory } from "../../features/order/orderSlice";
 
 import ReusableForm from "../../components/reusableform.component";
 import Spinner from "../../components/spinner.component";
 
-const orderStatus = [
-	{ status: "Pending" },
-	{ status: "In Progress" },
-	{ status: "Completed" },
-	{ status: "Cancelled" },
-];
+const orderStatus = [{ status: "Pending" }, { status: "Cancelled" }];
 
 const addsvg = (
 	<svg
@@ -42,6 +38,13 @@ function EditOrders() {
 
 	const { orderUpdate, newOrder, isLoading, isError, isSuccess, message } =
 		useSelector((state) => state.order);
+	const { inventory } = useSelector((state) => state.order);
+
+	useEffect(() => {
+		if (!inventory) {
+			dispatch(getInventory());
+		}
+	}, [inventory]);
 
 	const formGroups = [
 		{
@@ -71,6 +74,7 @@ function EditOrders() {
 						placeholder: "Frame",
 						value: orderUpdate?.frameName || "",
 						name: "frame",
+						inventory: inventory,
 						size: "w-full",
 					},
 					{
@@ -95,6 +99,7 @@ function EditOrders() {
 						type: "customsearch",
 						value: orderUpdate?.lensName || "",
 						name: "lens",
+						inventory: inventory,
 						size: "w-full",
 					},
 					{
@@ -120,6 +125,7 @@ function EditOrders() {
 						value: "",
 						name: "otherItems.itemName",
 						size: "w-full",
+						inventory: inventory,
 						clearOnAdd: true,
 					},
 					{
@@ -259,7 +265,7 @@ function EditOrders() {
 				}}
 				fields={formGroups}
 				onSubmit={onSubmit}
-				otherItems={orderUpdate?.otherItems}
+				otherItems={orderUpdate?.otherItems ? orderUpdate?.otherItems : null}
 			/>
 		</>
 	);

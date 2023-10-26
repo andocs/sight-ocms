@@ -11,8 +11,8 @@ import {
 import { getDoctorList } from "../../features/staff/staffSlice";
 import { getOrderList } from "../../features/order/orderSlice";
 import { getEyeRecords } from "../../features/record/recordSlice";
+import { getUser } from "../../features/auth/authSlice";
 
-import decode from "jwt-decode";
 import DashComponent from "../../components/dashboard.component";
 import Spinner from "../../components/spinner.component";
 
@@ -94,16 +94,10 @@ function PatientHome() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const { appointment, isLoading } = useSelector((state) => state.appointment);
-
+	const { infoUpdate } = useSelector((state) => state.auth);
 	const { staff } = useSelector((state) => state.staff);
 	const { order } = useSelector((state) => state.order);
 	const { record } = useSelector((state) => state.record);
-
-	const token = localStorage.getItem("user");
-
-	const decodedToken = decode(token);
-	const name = decodedToken.user.name || "John Doe";
-	const role = decodedToken.user.role;
 
 	const onHeaderClick = () => {
 		navigate("/patient/view-records");
@@ -113,31 +107,12 @@ function PatientHome() {
 		navigate("/patient/view-doctors");
 	};
 
-	const header = {
-		title: "Dashboard",
-		color: "blue",
-		button: "View Records",
-	};
-
-	const display = {
-		role,
-		button: "View Doctors",
-		color: "sky",
-	};
-
-	const props = {
-		textcolor: "text-gray-100",
-		header,
-		display,
-		username: name,
-		text,
-	};
-
 	useEffect(() => {
 		dispatch(getAppointmentList());
 		dispatch(getDoctorList());
 		dispatch(getOrderList());
 		dispatch(getEyeRecords());
+		dispatch(getUser());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
@@ -168,9 +143,27 @@ function PatientHome() {
 		},
 	];
 
-	if (isLoading) {
-		return <Spinner />;
-	}
+	const header = {
+		title: "Dashboard",
+		color: "blue",
+		button: "View Records",
+	};
+
+	const display = {
+		role: infoUpdate?.role,
+		button: "View Doctors",
+		color: "sky",
+	};
+
+	const props = {
+		textcolor: "text-gray-100",
+		header,
+		display,
+		username:
+			`${infoUpdate?.personalInfo.fname} ${infoUpdate?.personalInfo.lname}` ||
+			"John Doe",
+		text,
+	};
 
 	const columns = [
 		{ header: "Start Time", field: `appointmentStart` },
@@ -186,10 +179,15 @@ function PatientHome() {
 		columns,
 	};
 
+	if (isLoading) {
+		return <Spinner />;
+	}
+
 	return (
 		<>
 			{appointment && staff && record && order && (
 				<DashComponent
+					key={infoUpdate}
 					props={props}
 					status={status}
 					headerClick={onHeaderClick}

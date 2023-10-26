@@ -9,8 +9,8 @@ import {
 } from "../../features/inventory/inventorySlice";
 import { getPendingRequests } from "../../features/maintenance/maintenanceSlice";
 import { getStaffAccounts } from "../../features/staff/staffSlice";
+import { getUser } from "../../features/auth/authSlice";
 
-import decode from "jwt-decode";
 import DashComponent from "../../components/dashboard.component";
 import Spinner from "../../components/spinner.component";
 
@@ -91,12 +91,7 @@ function AdminHome() {
 	const { item, isLoading } = useSelector((state) => state.inventory);
 	const { staff } = useSelector((state) => state.staff);
 	const { maintenance } = useSelector((state) => state.maintenance);
-
-	const token = localStorage.getItem("user");
-
-	const decodedToken = decode(token);
-	const name = decodedToken.user.name;
-	const role = decodedToken.user.role;
+	const { infoUpdate } = useSelector((state) => state.auth);
 
 	const onHeaderClick = () => {
 		navigate("/admin/view-inventory");
@@ -105,29 +100,11 @@ function AdminHome() {
 		navigate("/admin/view-staff");
 	};
 
-	const header = {
-		title: "Dashboard",
-		color: "blue",
-		button: "Update Inventory",
-	};
-
-	const display = {
-		role,
-		button: "View Staff List",
-		color: "sky",
-	};
-	const props = {
-		textcolor: "text-sky-800",
-		header,
-		display,
-		username: name,
-		text,
-	};
-
 	useEffect(() => {
 		dispatch(getInventoryItems());
 		dispatch(getStaffAccounts());
 		dispatch(getPendingRequests());
+		dispatch(getUser());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
@@ -160,6 +137,27 @@ function AdminHome() {
 			svg: requestsvg,
 		},
 	];
+
+	const header = {
+		title: "Dashboard",
+		color: "blue",
+		button: "Update Inventory",
+	};
+
+	const display = {
+		role: infoUpdate?.role,
+		button: "View Staff List",
+		color: "sky",
+	};
+	const props = {
+		textcolor: "text-sky-800",
+		header,
+		display,
+		username:
+			`${infoUpdate?.personalInfo.fname} ${infoUpdate?.personalInfo.lname}` ||
+			"John Doe",
+		text,
+	};
 
 	const columns = [
 		{ header: "Item", field: "itemName" },

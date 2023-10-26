@@ -9,6 +9,7 @@ import ReusableForm from "../../components/reusableform.component";
 import Table from "../../components/table.component";
 import ViewModal from "../../components/viewmodal.component";
 import ProceedConfirmation from "../../components/proceedconfirmation.component";
+import Spinner from "../../components/spinner.component";
 
 const header = { title: "Create Visit Record", buttontext: "Add Visit" };
 
@@ -53,7 +54,8 @@ function AddVisit() {
 	const { newVisit, isLoading, isError, isSuccess, message } = useSelector(
 		(state) => state.visit
 	);
-	const { patient } = useSelector((state) => state.patient);
+	const patientReducer = useSelector((state) => state.patient);
+	const patient = patientReducer.patient;
 
 	const formGroups = [
 		{
@@ -160,7 +162,8 @@ function AddVisit() {
 			openModal();
 		}
 		if (isConfirmed === true) {
-			navigate(`/doctor/add-records/`, { state: { patientDetails } });
+			const details = patientDetails.details;
+			navigate(`/doctor/add-record/${details._id}`, { state: { details } });
 		}
 		if (isRejected === true) {
 			navigate("/doctor");
@@ -184,6 +187,10 @@ function AddVisit() {
 		const patientId = patientDetails.details._id;
 		dispatch(createVisitRecord({ patientId, visitData }));
 	};
+
+	if (isLoading || patientReducer.isLoading) {
+		return <Spinner />;
+	}
 
 	return (
 		<>

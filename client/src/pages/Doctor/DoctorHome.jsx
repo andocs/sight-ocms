@@ -10,8 +10,8 @@ import {
 } from "../../features/appointment/appointmentSlice";
 import { getOrderList } from "../../features/order/orderSlice";
 import { getEyeRecords } from "../../features/record/recordSlice";
+import { getUser } from "../../features/auth/authSlice";
 
-import decode from "jwt-decode";
 import DashComponent from "../../components/dashboard.component";
 import Spinner from "../../components/spinner.component";
 
@@ -100,12 +100,7 @@ function DoctorHome() {
 	);
 	const { order } = useSelector((state) => state.order);
 	const { record } = useSelector((state) => state.record);
-
-	const token = localStorage.getItem("user");
-
-	const decodedToken = decode(token);
-	const name = decodedToken.user.name;
-	const role = decodedToken.user.role;
+	const { infoUpdate } = useSelector((state) => state.auth);
 
 	const onHeaderClick = () => {
 		navigate("/doctor/add-record");
@@ -114,31 +109,12 @@ function DoctorHome() {
 		navigate("/doctor/view-appointments");
 	};
 
-	const header = {
-		title: "Dashboard",
-		color: "blue",
-		button: "Add Records",
-	};
-
-	const display = {
-		role,
-		button: "View Appointment List",
-		color: "sky",
-	};
-
-	const props = {
-		textcolor: "text-sky-800",
-		header,
-		display,
-		username: `Dr. ${name}`,
-		text,
-	};
-
 	useEffect(() => {
 		dispatch(getPendingAppointments());
 		dispatch(getConfirmedAppointments());
 		dispatch(getEyeRecords());
 		dispatch(getOrderList());
+		dispatch(getUser());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
@@ -169,6 +145,28 @@ function DoctorHome() {
 		},
 	];
 
+	const header = {
+		title: "Dashboard",
+		color: "blue",
+		button: "Add Records",
+	};
+
+	const display = {
+		role: infoUpdate?.role,
+		button: "View Appointment List",
+		color: "sky",
+	};
+
+	const props = {
+		textcolor: "text-sky-800",
+		header,
+		display,
+		username:
+			`Dr. ${infoUpdate?.personalInfo.fname} ${infoUpdate?.personalInfo.lname}` ||
+			"John Doe",
+		text,
+	};
+
 	if (isLoading) {
 		return <Spinner />;
 	}
@@ -191,6 +189,7 @@ function DoctorHome() {
 		<>
 			{confirmed && record && order && (
 				<DashComponent
+					key={infoUpdate}
 					props={props}
 					status={status}
 					headerClick={onHeaderClick}

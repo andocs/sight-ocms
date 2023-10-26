@@ -7,7 +7,6 @@ import {
 	getVisitDetails,
 	editVisitRecord,
 	reset,
-	clear,
 } from "../../features/visit/visitSlice";
 
 import ReusableForm from "../../components/reusableform.component";
@@ -109,7 +108,7 @@ function EditVisit() {
 
 		if (isSuccess && newVisit !== null) {
 			toast.success(message);
-			navigate("/doctor/view-visit");
+			navigate("/doctor/view-visits");
 		}
 		dispatch(reset());
 	}, [newVisit, isError, isSuccess, message, navigate, dispatch]);
@@ -119,8 +118,30 @@ function EditVisit() {
 	}
 
 	const onSubmit = (formData) => {
-		const visitData = formData;
-		dispatch(editVisitRecord({ visitId, visitData }));
+		const updateInfo = {};
+
+		const initialData = {
+			patientType: visitUpdate?.patientType,
+			visitType: visitUpdate?.visitType,
+			reason: visitUpdate?.reason,
+			medicalHistory: visitUpdate?.medicalHistory,
+			additionalInfo: visitUpdate?.additionalInfo,
+		};
+
+		for (const key in formData) {
+			if (JSON.stringify(initialData[key]) !== JSON.stringify(formData[key])) {
+				if (formData[key] !== "") {
+					updateInfo[key] = formData[key];
+				}
+			}
+		}
+		if (JSON.stringify(updateInfo) === "{}") {
+			navigate("/doctor/view-visits");
+			dispatch(reset());
+		} else {
+			const visitData = updateInfo;
+			dispatch(editVisitRecord({ visitId, visitData }));
+		}
 	};
 
 	return (

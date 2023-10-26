@@ -61,14 +61,21 @@ function ItemDetails() {
 					},
 					{ label: "Critical Level", value: `${item.criticalLevel} pcs.` },
 					{ label: "Restock Level", value: `${item.restockLevel} pcs.` },
-					{ label: "Price", value: `₱${item.price}` },
+					{ label: "Price", value: `${item.price}` },
 				],
 			},
 		],
 	};
 
+	const positiveBatches = item.batches
+		? item.batches.filter((batch) => batch.batchQuantity > 0)
+		: [];
+	const nonPositiveBatches = item.batches
+		? item.batches.filter((batch) => batch.batchQuantity <= 0)
+		: [];
+	const combinedBatches = [...positiveBatches, ...nonPositiveBatches];
+
 	const editItem = (details) => {
-		console.log(details);
 		navigate(`/admin/edit-item/${details._id}`, { state: { details } });
 	};
 
@@ -77,7 +84,7 @@ function ItemDetails() {
 			<ViewDetails
 				header={header}
 				props={fields}
-				batches={item.batches && item.batches}
+				batches={combinedBatches}
 				onClick={() => editItem(item)}
 			/>
 		</>

@@ -4,10 +4,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { createOrder, reset } from "../../features/order/orderSlice";
 import { getPatientList } from "../../features/patient/patientSlice";
+import { getInventory } from "../../features/order/orderSlice";
 
 import ReusableForm from "../../components/reusableform.component";
 import Table from "../../components/table.component";
 import ViewModal from "../../components/viewmodal.component";
+import Spinner from "../../components/spinner.component";
 
 const header = { title: "Create Order", buttontext: "Add Order Request" };
 
@@ -31,7 +33,7 @@ function AddOrders() {
 
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
-	let [isOpen, setIsOpen] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 	const [patientData, setPatientData] = useState(null);
 
 	function closeModal() {
@@ -42,93 +44,9 @@ function AddOrders() {
 	const { newOrder, isLoading, isError, isSuccess, message } = useSelector(
 		(state) => state.order
 	);
-	const { patient } = useSelector((state) => state.patient);
-
-	const formGroups = [
-		{
-			label: "Frame",
-			size: "w-full",
-			fields: [
-				[
-					{
-						label: "Frame *",
-						type: "customsearch",
-						placeholder: "Frame",
-						value: "",
-						name: "frame",
-						size: "w-full",
-					},
-					{
-						label: "Quantity *",
-						type: "number",
-						value: 1,
-						min: 1,
-						name: "frameQuantity",
-						size: "w-full",
-					},
-				],
-			],
-		},
-		{
-			label: "Lens",
-			size: "w-full",
-			fields: [
-				[
-					{
-						label: "Lens *",
-						placeholder: "Lens",
-						type: "customsearch",
-						value: "",
-						name: "lens",
-						size: "w-full",
-					},
-					{
-						label: "Quantity *",
-						type: "number",
-						min: 1,
-						value: 1,
-						name: "lensQuantity",
-						size: "w-full",
-					},
-				],
-			],
-		},
-		{
-			label: "Other Items",
-			size: "w-full",
-			fields: [
-				[
-					{
-						label: "Item Name",
-						type: "customsearch",
-						placeholder: "Item Name",
-						value: "",
-						name: "otherItems.itemName",
-						size: "w-full",
-						clearOnAdd: true,
-					},
-					{
-						label: "Quantity",
-						type: "number",
-						value: 1,
-						min: 1,
-						name: "otherItems.quantity",
-						size: "w-full",
-					},
-					{
-						name: "addItem",
-						type: "button",
-						size: "w-fit",
-						icon: addsvg,
-						label: "Add Item",
-						action: (formData) => {
-							console.log("Button 1 clicked with form data:", formData);
-						},
-					},
-				],
-			],
-		},
-	];
+	const { inventory } = useSelector((state) => state.order);
+	const patientReducer = useSelector((state) => state.patient);
+	const patient = patientReducer.patient;
 
 	const columns = [
 		{ header: "Last Name", field: "lname" },
@@ -148,12 +66,19 @@ function AddOrders() {
 		{
 			label: "Confirm",
 			handler: (details) => {
+				console.log(details);
 				navigate(`/doctor/add-order/${details._id}`, {
 					state: { details },
 				});
 			},
 		},
 	];
+
+	useEffect(() => {
+		if (!inventory) {
+			dispatch(getInventory());
+		}
+	}, [inventory]);
 
 	useEffect(() => {
 		if (!patientDetails) {
@@ -182,7 +107,6 @@ function AddOrders() {
 	}, [newOrder, isLoading, isError, isSuccess, message, navigate, dispatch]);
 
 	const onSubmit = (formData) => {
-		console.log(formData);
 		const orderData = {
 			...formData,
 			frame: formData.frameID,
@@ -190,10 +114,102 @@ function AddOrders() {
 			otherItems: formData.otherItems,
 			amount: formData.amount,
 		};
-		console.log(orderData);
 		const patientId = patientDetails.details._id;
 		dispatch(createOrder({ patientId, orderData }));
 	};
+
+	const formGroups = [
+		{
+			label: "Frame",
+			size: "w-full",
+			fields: [
+				[
+					{
+						label: "Frame *",
+						type: "customsearch",
+						placeholder: "Frame",
+						value: "",
+						name: "frame",
+						size: "w-full",
+						inventory: inventory,
+					},
+					{
+						label: "Quantity *",
+						type: "number",
+						value: 1,
+						min: 1,
+						name: "frameQuantity",
+						size: "w-full",
+					},
+				],
+			],
+		},
+		{
+			label: "Lens",
+			size: "w-full",
+			fields: [
+				[
+					{
+						label: "Lens *",
+						placeholder: "Lens",
+						type: "customsearch",
+						value: "",
+						name: "lens",
+						inventory: inventory,
+						size: "w-full",
+					},
+					{
+						label: "Quantity in pairs *",
+						type: "number",
+						min: 1,
+						value: 1,
+						name: "lensQuantity",
+						size: "w-full",
+					},
+				],
+			],
+		},
+		{
+			label: "Other Items",
+			size: "w-full",
+			fields: [
+				[
+					{
+						label: "Item Name",
+						type: "customsearch",
+						placeholder: "Item Name",
+						value: "",
+						name: "otherItems.itemName",
+						inventory: inventory,
+						size: "w-full",
+						clearOnAdd: true,
+					},
+					{
+						label: "Quantity",
+						type: "number",
+						value: 1,
+						min: 1,
+						name: "otherItems.quantity",
+						size: "w-full",
+					},
+					{
+						name: "addItem",
+						type: "button",
+						size: "w-fit",
+						icon: addsvg,
+						label: "Add Item",
+						action: (formData) => {
+							console.log("Button 1 clicked with form data:", formData);
+						},
+					},
+				],
+			],
+		},
+	];
+
+	if (isLoading || patientReducer.isLoading) {
+		return <Spinner />;
+	}
 
 	return (
 		<>
@@ -206,6 +222,7 @@ function AddOrders() {
 					modalTitle="Patient Details"
 				/>
 			)}
+
 			<div>
 				{(!location.state || !patientDetails) && patient ? (
 					<>
@@ -232,6 +249,7 @@ function AddOrders() {
 					</>
 				) : (
 					<ReusableForm
+						key={inventory}
 						header={header}
 						fields={formGroups}
 						onSubmit={onSubmit}

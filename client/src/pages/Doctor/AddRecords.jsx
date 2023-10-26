@@ -9,6 +9,7 @@ import ReusableForm from "../../components/reusableform.component";
 import Table from "../../components/table.component";
 import ViewModal from "../../components/viewmodal.component";
 import ProceedConfirmation from "../../components/proceedconfirmation.component";
+import Spinner from "../../components/spinner.component";
 
 const header = { title: "Create Eye Record", buttontext: "Add Record" };
 
@@ -60,8 +61,8 @@ function AddRecords() {
 
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
-	let [isOpen, setIsOpen] = useState(false);
-	let [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
+	const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 	const [isConfirmed, setConfirmation] = useState(false);
 	const [isRejected, setRejection] = useState(false);
 	const [patientData, setPatientData] = useState(null);
@@ -88,7 +89,8 @@ function AddRecords() {
 	const { newRecord, isLoading, isError, isSuccess, message } = useSelector(
 		(state) => state.record
 	);
-	const { patient } = useSelector((state) => state.patient);
+	const patientReducer = useSelector((state) => state.patient);
+	const patient = patientReducer.patient;
 
 	const formGroups = [
 		{
@@ -221,7 +223,8 @@ function AddRecords() {
 			openModal();
 		}
 		if (isConfirmed === true) {
-			navigate(`/doctor/add-order/`, { state: { patientDetails } });
+			const details = patientDetails.details;
+			navigate(`/doctor/add-order/${details._id}`, { state: { details } });
 		}
 		if (isRejected === true) {
 			navigate("/doctor");
@@ -245,6 +248,10 @@ function AddRecords() {
 		const patientId = patientDetails.details._id;
 		dispatch(createEyeRecord({ patientId, recordData }));
 	};
+
+	if (isLoading || patientReducer.isLoading) {
+		return <Spinner />;
+	}
 
 	return (
 		<>

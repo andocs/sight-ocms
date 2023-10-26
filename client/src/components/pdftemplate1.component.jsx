@@ -171,7 +171,8 @@ function chunkArray(arr, chunkSize) {
 
 const ReportPDF = (data) => {
 	let tableHeaders = Object.keys(data.data[0]).filter(
-		(name) => name !== "headerText"
+		(name) =>
+			name !== "headerText" && name !== "dateStart" && name !== "dateEnd"
 	);
 	let tableFields;
 	let totalWidth = 550; // Set the total available width for the table

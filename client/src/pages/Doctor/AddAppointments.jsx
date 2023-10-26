@@ -60,7 +60,8 @@ function AddAppointments() {
 
 	const { schedule, availableDays } = useSelector((state) => state.schedule);
 
-	const { patient } = useSelector((state) => state.patient);
+	const patientReducer = useSelector((state) => state.patient);
+	const patient = patientReducer.patient;
 
 	const columns = [
 		{ header: "Last Name", field: "lname" },
@@ -151,14 +152,25 @@ function AddAppointments() {
 		dispatch,
 	]);
 
-	if (isLoading) {
+	if (isLoading || patientReducer.isLoading) {
 		return <Spinner />;
 	}
 
-	const getLeadDate = () => {
+	const getLeadDate = (daysOfWeek) => {
 		const today = new Date();
 		const tomorrow = new Date(today);
 		tomorrow.setDate(today.getDate() + 3);
+
+		while (
+			daysOfWeek.includes(
+				new Date(tomorrow).toLocaleDateString("en-US", {
+					weekday: "long",
+				})
+			)
+		) {
+			tomorrow.setDate(tomorrow.getDate() + 1); // Move to the next day
+		}
+
 		return tomorrow;
 	};
 
@@ -171,7 +183,7 @@ function AddAppointments() {
 					{
 						label: "Appointment Date *",
 						type: "date",
-						value: getLeadDate(),
+						value: getLeadDate(daysOfWeek),
 						name: "appointmentDate",
 						size: "w-full",
 						disabled: daysOfWeek,
@@ -250,8 +262,9 @@ function AddAppointments() {
 					</>
 				) : (
 					<>
-						{availableDays && schedule && (
+						{availableDays && schedule && daysOfWeek && (
 							<ReusableForm
+								key={doctorDetails}
 								header={header}
 								fields={formGroups}
 								onSubmit={onSubmit}

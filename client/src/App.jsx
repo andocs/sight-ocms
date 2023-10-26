@@ -8,7 +8,6 @@ import Navbar from "./components/navbar.component";
 import Home from "./pages/Landing_Page/Home";
 import Services from "./pages/Landing_Page/Services";
 import About from "./pages/Landing_Page/About";
-import Technology from "./pages/Landing_Page/Technology";
 import Login from "./pages/Landing_Page/Login";
 import Register from "./pages/Landing_Page/Register";
 import Profile from "./pages/Landing_Page/Profile";
@@ -42,6 +41,7 @@ import ViewPendingRequests from "./pages/Admin/ViewPendingRequests";
 import ViewRequests from "./pages/Admin/ViewRequests";
 import RequestDetails from "./pages/Admin/RequestDetails";
 import ReportGeneration from "./pages/Admin/ReportGeneration";
+import PDFViewer from "./pages/Admin/PDFViewer";
 
 //DOCTOR
 import AddRecords from "./pages/Doctor/AddRecords";
@@ -68,6 +68,7 @@ import ViewPatientHistory from "./pages/Doctor/ViewPatientHistory";
 import ViewRepair from "./pages/Doctor/ViewRepair";
 import CreateRepair from "./pages/Doctor/CreateRepair";
 import ViewPendingRepair from "./pages/Doctor/ViewPendingRepair";
+import EditRepair from "./pages/Doctor/EditRepair";
 
 //TECHNICIAN
 import ViewPendingOrders from "./pages/Technician/ViewPendingOrders";
@@ -88,7 +89,6 @@ import ViewVisitStaff from "./pages/Staff/ViewVisitStaff";
 import ViewScheduledStaff from "./pages/Staff/ViewScheduledStaff";
 import ViewConfirmedStaff from "./pages/Staff/ViewConfirmedStaff";
 import ViewAppointmentStaff from "./pages/Staff/ViewAppointmentStaff";
-import PDFViewer from "./pages/Admin/PDFViewer";
 
 function App() {
 	return (
@@ -100,7 +100,6 @@ function App() {
 					<Route path="/home" element={<Home />} />
 					<Route path="/services" element={<Services />} />
 					<Route path="/about" element={<About />} />
-					<Route path="/technology" element={<Technology />} />
 					<Route path="/login" element={<Login />} />
 					<Route path="/register" element={<Register />} />
 					<Route path="/profile" element={<Profile />} />
@@ -169,6 +168,8 @@ function App() {
 						<Route path="pending-repairs" element={<ViewPendingRepair />} />
 						<Route path="add-repair" element={<CreateRepair />} />
 						<Route path="add-repair/:id" element={<CreateRepair />} />
+						<Route path="edit-repair" element={<EditRepair />} />
+						<Route path="edit-repair/:id" element={<EditRepair />} />
 					</Route>
 
 					<Route path="/technician" element={<TechnicianDashboard />}>

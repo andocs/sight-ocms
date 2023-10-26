@@ -174,7 +174,7 @@ function DashComponent({ props, headerClick, displayClick, status, table }) {
 												<p>There is no data to display.</p>
 											</div>
 										</div>
-										<img className="h-full" src="images/nodata.svg" alt="" />
+										<img className="h-full" src="/images/nodata.svg" alt="" />
 									</div>
 								</>
 							)}

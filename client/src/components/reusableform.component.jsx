@@ -3,12 +3,14 @@ import ListBoxInput from "./listboxinput.component";
 import ImageInput from "./imageinput.component";
 import PasswordInput from "./passwordinput.component";
 import CustomSearchInput from "./customsearch.component";
+import { getInventory } from "../features/order/orderSlice";
 
 import DatePicker from "react-datepicker";
 
 import "react-datepicker/dist/react-datepicker.css";
 
 import { toast } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
 
 function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	const initialFormData = fields.reduce((formData, group) => {
@@ -18,7 +20,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			});
 		});
 		return formData;
-	}, {});
+	});
 
 	if (imageGroup) {
 		imageGroup.forEach((group) => {
@@ -28,6 +30,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 		});
 	}
 
+	const { inventory } = useSelector((state) => state.order);
 	const [formData, setFormData] = useState(initialFormData);
 	const [divHeight, setDivHeight] = useState(0);
 
@@ -53,6 +56,8 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	let doctorAppointments = [];
 	const timeSlots = [];
 
+	const dispatch = useDispatch();
+
 	for (let hour = 9; hour <= 17; hour++) {
 		for (let minute = 0; minute <= 30; minute += 30) {
 			if (hour == 17 && minute == 30) {
@@ -72,13 +77,26 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	const formGroupRef = useRef(null);
 	const customSearchInputRef = createRef(null);
 
-	const getLeadDate = () => {
+	function getLeadDate(disabled) {
 		const today = new Date();
 		const tomorrow = new Date(today);
 		tomorrow.setDate(today.getDate() + 3);
 
+		if (disabled && disabled.length > 0) {
+			// Calculate the next available date
+			while (
+				disabled.includes(
+					new Date(tomorrow).toLocaleDateString("en-US", {
+						weekday: "long",
+					})
+				)
+			) {
+				tomorrow.setDate(tomorrow.getDate() + 1); // Move to the next day
+			}
+		}
+
 		return tomorrow;
-	};
+	}
 
 	const getDateTwoMonthsFromNow = () => {
 		const today = new Date();
@@ -324,11 +342,11 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			i === item ? { ...i, isEditing: !i.isEditing } : i
 		);
 		setItemID(item._id ? item._id : item.itemID);
-		setOtherItemsList(updatedOtherItemsList);
 		setSearchValue(item.itemName);
 		setItemName(item.itemName);
 		setItemPrice(item.price);
 		setEditedQuantity(item.quantity);
+		setOtherItemsList(updatedOtherItemsList);
 	};
 
 	const handleSaveEditedItem = (editedItem) => {
@@ -629,6 +647,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 							placeholder={field.placeholder}
 							initialValue={searchValue}
 							category={"Frame"}
+							inventoryItems={field.inventory}
 						/>
 					);
 				} else if (field.name === "lens") {
@@ -641,11 +660,12 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 							onSelect={(selectedItem) =>
 								handleCustomSearchSelect(field.name, selectedItem)
 							}
-							onRemove={(e) => handleOnRemove(field.name)}
+							onRemove={() => handleOnRemove(field.name)}
 							value={formData[field.name] || inputValue}
 							placeholder={field.placeholder}
 							initialValue={searchValue}
 							category={"Lens"}
+							inventoryItems={field.inventory}
 						/>
 					);
 				} else {
@@ -658,16 +678,18 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 							onSelect={(selectedItem) =>
 								handleCustomSearchSelect(field.name, selectedItem)
 							}
-							onRemove={(e) => handleOnRemove(field.name)}
-							value={formData[field.name] || inputValue}
+							onRemove={() => handleOnRemove(field.name)}
+							value={formData[field.name]}
 							placeholder={field.placeholder}
 							initialValue={searchValue}
+							inventoryItems={field.inventory}
 						/>
 					);
 				}
 			case "date":
 				const schedule = field?.available;
 				const appointment = field?.appointment;
+				const disabled = field?.disabled || null;
 				if (schedule) {
 					doctorSchedule = schedule;
 				}
@@ -677,14 +699,14 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 
 				let filterDate = null;
 
-				if (field.disabled) {
+				if (disabled) {
 					const isDisabled = (date) => {
 						const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
 							weekday: "long",
 						});
-						const daysToDisable = field.disabled;
+						const daysToDisable = disabled;
 
-						if (field.disabled) {
+						if (disabled) {
 							return !daysToDisable.includes(dayOfWeek);
 						} else {
 							return null;
@@ -747,10 +769,10 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 									selected={
 										formData[field.name] !== ""
 											? formData[field.name]
-											: getLeadDate()
+											: (formData[field.name] = getLeadDate(disabled))
 									}
 									onChange={(value) => handleChange(field.name, value)}
-									minDate={getLeadDate()}
+									minDate={getLeadDate(disabled)}
 									filterDate={filterDate}
 								/>
 								<div className="w-6 h-6 absolute top-4 right-5 z-10">
@@ -782,10 +804,13 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			const height = formGroupRef.current.offsetHeight;
 			setDivHeight(height);
 		}
-	}, []);
+		if (otherItems && otherItems.length > 0 && !inventory) {
+			dispatch(getInventory());
+		}
+	}, [otherItems]);
 
 	useEffect(() => {
-		if (otherItems) {
+		if (otherItems && otherItems.length > 0) {
 			setOtherItemsList(otherItems);
 		}
 	}, [otherItems]);
@@ -1004,11 +1029,13 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 																	</label>
 
 																	<CustomSearchInput
+																		key={inventory}
 																		ref={customSearchInputRef}
 																		onInputChange={handleInputChange}
 																		onSelect={handleSelect}
 																		value={searchValue}
 																		onRemove={handleOnSearchRemove}
+																		inventoryItems={inventory}
 																	/>
 																</div>
 

@@ -186,7 +186,6 @@ function EditAppointment() {
 			dispatch(reset());
 		} else {
 			const appointmentData = updateInfo;
-			console.log(appointmentData);
 			dispatch(editAppointment({ appointmentId, appointmentData }));
 		}
 	};

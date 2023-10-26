@@ -42,7 +42,6 @@ function ViewDetails({ header, props, onClick, batches }) {
 		const par = document.getElementById("paragraph");
 		if (imagediv && wrapperHeight && par) {
 			const imagedivHeight = imagediv.offsetHeight + par.offsetHeight + 1;
-			console.log(wrapperHeight, imagedivHeight);
 			setIsImageOverflowing(imagedivHeight > wrapperHeight);
 		}
 	}, [detailsRef, marginRef, divHeight, marginHeight]);
@@ -208,15 +207,19 @@ function ViewDetails({ header, props, onClick, batches }) {
 														</p>
 														<p
 															className={`mx-1 font-medium ${
-																detail.label === "Quantity" &&
-																detail.value <= field.details[7].value
+																detailIndex === 5 &&
+																parseInt(detail.value.split(" ")[0]) <=
+																	parseInt(field.details[7].value.split(" ")[0])
 																	? "text-red-500"
-																	: detail.label === "Quantity" &&
-																	  detail.value <= field.details[6].value &&
-																	  "text-yellow-500"
+																	: detailIndex === 5 &&
+																	  parseInt(detail.value.split(" ")[0]) <=
+																			parseInt(
+																				field.details[6].value.split(" ")[0]
+																			)
+																	? "text-yellow-500"
+																	: "text-sky-800"
 															}`}
 														>
-															{console.log(field.details)}
 															{detail.label === "Created At"
 																? formatDateandTime(detail.value)
 																: detail.value}{" "}

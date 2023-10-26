@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import orderService from "./orderService";
 
 const initialState = {
-	item: null,
+	inventory: null,
 	newOrder: null,
 	orderUpdate: null,
 	order: [],
@@ -175,7 +175,7 @@ const orderSlice = createSlice({
 			state.message = "";
 		},
 		clearItem: (state) => {
-			state.item = "";
+			state.inventory = "";
 		},
 		clear: (state) => {
 			state.newOrder = null;
@@ -299,13 +299,13 @@ const orderSlice = createSlice({
 			.addCase(getInventory.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.item = action.payload;
+				state.inventory = action.payload;
 			})
 			.addCase(getInventory.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.order = null;
+				state.inventory = null;
 			});
 	},
 });

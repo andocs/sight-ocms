@@ -36,13 +36,13 @@ function RestockModal({ item, isOpen, closeModal, handleRestock }) {
 	const initialDate = getDateTwoMonthsFromNow();
 	const units = [{ unit: "piece" }, { unit: "box" }];
 	const [unit, setUnit] = useState(units[0].unit);
-	const [quantity, setQuantity] = useState(1);
+	const [itemQuantity, setItemQuantity] = useState(1);
 	const [piecesPerBox, setPPB] = useState(null);
 	const [expirationDate, setExpirationDate] = useState(initialDate);
 
 	const onClose = () => {
 		setUnit(units[0].unit);
-		setQuantity(1);
+		setItemQuantity(1);
 		setPPB(null);
 		setExpirationDate(initialDate);
 		closeModal();
@@ -50,8 +50,9 @@ function RestockModal({ item, isOpen, closeModal, handleRestock }) {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
+		let quantity = itemQuantity;
 		if (unit === "box") {
-			setQuantity(piecesPerBox * quantity);
+			quantity = piecesPerBox * itemQuantity;
 		}
 		if (item.category === "Medicine") {
 			const uniqueBatchNumber = generateUniqueBatchNumber();
@@ -60,14 +61,15 @@ function RestockModal({ item, isOpen, closeModal, handleRestock }) {
 				expirationDate,
 				batchQuantity: quantity,
 			};
-			const updates = { quantity, batches };
+			const updates = { batches, quantity };
+			console.log(updates);
 			handleRestock(updates);
 		} else {
 			const updates = { quantity };
 			handleRestock(updates);
 		}
 		setUnit(units[0].unit);
-		setQuantity(1);
+		setItemQuantity(1);
 		setPPB(null);
 		setExpirationDate(initialDate);
 		closeModal();
@@ -117,8 +119,8 @@ function RestockModal({ item, isOpen, closeModal, handleRestock }) {
 											<input
 												type="number"
 												min={1}
-												value={quantity}
-												onChange={(e) => setQuantity(e.target.value)}
+												value={itemQuantity}
+												onChange={(e) => setItemQuantity(e.target.value)}
 												className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
 											/>
 										</div>

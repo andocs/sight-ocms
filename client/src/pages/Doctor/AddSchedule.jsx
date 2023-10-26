@@ -88,7 +88,6 @@ function AddSchedule() {
 	}
 
 	const onSubmit = (formData) => {
-		console.log(formData);
 		if (formData["startTime"] === "N/A" || formData["endTime"] === "N/A") {
 			toast.error("Fields cannot be blank!");
 		} else {

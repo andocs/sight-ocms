@@ -180,8 +180,32 @@ function EditRecord() {
 	}
 
 	const onSubmit = (formData) => {
-		const recordData = formData;
-		dispatch(editEyeRecord({ recordId, recordData }));
+		const updateInfo = {};
+
+		const initialData = {
+			"rightEye.sphere": recordUpdate.rightEye.sphere,
+			"rightEye.cylinder": recordUpdate.rightEye.cylinder,
+			"rightEye.axis": recordUpdate.rightEye.axis,
+			"leftEye.sphere": recordUpdate.leftEye.sphere,
+			"leftEye.cylinder": recordUpdate.leftEye.cylinder,
+			"leftEye.axis": recordUpdate.leftEye.axis,
+			additionalNotes: recordUpdate.additionalNotes,
+		};
+
+		for (const key in formData) {
+			if (JSON.stringify(initialData[key]) !== JSON.stringify(formData[key])) {
+				if (formData[key] !== "") {
+					updateInfo[key] = formData[key];
+				}
+			}
+		}
+		if (JSON.stringify(updateInfo) === "{}") {
+			navigate("/doctor/view-records");
+			dispatch(reset());
+		} else {
+			const recordData = updateInfo;
+			dispatch(editEyeRecord({ recordId, recordData }));
+		}
 	};
 	return (
 		<>

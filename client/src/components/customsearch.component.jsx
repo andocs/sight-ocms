@@ -18,6 +18,7 @@ const CustomSearchInput = forwardRef(
 			onRemove,
 			initialValue,
 			category,
+			inventoryItems,
 		},
 		ref
 	) => {
@@ -25,7 +26,6 @@ const CustomSearchInput = forwardRef(
 		const [inputValue, setInputValue] = useState(value || "");
 		const [filteredSuggestions, setFilteredSuggestions] = useState([]);
 		const [itemSelected, setItemSelected] = useState(false);
-		const inventoryItems = useSelector((state) => state.order.item);
 		const inputRef = useRef(null);
 
 		useEffect(() => {

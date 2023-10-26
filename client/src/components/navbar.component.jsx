@@ -10,7 +10,6 @@ const navigation = [
 	{ name: "Home", href: "/" },
 	{ name: "Services", href: "/services" },
 	{ name: "About", href: "/about" },
-	{ name: "Technology", href: "/technology" },
 ];
 
 const defaultsvg = (
@@ -47,8 +46,10 @@ export default function Navbar() {
 
 	const token = localStorage.getItem("user");
 	let role = null;
+	let name = null;
 	if (token) {
 		const decodedToken = decode(token);
+		name = decodedToken.user.name;
 		role = decodedToken.user.role;
 	}
 
@@ -202,13 +203,14 @@ export default function Navbar() {
 										<div className="absolute right-0 pr-4">
 											{!user ? null : (
 												<div className="relative inset-y-0 right-0 flex items-center">
-													<button
+													<p>Hey, {name ? name : "John Doe"}!</p>
+													{/* <button
 														type="button"
 														className="rounded-full bg-slate-50 p-1 text-sky-800 hover:text-white hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-800 focus:ring-offset-2"
 													>
 														<span className="sr-only">View notifications</span>
 														<BellIcon className="h-6 w-6" aria-hidden="true" />
-													</button>
+													</button> */}
 
 													{/* Profile dropdown */}
 													<Menu as="div" className="ml-3">

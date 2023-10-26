@@ -92,6 +92,7 @@ function AddAppointment() {
 				"Saturday",
 				"Sunday",
 			];
+			console.log(availableDays);
 
 			const days = allDays.filter((day) => !availableDays.includes(day));
 			if (days.length === 0) {
@@ -102,26 +103,24 @@ function AddAppointment() {
 		}
 	}, [doctorDetails]);
 
-	if (isLoading || scheduleReducer.isLoading) {
-		return <Spinner />;
-	}
+	const getLeadDate = (daysOfWeek) => {
+		if (doctorDetails && daysOfWeek) {
+			const today = new Date();
+			const tomorrow = new Date(today);
+			tomorrow.setDate(today.getDate() + 3);
 
-	const getLeadDate = () => {
-		const today = new Date();
-		const tomorrow = new Date(today);
-		tomorrow.setDate(today.getDate() + 3);
-		if (daysOfWeek) {
-			daysOfWeek.filter((day) => {
-				const longDay = tomorrow.toLocaleDateString("en-US", {
-					weekday: "long",
-				});
-				while (day.includes(longDay)) {
-					tomorrow.setDate(today.getDate() + 1);
-				}
-			});
+			while (
+				daysOfWeek.includes(
+					new Date(tomorrow).toLocaleDateString("en-US", {
+						weekday: "long",
+					})
+				)
+			) {
+				tomorrow.setDate(tomorrow.getDate() + 1); // Move to the next day
+			}
+
+			return tomorrow;
 		}
-
-		return tomorrow;
 	};
 
 	const formGroups = [
@@ -133,7 +132,7 @@ function AddAppointment() {
 					{
 						label: "Appointment Date *",
 						type: "date",
-						value: getLeadDate(),
+						value: getLeadDate(daysOfWeek),
 						name: "appointmentDate",
 						size: "w-full",
 						disabled: daysOfWeek && daysOfWeek,
@@ -182,6 +181,11 @@ function AddAppointment() {
 		}
 		dispatch(scheduleAppointment(appointmentData));
 	};
+
+	if (isLoading || scheduleReducer.isLoading) {
+		return <Spinner />;
+	}
+
 	return (
 		<>
 			{(!location.state || !doctorDetails) && scheduleReducer.schedule ? (
@@ -216,12 +220,16 @@ function AddAppointment() {
 					</div>
 				</>
 			) : (
-				<ReusableForm
-					key={doctorDetails}
-					header={header}
-					fields={formGroups}
-					onSubmit={onSubmit}
-				/>
+				<>
+					{daysOfWeek && (
+						<ReusableForm
+							key={daysOfWeek}
+							header={header}
+							fields={formGroups}
+							onSubmit={onSubmit}
+						/>
+					)}
+				</>
 			)}
 		</>
 	);

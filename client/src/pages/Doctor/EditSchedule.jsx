@@ -168,7 +168,6 @@ function EditSchedule() {
 	}
 
 	const onSubmit = (formData) => {
-		console.log(formData);
 		formData.isLeave = formData.isLeave === "No" ? false : true;
 		formData.isEmergencyBreak =
 			formData.isEmergencyBreak === "No" ? false : true;

@@ -1333,6 +1333,8 @@ const createAppointment = async (req, res) => {
 //@route GET /api/doctor/appointments
 //@access private (doctor only)
 const getAllAppointments = asyncHandler(async (req, res) => {
+	const today = new Date();
+
 	const appointment = await Appointment.aggregate([
 		{
 			$lookup: {
@@ -1343,11 +1345,25 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 			},
 		},
 		{
+			$lookup: {
+				from: "userDetails",
+				localField: "doctor",
+				foreignField: "_id",
+				as: "doctorDetails",
+			},
+		},
+		{
 			$project: {
 				appointmentDate: 1,
 				doctor: 1,
 				userLastName: { $arrayElemAt: ["$userDetails.personalInfo.lname", 0] },
 				userFirstName: { $arrayElemAt: ["$userDetails.personalInfo.fname", 0] },
+				doctorLastName: {
+					$arrayElemAt: ["$doctorDetails.personalInfo.lname", 0],
+				},
+				doctorFirstName: {
+					$arrayElemAt: ["$doctorDetails.personalInfo.fname", 0],
+				},
 				appointmentStart: 1,
 				appointmentEnd: 1,
 				notes: 1,
@@ -1356,11 +1372,42 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 		},
 		{
 			$sort: {
-				appointmentDate: -1,
+				appointmentDate: 1,
+			},
+		},
+		{
+			$facet: {
+				futureAppointments: [
+					{
+						$match: {
+							appointmentDate: { $gte: today },
+						},
+					},
+				],
+				pastAppointments: [
+					{
+						$match: {
+							appointmentDate: { $lt: today },
+						},
+					},
+					{
+						$sort: {
+							appointmentDate: -1,
+						},
+					},
+				],
+			},
+		},
+		{
+			$project: {
+				appointments: {
+					$concatArrays: ["$futureAppointments", "$pastAppointments"],
+				},
 			},
 		},
 	]);
-	res.json(appointment);
+
+	res.json(appointment[0].appointments);
 });
 
 //@desc GET LIST OF DOCTOR'S PENDING APPOINTMENTS
@@ -1936,9 +1983,7 @@ const deleteDoctorSchedule = asyncHandler(async (req, res) => {
 
 const getInventoryList = asyncHandler(async (req, res) => {
 	const inventoryList = await Inventory.find();
-	if (inventoryList == {}) {
-		res.json({ message: "No items currently in inventory." });
-	}
+	console.log(inventoryList);
 	res.json(inventoryList);
 });
 

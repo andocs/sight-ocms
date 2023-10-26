@@ -56,6 +56,18 @@ function ViewAppointments() {
 		{ header: "Additional Notes", field: "notes" },
 	];
 
+	const viewColumns = [
+		{ header: "Date", field: "appointmentDate" },
+		{ header: "Status", field: "status" },
+		{ header: "Doctor Last Name", field: "doctorLastName" },
+		{ header: "Doctor First Name", field: "doctorFirstName" },
+		{ header: "Patient Last Name", field: "userLastName" },
+		{ header: "Patient First Name", field: "userFirstName" },
+		{ header: "Start Time", field: `appointmentStart` },
+		{ header: "End Time", field: "appointmentEnd" },
+		{ header: "Additional Notes", field: "notes" },
+	];
+
 	const actions = [
 		{
 			label: "View",
@@ -81,7 +93,7 @@ function ViewAppointments() {
 					isOpen={isViewOpen}
 					closeModal={closeViewModal}
 					dataFields={appointmentData}
-					columnHeaders={columns}
+					columnHeaders={viewColumns}
 					modalTitle="View Appointment Details"
 				/>
 			)}

@@ -366,10 +366,6 @@ const updateStaff = asyncHandler(async (req, res) => {
 	const staffId = req.params.id;
 	let updates = req.body;
 
-	if (updates.personalInfo && req.file) {
-		updates.personalInfo = JSON.parse(updates.personalInfo);
-	}
-
 	const staff = await User.findOne({
 		_id: staffId,
 		role: { $in: ["doctor", "technician", "staff"] },
@@ -1623,7 +1619,7 @@ const generateInventoryReport = asyncHandler(async (req, res) => {
 			vendor: item.vendor,
 			category: item.category,
 			quantity: item.quantity,
-			value: item.price * item.quantity,
+			value: formatPrice(item.price * item.quantity),
 			price: formatPrice(item.price),
 			stockStatus,
 		};

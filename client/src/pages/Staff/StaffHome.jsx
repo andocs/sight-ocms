@@ -11,8 +11,8 @@ import {
 } from "../../features/appointment/appointmentSlice";
 
 import { getPatientList } from "../../features/patient/patientSlice";
+import { getUser } from "../../features/auth/authSlice";
 
-import decode from "jwt-decode";
 import DashComponent from "../../components/dashboard.component";
 import Spinner from "../../components/spinner.component";
 
@@ -95,12 +95,7 @@ function StaffHome() {
 		(state) => state.appointment
 	);
 	const { patient } = useSelector((state) => state.patient);
-
-	const token = localStorage.getItem("user");
-
-	const decodedToken = decode(token);
-	const role = decodedToken.user.role;
-	const name = decodedToken.user.name;
+	const { infoUpdate } = useSelector((state) => state.auth);
 
 	const onHeaderClick = () => {
 		navigate("/staff/view-confirmed");
@@ -109,34 +104,12 @@ function StaffHome() {
 		navigate("/doctor/view-appointments");
 	};
 
-	const header = {
-		title: "Dashboard",
-		color: "blue",
-		button: "View Confirmed Appointments",
-	};
-
-	const display = {
-		role,
-		button: "View Appointment List",
-		color: "sky",
-	};
-
-	const props = {
-		textcolor: "text-sky-800",
-		header,
-		display,
-		username: name,
-		text,
-	};
-
 	useEffect(() => {
 		dispatch(getPendingAppointments());
-
 		dispatch(getConfirmedAppointments());
-
 		dispatch(getScheduledAppointments());
-
 		dispatch(getPatientList());
+		dispatch(getUser());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
@@ -170,6 +143,28 @@ function StaffHome() {
 			svg: scheduledsvg,
 		},
 	];
+
+	const header = {
+		title: "Dashboard",
+		color: "blue",
+		button: "View Confirmed Appointments",
+	};
+
+	const display = {
+		role: infoUpdate?.role,
+		button: "View Appointment List",
+		color: "sky",
+	};
+
+	const props = {
+		textcolor: "text-sky-800",
+		header,
+		display,
+		username:
+			`${infoUpdate?.personalInfo.fname} ${infoUpdate?.personalInfo.lname}` ||
+			"John Doe",
+		text,
+	};
 
 	const columns = [
 		{ header: "Start Time", field: `appointmentStart` },

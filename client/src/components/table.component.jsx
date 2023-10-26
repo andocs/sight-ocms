@@ -47,7 +47,23 @@ const ReusableTable = ({ data, columns, actions }) => {
 	const visibleData = filteredData.slice(startIndex, endIndex);
 
 	if (!data || data.length === 0) {
-		return <p>No data available.</p>;
+		return (
+			<div className="bg-white border-gray-200 shadow-lg flex flex-col w-full justify-center items-center">
+				<div className="p-8 flex space-x-16 flex-row">
+					<div className="-ml-20 flex w-[800px]">
+						<img className="h-full" src="/images/nodata.svg" alt="" />
+					</div>
+					<div className="flex flex-col justify-center">
+						<div className="text-center text-7xl font-bold z-50">
+							<p>Oops!</p>
+						</div>
+						<div className="text-center text-2xl z-50">
+							<p>There is no data to display.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
 	}
 
 	return (

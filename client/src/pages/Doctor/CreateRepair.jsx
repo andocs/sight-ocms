@@ -9,6 +9,7 @@ import { getPatientList } from "../../features/patient/patientSlice";
 import ReusableForm from "../../components/reusableform.component";
 import Table from "../../components/table.component";
 import ViewModal from "../../components/viewmodal.component";
+import Spinner from "../../components/spinner.component";
 
 const categories = [
 	{ category: "Frame" },
@@ -36,7 +37,8 @@ function CreateRepair() {
 		(state) => state.repair
 	);
 
-	const { patient } = useSelector((state) => state.patient);
+	const patientReducer = useSelector((state) => state.patient);
+	const patient = patientReducer.patient;
 
 	const formGroups = [
 		{
@@ -121,6 +123,10 @@ function CreateRepair() {
 		const patientId = patientDetails.details._id;
 		dispatch(addRepairRequest({ patientId, requestData }));
 	};
+
+	if (isLoading || patientReducer.isLoading) {
+		return <Spinner />;
+	}
 
 	return (
 		<>
