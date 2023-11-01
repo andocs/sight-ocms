@@ -24,6 +24,7 @@ const {
 	getUserById,
 	updateInfo,
 	changePassword,
+	getDoctors,
 } = require("../controllers/userController");
 
 const validateToken = require("../middleware/validateTokenHandler");
@@ -31,6 +32,8 @@ const validateToken = require("../middleware/validateTokenHandler");
 router.post("/register", registerUser);
 
 router.post("/login", loginUser);
+
+router.get("/schedule", getDoctors);
 
 router
 	.route("/")

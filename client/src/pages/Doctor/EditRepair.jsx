@@ -24,7 +24,7 @@ function EditRepair() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const repairDetails = location.state;
-	const requestId = repairDetails.details._id;
+	const requestId = repairDetails?.details._id;
 	const { repairUpdate, newRepair, isLoading, isError, isSuccess, message } =
 		useSelector((state) => state.repair);
 
@@ -64,10 +64,10 @@ function EditRepair() {
 	];
 
 	useEffect(() => {
-		if (!repairUpdate) {
+		if (!repairUpdate && repairDetails) {
 			dispatch(getRepairDetails(repairDetails.details._id));
 		}
-	}, [dispatch, repairUpdate, repairDetails]);
+	}, [dispatch, repairUpdate]);
 
 	useEffect(() => {
 		if (isError) {

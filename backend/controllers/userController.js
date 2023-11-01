@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 const AuditLog = require("../models/auditLogModel");
+const Appointment = require("../models/appointmentModel");
+const Schedule = require("../models/scheduleModel");
 
 const sessionOptions = {
 	readConcern: { level: "snapshot" },
@@ -366,11 +368,11 @@ const updateInfo = asyncHandler(async (req, res) => {
 			{ session }
 		);
 
+		await session.commitTransaction();
 		res.status(201).json({
 			data: updatedUser,
 			message: "Your account has successfully been updated!",
 		});
-		await session.commitTransaction();
 	} catch (error) {
 		console.log(error);
 		if (req.file) {
@@ -487,6 +489,94 @@ const changePassword = asyncHandler(async (req, res) => {
 	}
 });
 
+//@desc GET LIST OF DOCTOR'S SCHEDULE
+//@route GET /api/user/schedule
+//@access public
+const getDoctors = asyncHandler(async (req, res) => {
+	const allSchedules = await Schedule.find({ breaks: { $exists: false } });
+
+	const schedulesByDoctor = {};
+
+	for (const schedules of allSchedules) {
+		const doctorId = schedules.doctor;
+		if (!schedulesByDoctor[doctorId]) {
+			schedulesByDoctor[doctorId] = {
+				id: doctorId,
+				name: "",
+				email: "",
+				contact: "",
+				schedule: [],
+				breaks: [],
+			};
+		}
+		const userDetails = await User.findOne({ _id: doctorId });
+		if (userDetails) {
+			const { personalInfo } = userDetails;
+			schedulesByDoctor[
+				doctorId
+			].name = `${personalInfo.fname} ${personalInfo.lname}`;
+			schedulesByDoctor[doctorId].contact = `${personalInfo.contact}`;
+			schedulesByDoctor[doctorId].email = userDetails.email;
+		}
+
+		schedulesByDoctor[doctorId].schedule.push(schedules);
+	}
+
+	for (const doctorId in schedulesByDoctor) {
+		const currentDate = new Date();
+		const appointments = await Appointment.find({
+			doctor: doctorId,
+			status: { $in: ["Scheduled", "Confirmed"] },
+			appointmentDate: { $gte: currentDate },
+		});
+		schedulesByDoctor[doctorId].appointments = appointments;
+
+		const breaks = await Schedule.findOne({
+			doctor: doctorId,
+			breaks: { $exists: true, $ne: [] },
+		});
+		const allBreaks = breaks?.breaks || [];
+		if (allBreaks.length === 0) {
+			schedulesByDoctor[doctorId].breaks = allBreaks;
+		} else {
+			allBreaks.sort((a, b) => {
+				const dateA = new Date(a.startDate);
+				const dateB = new Date(b.startDate);
+				return dateA - dateB;
+			});
+
+			// Filter breaks greater than or equal to current date
+			const breaksFromToday = allBreaks.filter((breakItem) => {
+				const breakStartDate = new Date(breakItem.startDate);
+				return breakStartDate >= currentDate;
+			});
+
+			schedulesByDoctor[doctorId].breaks = breaksFromToday;
+		}
+	}
+
+	const schedule = Object.values(schedulesByDoctor);
+
+	for (const doctorSchedule of schedule) {
+		const daysOfWeek = [
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
+			"Sunday",
+		];
+		doctorSchedule.schedule.sort((a, b) => {
+			const dayA = daysOfWeek.indexOf(a.dayOfWeek);
+			const dayB = daysOfWeek.indexOf(b.dayOfWeek);
+			return dayA - dayB;
+		});
+	}
+
+	res.json(schedule);
+});
+
 module.exports = {
 	registerUser,
 	loginUser,
@@ -494,4 +584,5 @@ module.exports = {
 	updateInfo,
 	getUserById,
 	changePassword,
+	getDoctors,
 };

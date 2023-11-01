@@ -100,7 +100,7 @@ function DoctorHome() {
 	);
 	const { order } = useSelector((state) => state.order);
 	const { record } = useSelector((state) => state.record);
-	const { infoUpdate } = useSelector((state) => state.auth);
+	const { info } = useSelector((state) => state.auth);
 
 	const onHeaderClick = () => {
 		navigate("/doctor/add-record");
@@ -152,7 +152,7 @@ function DoctorHome() {
 	};
 
 	const display = {
-		role: infoUpdate?.role,
+		role: info?.role,
 		button: "View Appointment List",
 		color: "sky",
 	};
@@ -162,7 +162,7 @@ function DoctorHome() {
 		header,
 		display,
 		username:
-			`Dr. ${infoUpdate?.personalInfo.fname} ${infoUpdate?.personalInfo.lname}` ||
+			`Dr. ${info?.personalInfo.fname} ${info?.personalInfo.lname}` ||
 			"John Doe",
 		text,
 	};
@@ -189,7 +189,7 @@ function DoctorHome() {
 		<>
 			{confirmed && record && order && (
 				<DashComponent
-					key={infoUpdate}
+					key={info}
 					props={props}
 					status={status}
 					headerClick={onHeaderClick}

@@ -46,40 +46,46 @@ const doctorScheduleSchema = new mongoose.Schema({
 			"Saturday",
 			"Sunday",
 		],
-		required: true,
 	},
 	startTime: {
-		type: String, // Store time as minutes since midnight (e.g., 9:00 AM = 540 minutes)
-		required: true,
-		validate: [validateTime, "Invalid format"],
+		type: String,
+		required: function () {
+			return this.dayOfWeek !== undefined;
+		},
+		validator: [validateTime, "Invalid format"],
 		enum: timeSlots,
 	},
 	endTime: {
-		type: String, // Store time as minutes since midnight (e.g., 5:00 PM = 1020 minutes)
-		required: true,
-		validate: [validateTime, "Invalid format"],
+		type: String,
+		required: function () {
+			return this.dayOfWeek !== undefined;
+		},
+		validator: [validateTime, "Invalid format"],
 		enum: timeSlots,
 	},
 	lunchBreakStart: {
-		type: String, // Store lunch break start time as minutes since midnight
-		default: null, // No lunch break by default
-		validate: [validateTime, "Invalid format"],
+		type: String,
+		default: undefined,
+		validator: [validateTime, "Invalid format"],
 		enum: timeSlots,
 	},
 	lunchBreakEnd: {
-		type: String, // Store lunch break end time as minutes since midnight
-		default: null, // No lunch break by default
-		validate: [validateTime, "Invalid format"],
+		type: String,
+		default: undefined,
+		validator: [validateTime, "Invalid format"],
 		enum: timeSlots,
 	},
-	isLeave: {
-		type: Boolean,
-		default: false,
-	},
-	isEmergencyBreak: {
-		type: Boolean,
-		default: false,
-	},
+	breaks: [
+		{
+			startDate: { type: Date, require: true },
+			endDate: { type: Date },
+			reason: {
+				type: String,
+				enum: ["Vacation", "Holiday", "Personal Reasons"],
+				required: true,
+			},
+		},
+	],
 });
 
 const DoctorSchedule = mongoose.model(

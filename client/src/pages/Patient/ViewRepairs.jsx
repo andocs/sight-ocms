@@ -63,14 +63,6 @@ function ViewRepairs() {
 				setViewOpen(true);
 			},
 		},
-		{
-			label: "Update",
-			handler: (details) => {
-				navigate(`/doctor/edit-repair/${details._id}`, {
-					state: { details },
-				});
-			},
-		},
 	];
 
 	return (

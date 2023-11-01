@@ -54,14 +54,15 @@ function Profile() {
 		}
 	}, []);
 
-	const { infoUpdate, newInfo, isLoading, isSuccess, isError, message } =
-		useSelector((state) => state.auth);
+	const { info, newInfo, isLoading, isSuccess, isError, message } = useSelector(
+		(state) => state.auth
+	);
 
 	useEffect(() => {
-		if (!infoUpdate) {
+		if (!info) {
 			dispatch(getUser());
 		}
-	}, [dispatch, infoUpdate]);
+	}, [dispatch, info]);
 
 	useEffect(() => {
 		if (isError) {
@@ -77,10 +78,12 @@ function Profile() {
 			navigate("/profile");
 			dispatch(clear());
 		}
-		dispatch(reset());
+		return () => {
+			dispatch(reset());
+		};
 	}, [newInfo, isError, isSuccess, message, navigate, dispatch]);
 
-	if (isLoading || !infoUpdate) {
+	if (isLoading || !info) {
 		return <Spinner />;
 	}
 
@@ -93,7 +96,7 @@ function Profile() {
 					{
 						label: "First Name",
 						type: "text",
-						value: infoUpdate?.personalInfo?.fname || "",
+						value: info?.personalInfo?.fname || "",
 						name: "fname",
 						placeholder: "First Name",
 						size: "w-full",
@@ -103,7 +106,7 @@ function Profile() {
 					{
 						label: "Last Name",
 						type: "text",
-						value: infoUpdate?.personalInfo?.lname || "",
+						value: info?.personalInfo?.lname || "",
 						name: "lname",
 						placeholder: "Last Name",
 						size: "w-full",
@@ -113,7 +116,7 @@ function Profile() {
 					{
 						label: "Gender",
 						type: "listbox",
-						value: infoUpdate?.personalInfo?.gender || genders[0].gender,
+						value: info?.personalInfo?.gender || genders[0].gender,
 						options: genders.map((gender) => gender.gender),
 						name: "gender",
 						size: "w-full",
@@ -123,7 +126,7 @@ function Profile() {
 					{
 						label: "Email",
 						type: "email",
-						value: infoUpdate?.email || "",
+						value: info?.email || "",
 						name: "email",
 						placeholder: "name@email.com",
 						placeholdercss: "placeholder:underline",
@@ -134,7 +137,7 @@ function Profile() {
 					{
 						label: "Contact Number",
 						type: "text",
-						value: infoUpdate?.personalInfo?.contact || "",
+						value: info?.personalInfo?.contact || "",
 						name: "contact",
 						placeholder: "Contact Number",
 						size: "w-full",
@@ -144,7 +147,7 @@ function Profile() {
 					{
 						label: "Address",
 						type: "text",
-						value: infoUpdate?.personalInfo?.address || "",
+						value: info?.personalInfo?.address || "",
 						name: "address",
 						placeholder: "123 Penny Lane",
 						size: "w-full",
@@ -154,7 +157,7 @@ function Profile() {
 					{
 						label: "City",
 						type: "text",
-						value: infoUpdate?.personalInfo?.city || "",
+						value: info?.personalInfo?.city || "",
 						name: "city",
 						placeholder: "City",
 						size: "w-full",
@@ -164,7 +167,7 @@ function Profile() {
 					{
 						label: "Province",
 						type: "text",
-						value: infoUpdate?.personalInfo?.province || "",
+						value: info?.personalInfo?.province || "",
 						name: "province",
 						placeholder: "Province",
 						size: "w-full",
@@ -180,20 +183,20 @@ function Profile() {
 				{
 					label: "Image",
 					type: "image",
-					value: infoUpdate?.image || "",
+					value: info?.image || "",
 					name: "image",
 					size: "w-full",
 				},
 			],
-			fname: infoUpdate?.personalInfo?.fname
-				? infoUpdate?.personalInfo?.fname
-				: infoUpdate?.personalInfo?.gender === "Female"
+			fname: info?.personalInfo?.fname
+				? info?.personalInfo?.fname
+				: info?.personalInfo?.gender === "Female"
 				? "Jane"
 				: "John",
-			lname: infoUpdate?.personalInfo?.lname || "Doe",
-			email: infoUpdate?.email || "placeholder@email.com",
-			role: infoUpdate?.role
-				? infoUpdate.role.charAt(0).toUpperCase() + infoUpdate.role.slice(1)
+			lname: info?.personalInfo?.lname || "Doe",
+			email: info?.email || "placeholder@email.com",
+			role: info?.role
+				? info.role.charAt(0).toUpperCase() + info.role.slice(1)
 				: "Patient",
 			placeholder: defaultsvg,
 		},
@@ -239,15 +242,15 @@ function Profile() {
 		const updateInfo = {};
 
 		const initialData = {
-			fname: infoUpdate?.personalInfo?.fname || "",
-			lname: infoUpdate?.personalInfo?.lname || "",
-			gender: infoUpdate?.personalInfo?.gender || genders[0].gender,
-			email: infoUpdate?.email,
-			contact: infoUpdate?.personalInfo?.contact || "",
-			address: infoUpdate?.personalInfo?.address || "",
-			city: infoUpdate?.personalInfo?.city || "",
-			province: infoUpdate?.personalInfo?.province || "",
-			image: infoUpdate?.image !== null ? infoUpdate?.image : "",
+			fname: info?.personalInfo?.fname || "",
+			lname: info?.personalInfo?.lname || "",
+			gender: info?.personalInfo?.gender || genders[0].gender,
+			email: info?.email,
+			contact: info?.personalInfo?.contact || "",
+			address: info?.personalInfo?.address || "",
+			city: info?.personalInfo?.city || "",
+			province: info?.personalInfo?.province || "",
+			image: info?.image !== null ? info?.image : "",
 		};
 
 		for (const key in formData) {
@@ -323,9 +326,9 @@ function Profile() {
 					</div>
 				</div>
 			</div>
-			{infoUpdate && (
+			{info && (
 				<UserProfile
-					key={infoUpdate}
+					key={newInfo}
 					fields={formGroups}
 					imageGroup={imageGroup}
 					passwordGroup={passwordGroup}

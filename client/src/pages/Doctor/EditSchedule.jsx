@@ -47,7 +47,7 @@ function EditSchedule() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const scheduleDetails = location.state;
-	const scheduleId = scheduleDetails.details._id;
+	const scheduleId = scheduleDetails?.details._id;
 
 	const {
 		scheduleUpdate,
@@ -106,41 +106,15 @@ function EditSchedule() {
 						size: "w-full",
 					},
 				],
-				[
-					{
-						label: "Set as Leave",
-						type: "listbox",
-						value: scheduleUpdate?.isLeave
-							? "Yes"
-							: scheduleUpdate?.isLeave === true
-							? "Yes"
-							: YesorNo[0].option,
-						options: YesorNo.map((option) => option.option),
-						name: "isLeave",
-						size: "w-full",
-					},
-					{
-						label: "Set as Emergency Break",
-						type: "listbox",
-						value: scheduleUpdate?.isEmergencyBreak
-							? "Yes"
-							: scheduleUpdate?.isEmergencyBreak === true
-							? "Yes"
-							: YesorNo[0].option,
-						options: YesorNo.map((option) => option.option),
-						name: "isEmergencyBreak",
-						size: "w-full",
-					},
-				],
 			],
 		},
 	];
 
 	useEffect(() => {
-		if (!scheduleUpdate) {
+		if (!scheduleUpdate && scheduleDetails) {
 			dispatch(getScheduleDetails(scheduleDetails.details._id));
 		}
-	}, [dispatch, scheduleUpdate, scheduleDetails]);
+	}, [dispatch, scheduleUpdate]);
 
 	useEffect(() => {
 		if (isError) {
@@ -168,10 +142,6 @@ function EditSchedule() {
 	}
 
 	const onSubmit = (formData) => {
-		formData.isLeave = formData.isLeave === "No" ? false : true;
-		formData.isEmergencyBreak =
-			formData.isEmergencyBreak === "No" ? false : true;
-
 		const updateInfo = {};
 
 		const initialData = {

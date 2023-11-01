@@ -341,9 +341,7 @@ const getStaffList = asyncHandler(async (req, res) => {
 	const staff = await User.find({
 		role: { $in: ["doctor", "technician", "staff"] },
 	});
-	if (staff.length === 0) {
-		res.json({ message: "No staff currently registered." });
-	}
+
 	res.json(staff);
 });
 
@@ -365,6 +363,10 @@ const getStaffDetails = asyncHandler(async (req, res) => {
 const updateStaff = asyncHandler(async (req, res) => {
 	const staffId = req.params.id;
 	let updates = req.body;
+
+	if (updates.personalInfo && req.file) {
+		updates.personalInfo = JSON.parse(updates.personalInfo);
+	}
 
 	const staff = await User.findOne({
 		_id: staffId,
@@ -1794,7 +1796,7 @@ const generateBatchesExpirationReport = asyncHandler(async (req, res) => {
 				report.push({
 					itemName: item.itemName,
 					vendor: item.vendor,
-					value: formatPrice(item.price * item.quantity),
+					value: formatPrice(item.price * batch.batchQuantity),
 					batchNumber: batch.batchNumber,
 					expirationDate: formatExpDate(batch.expirationDate),
 					batchQuantity: batch.batchQuantity,
@@ -1809,6 +1811,7 @@ const generateBatchesExpirationReport = asyncHandler(async (req, res) => {
 		const options = { year: "numeric", month: "short", day: "2-digit" };
 		return date.toLocaleDateString("en-US", options);
 	}
+	console.log(report);
 	res.json(report);
 });
 

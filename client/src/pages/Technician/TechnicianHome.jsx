@@ -96,7 +96,7 @@ function TechnicianHome() {
 	);
 	const { item } = useSelector((state) => state.inventory);
 	const { maintenance } = useSelector((state) => state.maintenance);
-	const { infoUpdate } = useSelector((state) => state.auth);
+	const { info } = useSelector((state) => state.auth);
 
 	const onHeaderClick = () => {
 		navigate("/technician/add-request");
@@ -150,7 +150,7 @@ function TechnicianHome() {
 	};
 
 	const display = {
-		role: infoUpdate?.role,
+		role: info?.role,
 		button: "View Pending Orders",
 		color: "sky",
 	};
@@ -160,8 +160,7 @@ function TechnicianHome() {
 		header,
 		display,
 		username:
-			`${infoUpdate?.personalInfo.fname} ${infoUpdate?.personalInfo.lname}` ||
-			"John Doe",
+			`${info?.personalInfo.fname} ${info?.personalInfo.lname}` || "John Doe",
 		text,
 	};
 

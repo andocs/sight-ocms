@@ -7,10 +7,13 @@ import {
 	getAppointmentDetails,
 	editAppointment,
 	reset,
+	getScheduledAppointments,
+	getConfirmedAppointments,
 } from "../../features/appointment/appointmentSlice";
 import {
 	getScheduleList,
 	getAvailableDays,
+	getBreakList,
 } from "../../features/schedule/scheduleSlice";
 
 import ReusableForm from "../../components/reusableform.component";
@@ -22,9 +25,11 @@ function EditAppointment() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const appointmentDetails = location.state;
-	const appointmentId = appointmentDetails.details._id;
+	const appointmentId = appointmentDetails?.details._id;
 	let doctorSchedule = null;
 	const {
+		confirmed,
+		scheduled,
 		appointmentUpdate,
 		newAppointment,
 		isLoading,
@@ -39,12 +44,17 @@ function EditAppointment() {
 		{ status: "Completed" },
 	];
 
-	const { schedule, availableDays } = useSelector((state) => state.schedule);
+	const { schedule, availableDays, breaks } = useSelector(
+		(state) => state.schedule
+	);
 
 	useEffect(() => {
 		if (!doctorSchedule) {
 			dispatch(getScheduleList());
 		}
+		dispatch(getScheduledAppointments());
+		dispatch(getConfirmedAppointments());
+		dispatch(getBreakList());
 	}, [dispatch, doctorSchedule]);
 
 	useEffect(() => {
@@ -72,10 +82,10 @@ function EditAppointment() {
 	}, [availableDays]);
 
 	useEffect(() => {
-		if (!appointmentUpdate) {
+		if (!appointmentUpdate && appointmentDetails) {
 			dispatch(getAppointmentDetails(appointmentDetails.details._id));
 		}
-	}, [dispatch, appointmentUpdate, appointmentDetails]);
+	}, [dispatch, appointmentUpdate]);
 
 	useEffect(() => {
 		if (isError) {
@@ -102,6 +112,15 @@ function EditAppointment() {
 		return <Spinner />;
 	}
 
+	const combinedAppointments =
+		confirmed.length > 0 && scheduled.length > 0
+			? [...confirmed, ...scheduled]
+			: confirmed.length > 0
+			? confirmed
+			: scheduled.length > 0
+			? scheduled
+			: [];
+
 	const formGroups = [
 		{
 			label: "Appointment Information",
@@ -118,6 +137,12 @@ function EditAppointment() {
 						size: "w-full",
 						disabled: daysOfWeek,
 						available: schedule,
+						appointment: combinedAppointments,
+						breaks: breaks,
+						existingStartTime: appointmentUpdate?.appointmentStart,
+						existingAppointmentDate: appointmentUpdate?.appointmentDate
+							? new Date(appointmentUpdate?.appointmentDate)
+							: "",
 					},
 					{
 						label: "Status *",
@@ -191,7 +216,7 @@ function EditAppointment() {
 	};
 	return (
 		<>
-			{daysOfWeek && schedule && (
+			{daysOfWeek && schedule && breaks && (
 				<ReusableForm
 					key={appointmentUpdate}
 					header={{

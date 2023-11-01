@@ -10,7 +10,7 @@ import Spinner from "../../components/spinner.component";
 function ViewPatients() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
-	let [isOpen, setIsOpen] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 	const [patientData, setPatientData] = useState(null);
 
 	function closeModal() {

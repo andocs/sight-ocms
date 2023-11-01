@@ -463,7 +463,7 @@ const getDoctorList = asyncHandler(async (req, res) => {
 //@route GET /api/patient/schedule
 //@access private (patient only)
 const getDoctorSchedule = asyncHandler(async (req, res) => {
-	const allSchedules = await Schedule.find();
+	const allSchedules = await Schedule.find({ breaks: { $exists: false } });
 
 	const schedulesByDoctor = {};
 
@@ -477,6 +477,7 @@ const getDoctorSchedule = asyncHandler(async (req, res) => {
 				contact: "",
 				schedule: [],
 				appointments: [],
+				breaks: [],
 			};
 		}
 		const userDetails = await User.findOne({ _id: doctorId });
@@ -500,6 +501,29 @@ const getDoctorSchedule = asyncHandler(async (req, res) => {
 			appointmentDate: { $gte: currentDate },
 		});
 		schedulesByDoctor[doctorId].appointments = appointments;
+
+		const breaks = await Schedule.findOne({
+			doctor: doctorId,
+			breaks: { $exists: true, $ne: [] },
+		});
+		const allBreaks = breaks?.breaks || [];
+		if (allBreaks.length === 0) {
+			schedulesByDoctor[doctorId].breaks = allBreaks;
+		} else {
+			allBreaks.sort((a, b) => {
+				const dateA = new Date(a.startDate);
+				const dateB = new Date(b.startDate);
+				return dateA - dateB;
+			});
+
+			// Filter breaks greater than or equal to current date
+			const breaksFromToday = allBreaks.filter((breakItem) => {
+				const breakStartDate = new Date(breakItem.startDate);
+				return breakStartDate >= currentDate;
+			});
+
+			schedulesByDoctor[doctorId].breaks = breaksFromToday;
+		}
 	}
 
 	const schedule = Object.values(schedulesByDoctor);

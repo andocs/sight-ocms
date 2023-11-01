@@ -146,24 +146,6 @@ function AddSchedule() {
 						size: "w-full",
 					},
 				],
-				[
-					{
-						label: "Set as Leave",
-						type: "listbox",
-						value: YesorNo[0].option,
-						options: YesorNo.map((option) => option.option),
-						name: "isLeave",
-						size: "w-full",
-					},
-					{
-						label: "Set as Emergency Break",
-						type: "listbox",
-						value: YesorNo[0].option,
-						options: YesorNo.map((option) => option.option),
-						name: "isEmergencyBreak",
-						size: "w-full",
-					},
-				],
 			],
 		},
 	];

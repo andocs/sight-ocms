@@ -1,4 +1,11 @@
+import { useNavigate } from "react-router-dom";
 function Home() {
+	const navigate = useNavigate();
+
+	const handleAboutClick = () => {
+		navigate("/about");
+	};
+
 	return (
 		<>
 			<div className="xl:px-56 xl:py-24 xl:overflow-hidden overflow-auto py-12 flex xl:flex-row xl:space-x-32 flex-col xl:space-y-0 space-y-16 xl:items-start items-center  w-full">
@@ -15,6 +22,7 @@ function Home() {
 					</div>
 					<div className="pt-2">
 						<button
+							onClick={handleAboutClick}
 							type="button"
 							className="text-sky-800 hover:text-white border-2 border-sky-800 hover:bg-sky-900 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-md md:text-l px-7 py-1.5 text-base text-center mr-1 mb-1 dark:border-sky-800 dark:text-sky-800 dark:hover:text-white dark:hover:bg-sky-800 dark:focus:ring-sky-900"
 						>

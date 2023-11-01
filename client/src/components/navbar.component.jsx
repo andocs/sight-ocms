@@ -32,7 +32,7 @@ export default function Navbar() {
 	const dispatch = useDispatch();
 	const location = useLocation();
 
-	const { infoUpdate, navPage } = useSelector((state) => state.auth);
+	const { info, navPage } = useSelector((state) => state.auth);
 
 	const user = localStorage.getItem("user");
 
@@ -44,20 +44,21 @@ export default function Navbar() {
 		window.location.reload();
 	};
 
-	const token = localStorage.getItem("user");
 	let role = null;
 	let name = null;
-	if (token) {
-		const decodedToken = decode(token);
-		name = decodedToken.user.name;
-		role = decodedToken.user.role;
+	if (user && info) {
+		name =
+			info.personalInfo?.fname || info.personalInfo?.lname
+				? info.personalInfo?.fname + " " + info.personalInfo?.lname
+				: "User";
+		role = info?.role;
 	}
 
 	useEffect(() => {
-		if (token && !infoUpdate) {
+		if (user && !info) {
 			dispatch(getUser());
 		}
-	}, [dispatch, infoUpdate]);
+	}, [dispatch, info]);
 
 	const updatedNavigation =
 		user && navPage
@@ -78,6 +79,81 @@ export default function Navbar() {
 		"/technician",
 		"/staff",
 	].some((route) => location.pathname.startsWith(route));
+
+	if (user && !info) {
+		return (
+			<div keyid="navbar" className="z-40 sticky w-full bg-white">
+				<Disclosure as="nav">
+					{({ open }) => (
+						<>
+							<div className="overflow-x-hidden overflow-y-auto mx-auto max-w-full sm:px-6 lg:px-8 border-b-2 border-slate-300">
+								<div className="flex h-32 items-center justify-between">
+									<div className="sm:absolute relative inset-y-0 left-0 flex items-center sm:hidden">
+										{/* Mobile menu button*/}
+										<Disclosure.Button className="inline-flex z-40 items-center justify-center rounded-md ml-2 p-2 text-sky-800 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+											<span className="sr-only">Open main menu</span>
+											{open ? (
+												<XMarkIcon
+													className="block h-6 w-6"
+													aria-hidden="true"
+												/>
+											) : (
+												<Bars3Icon
+													className="block h-6 w-6"
+													aria-hidden="true"
+												/>
+											)}
+										</Disclosure.Button>
+									</div>
+									<div className="animate-pulse left-0 absolute flex w-full items-center justify-center sm:justify-start">
+										<div className="flex flex-col justify-start h-full w-full space-y-4 ml-6">
+											<div className="flex h-2 bg-gray-200 rounded w-[185px]"></div>
+											<div className="flex h-2 bg-gray-200 rounded w-[270px]"></div>
+										</div>
+
+										<div className="relative mt-1 md:absolute w-full">
+											<div className="animate-pulse hidden ml-0 -mt-2 sm:flex grow sm:place-items-center justify-center relative">
+												<div className="flex h-6 bg-gray-200 rounded-full w-1/3"></div>
+											</div>
+										</div>
+									</div>
+									<div className="animate-pulse absolute right-0 pr-4 w-full h-full">
+										<div className="flex flex-row items-center justify-end h-full w-full space-x-4">
+											<div className="flex h-2 bg-gray-200 rounded w-[150px]"></div>
+											<div className="rounded-full bg-gray-200 h-8 w-8"></div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<Disclosure.Panel className="sm:hidden">
+								<div className="space-y-1 px-2 pb-3 pt-2">
+									{updatedNavigation.map((item) => (
+										<Disclosure.Button
+											key={item.name}
+											as="a"
+											href={item.href}
+											className={`block rounded-md px-3 py-2 text-base font-medium 
+										${
+											location.pathname === item.href
+												? "bg-sky-800 text-white"
+												: "text-sky-800 hover:bg-sky-700 hover:text-white"
+										}
+											
+										`}
+											aria-current={item.current ? "page" : undefined}
+										>
+											{item.name}
+										</Disclosure.Button>
+									))}
+								</div>
+							</Disclosure.Panel>
+						</>
+					)}
+				</Disclosure>
+			</div>
+		);
+	}
 
 	return (
 		<>
@@ -203,7 +279,7 @@ export default function Navbar() {
 										<div className="absolute right-0 pr-4">
 											{!user ? null : (
 												<div className="relative inset-y-0 right-0 flex items-center">
-													<p>Hey, {name ? name : "John Doe"}!</p>
+													<p>Hey, {name}!</p>
 													{/* <button
 														type="button"
 														className="rounded-full bg-slate-50 p-1 text-sky-800 hover:text-white hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-800 focus:ring-offset-2"
@@ -218,10 +294,10 @@ export default function Navbar() {
 															<Menu.Button className="flex rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-sky-800">
 																<span className="sr-only">Open user menu</span>
 
-																{infoUpdate?.image ? (
+																{info?.image ? (
 																	<img
 																		className="h-8 w-8 rounded-full"
-																		src={`/images/uploads/${infoUpdate?.image}`}
+																		src={`/images/uploads/${info?.image}`}
 																		alt=""
 																	/>
 																) : (
@@ -243,7 +319,7 @@ export default function Navbar() {
 																	{({ active }) => (
 																		<a
 																			href="/profile"
-																			className={`block px-4 py-2 text-sm text-gray-700 
+																			className={`block px-4 py-2 text-sm text-gray-700
 																	${active ? "bg-gray-100" : ""}`}
 																		>
 																			Your Profile
@@ -254,7 +330,7 @@ export default function Navbar() {
 																	{({ active }) => (
 																		<a
 																			href="#"
-																			className={`block px-4 py-2 text-sm text-gray-700 
+																			className={`block px-4 py-2 text-sm text-gray-700
 																	${active ? "bg-gray-100" : ""}`}
 																			onClick={onLogout}
 																		>
@@ -278,13 +354,13 @@ export default function Navbar() {
 												key={item.name}
 												as="a"
 												href={item.href}
-												className={`block rounded-md px-3 py-2 text-base font-medium 
+												className={`block rounded-md px-3 py-2 text-base font-medium
 										${
 											location.pathname === item.href
 												? "bg-sky-800 text-white"
 												: "text-sky-800 hover:bg-sky-700 hover:text-white"
 										}
-											
+
 										`}
 												aria-current={item.current ? "page" : undefined}
 											>

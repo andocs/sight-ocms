@@ -116,7 +116,9 @@ function WalkInConsult() {
 			const patientId = newPatient[0]._id;
 			const details = newPatient[0];
 			toast.success(message);
-			navigate(`/doctor/add-records/${patientId}`, { state: { details } });
+			navigate(`/doctor/add-visit/${patientId}`, {
+				state: { details, patientType: "Walk-In" },
+			});
 		}
 
 		dispatch(reset());

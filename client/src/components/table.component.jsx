@@ -144,7 +144,9 @@ const ReusableTable = ({ data, columns, actions }) => {
 														  )
 														: "N/A"}
 												</div>
-											) : column.field === "appointmentDate" ? (
+											) : column.field === "appointmentDate" ||
+											  column.field === "startDate" ||
+											  column.field === "endDate" ? (
 												<div>
 													{item[column.field]
 														? new Date(item[column.field]).toLocaleString(

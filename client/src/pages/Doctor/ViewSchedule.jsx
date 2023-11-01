@@ -10,7 +10,10 @@ import {
 	clear,
 } from "../../features/schedule/scheduleSlice";
 
-import { getScheduledAppointments } from "../../features/appointment/appointmentSlice";
+import {
+	getScheduledAppointments,
+	getConfirmedAppointments,
+} from "../../features/appointment/appointmentSlice";
 
 import Spinner from "../../components/spinner.component";
 import DeleteConfirmation from "../../components/deleteconfirmation.component";
@@ -28,11 +31,12 @@ function ViewSchedule() {
 		(state) => state.schedule
 	);
 
-	const { scheduled } = useSelector((state) => state.appointment);
+	const { scheduled, confirmed } = useSelector((state) => state.appointment);
 
 	useEffect(() => {
 		dispatch(getScheduledAppointments());
-	}, [dispatch, scheduled]);
+		dispatch(getConfirmedAppointments());
+	}, [dispatch]);
 
 	useEffect(() => {
 		if (isError) {
@@ -84,7 +88,11 @@ function ViewSchedule() {
 		navigate("/doctor");
 	};
 
-	function checkForConflicts(scheduleDetails, scheduledAppointments) {
+	function checkForConflicts(
+		scheduleDetails,
+		scheduledAppointments,
+		confirmedAppointments
+	) {
 		const scheduleDayOfWeek = scheduleDetails.dayOfWeek;
 		const currentDate = new Date(); // Get the current date
 
@@ -101,16 +109,33 @@ function ViewSchedule() {
 				scheduleDayOfWeek === appointmentDayOfWeek &&
 				appointmentDate >= currentDate
 			) {
-				return (hasConflict = true);
+				return true; // Conflict found with scheduledAppointments
 			}
 		}
+
+		// Loop through confirmed appointments
+		for (const appointment of confirmedAppointments) {
+			const appointmentDate = new Date(appointment.appointmentDate);
+			const appointmentDayOfWeek = appointmentDate.toLocaleDateString("en-US", {
+				weekday: "long",
+			});
+
+			if (
+				scheduleDayOfWeek === appointmentDayOfWeek &&
+				appointmentDate >= currentDate
+			) {
+				return true; // Conflict found with confirmedAppointments
+			}
+		}
+
+		return hasConflict; // No conflicts found
 	}
 
 	const actions = [
 		{
 			label: "Edit",
 			handler: (details) => {
-				const hasConflict = checkForConflicts(details, scheduled);
+				const hasConflict = checkForConflicts(details, scheduled, confirmed);
 				if (!hasConflict) {
 					navigate(`/doctor/edit-schedule/${details._id}`, {
 						state: { details },
@@ -124,7 +149,7 @@ function ViewSchedule() {
 			label: "Delete",
 			css: "red",
 			handler: (details) => {
-				const hasConflict = checkForConflicts(details, scheduled);
+				const hasConflict = checkForConflicts(details, scheduled, confirmed);
 				if (!hasConflict) {
 					openModal(details._id);
 				} else {

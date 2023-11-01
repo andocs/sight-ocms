@@ -90,7 +90,9 @@ function ViewModal({
 												<p className="text-sm text-gray-500">
 													<strong>{title.header}</strong>
 													{": "}
-													{title.field === "appointmentDate"
+													{title.field === "appointmentDate" ||
+													title.field === "startDate" ||
+													title.field === "endDate"
 														? formatDate(dataFields[title.field])
 														: title.field === "createdAt" ||
 														  title.field === "orderTime" ||

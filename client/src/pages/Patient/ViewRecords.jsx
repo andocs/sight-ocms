@@ -41,8 +41,8 @@ function ViewRecords() {
 
 	const columns = [
 		{ header: "Record Date", field: "createdAt" },
-		{ header: "Last Name", field: "userLastName" },
-		{ header: "First Name", field: "userFirstName" },
+		{ header: "Last Name", field: "doctorLastName" },
+		{ header: "First Name", field: "doctorFirstName" },
 		{ header: "OD SPH", field: `rightEye.sphere` },
 		{ header: "OD CYL", field: "rightEye.cylinder" },
 		{ header: "OD Axis", field: "rightEye.axis" },

@@ -95,7 +95,7 @@ function StaffHome() {
 		(state) => state.appointment
 	);
 	const { patient } = useSelector((state) => state.patient);
-	const { infoUpdate } = useSelector((state) => state.auth);
+	const { info } = useSelector((state) => state.auth);
 
 	const onHeaderClick = () => {
 		navigate("/staff/view-confirmed");
@@ -151,7 +151,7 @@ function StaffHome() {
 	};
 
 	const display = {
-		role: infoUpdate?.role,
+		role: info?.role,
 		button: "View Appointment List",
 		color: "sky",
 	};
@@ -161,8 +161,7 @@ function StaffHome() {
 		header,
 		display,
 		username:
-			`${infoUpdate?.personalInfo.fname} ${infoUpdate?.personalInfo.lname}` ||
-			"John Doe",
+			`${info?.personalInfo.fname} ${info?.personalInfo.lname}` || "John Doe",
 		text,
 	};
 

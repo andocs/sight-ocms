@@ -86,6 +86,73 @@ const getDoctorSchedule = async (token) => {
 	return res.data;
 };
 
+// Get all schedule records
+const getDoctors = async () => {
+	const url = `${BASE_URL}/users/schedule`;
+	const res = await axios.get(url);
+	return res.data;
+};
+
+// Add a break
+const addBreak = async (breakData, token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/breaks`;
+	const res = await axios.post(url, breakData, config);
+	return res.data;
+};
+
+// Get all break records
+const getBreakList = async (token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/breaks`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
+// Get break record details
+const getBreakDetails = async (breakId, token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/breaks/${breakId}`;
+	const res = await axios.get(url, config);
+	return res.data;
+};
+
+// Update break record
+const updateBreak = async ({ breakId, breakData }, token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/breaks/${breakId}`;
+	const res = await axios.put(url, breakData, config);
+	return res.data;
+};
+
+// Delete break record
+const deleteBreak = async (breakId, token) => {
+	const config = {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	};
+	const url = `${BASE_URL}/${getUserRole(token)}/breaks/${breakId}`;
+	const res = await axios.delete(url, config);
+	return res.data;
+};
+
 const getUserRole = (token) => {
 	const decodedToken = jwt_decode(token);
 	const userRole = decodedToken.user.role;
@@ -100,6 +167,12 @@ const scheduleService = {
 	editSchedule,
 	deleteSchedule,
 	getDoctorSchedule,
+	getDoctors,
+	addBreak,
+	getBreakList,
+	getBreakDetails,
+	updateBreak,
+	deleteBreak,
 };
 
 export default scheduleService;

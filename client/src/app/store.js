@@ -28,6 +28,7 @@ function getReducerByUserRole() {
 			inventory: inventoryReducer,
 			maintenance: maintenanceReducer,
 			patient: patientReducer,
+			schedule: scheduleReducer,
 		};
 	}
 
@@ -39,9 +40,11 @@ function getReducerByUserRole() {
 			auth: authReducer,
 			audit: auditReducer,
 			staff: staffReducer,
+			order: orderReducer,
 			inventory: inventoryReducer,
 			maintenance: maintenanceReducer,
 			report: reportReducer,
+			schedule: scheduleReducer,
 		};
 	} else if (userRole === "doctor") {
 		return {
@@ -63,6 +66,7 @@ function getReducerByUserRole() {
 			inventory: inventoryReducer,
 			maintenance: maintenanceReducer,
 			repair: repairReducer,
+			schedule: scheduleReducer,
 		};
 	} else if (userRole === "patient") {
 		return {
@@ -81,6 +85,7 @@ function getReducerByUserRole() {
 			audit: auditReducer,
 			appointment: appointmentReducer,
 			patient: patientReducer,
+			schedule: scheduleReducer,
 			visit: visitReducer,
 		};
 	}

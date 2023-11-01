@@ -209,12 +209,14 @@ function ViewDetails({ header, props, onClick, batches }) {
 															className={`mx-1 font-medium ${
 																detailIndex === 5 &&
 																parseInt(detail.value.split(" ")[0]) <=
-																	parseInt(field.details[7].value.split(" ")[0])
+																	parseInt(
+																		field.details[7]?.value.split(" ")[0]
+																	)
 																	? "text-red-500"
 																	: detailIndex === 5 &&
 																	  parseInt(detail.value.split(" ")[0]) <=
 																			parseInt(
-																				field.details[6].value.split(" ")[0]
+																				field.details[6]?.value.split(" ")[0]
 																			)
 																	? "text-yellow-500"
 																	: "text-sky-800"

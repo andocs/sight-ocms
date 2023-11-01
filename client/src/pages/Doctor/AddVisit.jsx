@@ -70,6 +70,7 @@ function AddVisit() {
 						options: patientType.map((type) => type.type),
 						name: "patientType",
 						size: "w-full",
+						disabled: patientDetails?.patientType && true,
 					},
 					{
 						label: "Visit Type *",

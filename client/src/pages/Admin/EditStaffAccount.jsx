@@ -194,14 +194,14 @@ function EditStaffAccount() {
 		const updateInfo = {};
 
 		const initialData = {
-			"personalInfo.fname": staffUpdate.personalInfo.fname,
-			"personalInfo.lname": staffUpdate.personalInfo.lname,
-			"personalInfo.gender": staffUpdate.personalInfo.gender,
+			fname: staffUpdate.personalInfo.fname,
+			lname: staffUpdate.personalInfo.lname,
+			gender: staffUpdate.personalInfo.gender,
 			email: staffUpdate.email,
-			"personalInfo.contact": staffUpdate.personalInfo.contact,
-			"personalInfo.address": staffUpdate.personalInfo.address,
-			"personalInfo.city": staffUpdate.personalInfo.city,
-			"personalInfo.province": staffUpdate.personalInfo.province,
+			contact: staffUpdate.personalInfo.contact,
+			address: staffUpdate.personalInfo.address,
+			city: staffUpdate.personalInfo.city,
+			province: staffUpdate.personalInfo.province,
 			image: staffUpdate.image !== null ? staffUpdate.image : "",
 			role:
 				staffUpdate.role.charAt(0).toUpperCase() + staffUpdate.role.slice(1),
@@ -224,16 +224,43 @@ function EditStaffAccount() {
 			dispatch(clear());
 			dispatch(reset());
 		} else {
+			const newInfo = {};
+			const personalInfo = {
+				fname: "",
+				lname: "",
+				gender: "",
+				contact: "",
+				address: "",
+				city: "",
+				province: "",
+			};
+			for (const key in personalInfo) {
+				if (updateInfo.hasOwnProperty(key)) {
+					newInfo[key] = updateInfo[key];
+				}
+			}
 			if (updateInfo.image) {
 				const staffData = new FormData();
 
+				for (const key in newInfo) {
+					staffData.append(`personalInfo.${key}`, newInfo[key]);
+				}
 				for (const key in updateInfo) {
-					staffData.append(key, updateInfo[key]);
+					if (!personalInfo.hasOwnProperty(key)) {
+						staffData.append(key, updateInfo[key]);
+					}
 				}
 
 				dispatch(editStaffAccount({ staffId, staffData }));
 			} else {
-				const staffData = updateInfo;
+				let staffData = {};
+				for (const key in updateInfo) {
+					if (!personalInfo.hasOwnProperty(key)) {
+						staffData[key] = updateInfo[key];
+					} else {
+						staffData[`personalInfo.${key}`] = newInfo[key];
+					}
+				}
 				dispatch(editStaffAccount({ staffId, staffData }));
 			}
 		}

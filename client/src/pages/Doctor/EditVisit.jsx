@@ -25,7 +25,7 @@ function EditVisit() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const visitDetails = location.state;
-	const visitId = visitDetails.details._id;
+	const visitId = visitDetails?.details._id;
 
 	const { visitUpdate, newVisit, isLoading, isError, isSuccess, message } =
 		useSelector((state) => state.visit);
@@ -87,12 +87,6 @@ function EditVisit() {
 	];
 
 	useEffect(() => {
-		if (!visitUpdate) {
-			dispatch(getVisitDetails(visitDetails.details._id));
-		}
-	}, [dispatch, visitUpdate, visitDetails]);
-
-	useEffect(() => {
 		if (isError) {
 			if (message && typeof message === "object") {
 				message.map((error) => toast.error(error.message));
@@ -112,6 +106,12 @@ function EditVisit() {
 		}
 		dispatch(reset());
 	}, [newVisit, isError, isSuccess, message, navigate, dispatch]);
+
+	useEffect(() => {
+		if (!visitUpdate && visitDetails) {
+			dispatch(getVisitDetails(visitDetails?.details._id));
+		}
+	}, [dispatch, visitUpdate]);
 
 	if (isLoading) {
 		return <Spinner />;

@@ -60,7 +60,7 @@ function EditRecord() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const recordDetails = location.state;
-	const recordId = recordDetails.details._id;
+	const recordId = recordDetails?.details._id;
 
 	const { recordUpdate, newRecord, isLoading, isError, isSuccess, message } =
 		useSelector((state) => state.record);
@@ -149,10 +149,10 @@ function EditRecord() {
 	];
 
 	useEffect(() => {
-		if (!recordUpdate) {
+		if (!recordUpdate && recordDetails) {
 			dispatch(getRecordDetails(recordDetails.details._id));
 		}
-	}, [dispatch, recordUpdate, recordDetails]);
+	}, [dispatch, recordUpdate]);
 
 	useEffect(() => {
 		if (isError) {

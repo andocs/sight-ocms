@@ -6,11 +6,14 @@ import { getPatientList } from "../../features/patient/patientSlice";
 import {
 	reset,
 	createAppointment,
+	getScheduledAppointments,
+	getConfirmedAppointments,
 } from "../../features/appointment/appointmentSlice";
 
 import {
 	getScheduleList,
 	getAvailableDays,
+	getBreakList,
 } from "../../features/schedule/scheduleSlice";
 
 import ReusableForm from "../../components/reusableform.component";
@@ -55,10 +58,19 @@ function AddAppointments() {
 
 	const patientDetails = location.state;
 	let doctorSchedule = null;
-	const { newAppointment, isLoading, isError, isSuccess, message } =
-		useSelector((state) => state.appointment);
+	const {
+		confirmed,
+		scheduled,
+		newAppointment,
+		isLoading,
+		isError,
+		isSuccess,
+		message,
+	} = useSelector((state) => state.appointment);
 
-	const { schedule, availableDays } = useSelector((state) => state.schedule);
+	const { schedule, availableDays, breaks } = useSelector(
+		(state) => state.schedule
+	);
 
 	const patientReducer = useSelector((state) => state.patient);
 	const patient = patientReducer.patient;
@@ -88,10 +100,22 @@ function AddAppointments() {
 		},
 	];
 
+	const combinedAppointments =
+		confirmed.length > 0 && scheduled.length > 0
+			? [...confirmed, ...scheduled]
+			: confirmed.length > 0
+			? confirmed
+			: scheduled.length > 0
+			? scheduled
+			: [];
+
 	useEffect(() => {
 		if (!doctorSchedule) {
 			dispatch(getScheduleList());
 		}
+		dispatch(getScheduledAppointments());
+		dispatch(getConfirmedAppointments());
+		dispatch(getBreakList());
 	}, [dispatch, doctorSchedule]);
 
 	useEffect(() => {
@@ -156,23 +180,43 @@ function AddAppointments() {
 		return <Spinner />;
 	}
 
-	const getLeadDate = (daysOfWeek) => {
+	function getLeadDate(disabled, breaks) {
 		const today = new Date();
 		const tomorrow = new Date(today);
 		tomorrow.setDate(today.getDate() + 3);
 
-		while (
-			daysOfWeek.includes(
-				new Date(tomorrow).toLocaleDateString("en-US", {
-					weekday: "long",
-				})
-			)
-		) {
+		const isConflict = (date) => {
+			const selectedDate = new Date(date);
+			selectedDate.setHours(0, 0, 0, 0);
+			const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
+				weekday: "long",
+			});
+
+			return (
+				(disabled && disabled.includes(dayOfWeek)) ||
+				(breaks &&
+					breaks.some((breakItem) => {
+						const breakStartDate = new Date(breakItem.startDate);
+						const breakEndDate = breakItem.endDate
+							? new Date(breakItem.endDate)
+							: null;
+						const breakStartDateString = breakStartDate.toDateString();
+						return (
+							(breakEndDate &&
+								selectedDate >= breakStartDate &&
+								selectedDate <= breakEndDate) ||
+							(!breakEndDate &&
+								selectedDate.toDateString() === breakStartDateString)
+						);
+					}))
+			);
+		};
+
+		while (isConflict(tomorrow)) {
 			tomorrow.setDate(tomorrow.getDate() + 1); // Move to the next day
 		}
-
 		return tomorrow;
-	};
+	}
 
 	const formGroups = [
 		{
@@ -183,11 +227,13 @@ function AddAppointments() {
 					{
 						label: "Appointment Date *",
 						type: "date",
-						value: getLeadDate(daysOfWeek),
+						value: getLeadDate(daysOfWeek, breaks),
 						name: "appointmentDate",
 						size: "w-full",
 						disabled: daysOfWeek,
+						appointment: combinedAppointments,
 						available: schedule,
+						breaks: breaks,
 					},
 					{
 						label: "Start Time *",
@@ -225,6 +271,7 @@ function AddAppointments() {
 		const patientId = patientDetails.details._id;
 		dispatch(createAppointment({ patientId, appointmentData }));
 	};
+
 	return (
 		<>
 			{isOpen && (
@@ -262,9 +309,9 @@ function AddAppointments() {
 					</>
 				) : (
 					<>
-						{availableDays && schedule && daysOfWeek && (
+						{availableDays && schedule && daysOfWeek && breaks && (
 							<ReusableForm
-								key={doctorDetails}
+								key={patientDetails}
 								header={header}
 								fields={formGroups}
 								onSubmit={onSubmit}

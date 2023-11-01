@@ -34,7 +34,7 @@ function EditOrders() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const orderDetails = location.state;
-	const orderId = orderDetails.details._id;
+	const orderId = orderDetails?.details._id;
 
 	const { orderUpdate, newOrder, isLoading, isError, isSuccess, message } =
 		useSelector((state) => state.order);
@@ -179,10 +179,10 @@ function EditOrders() {
 	];
 
 	useEffect(() => {
-		if (!orderUpdate) {
+		if (!orderUpdate && orderDetails) {
 			dispatch(getOrderDetails(orderDetails.details._id));
 		}
-	}, [dispatch, orderUpdate, orderDetails]);
+	}, [dispatch, orderUpdate]);
 
 	useEffect(() => {
 		if (isError) {

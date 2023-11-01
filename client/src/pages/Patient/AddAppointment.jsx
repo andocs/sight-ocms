@@ -92,7 +92,6 @@ function AddAppointment() {
 				"Saturday",
 				"Sunday",
 			];
-			console.log(availableDays);
 
 			const days = allDays.filter((day) => !availableDays.includes(day));
 			if (days.length === 0) {
@@ -103,25 +102,43 @@ function AddAppointment() {
 		}
 	}, [doctorDetails]);
 
-	const getLeadDate = (daysOfWeek) => {
-		if (doctorDetails && daysOfWeek) {
-			const today = new Date();
-			const tomorrow = new Date(today);
-			tomorrow.setDate(today.getDate() + 3);
+	function getLeadDate(disabled, breaks) {
+		const today = new Date();
+		const tomorrow = new Date(today);
+		tomorrow.setDate(today.getDate() + 3);
 
-			while (
-				daysOfWeek.includes(
-					new Date(tomorrow).toLocaleDateString("en-US", {
-						weekday: "long",
-					})
-				)
-			) {
-				tomorrow.setDate(tomorrow.getDate() + 1); // Move to the next day
-			}
+		const isConflict = (date) => {
+			const selectedDate = new Date(date);
+			selectedDate.setHours(0, 0, 0, 0);
+			const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
+				weekday: "long",
+			});
 
-			return tomorrow;
+			return (
+				(disabled && disabled.includes(dayOfWeek)) ||
+				(breaks &&
+					breaks.some((breakItem) => {
+						const breakStartDate = new Date(breakItem.startDate);
+						const breakEndDate = breakItem.endDate
+							? new Date(breakItem.endDate)
+							: null;
+						const breakStartDateString = breakStartDate.toDateString();
+						return (
+							(breakEndDate &&
+								selectedDate >= breakStartDate &&
+								selectedDate <= breakEndDate) ||
+							(!breakEndDate &&
+								selectedDate.toDateString() === breakStartDateString)
+						);
+					}))
+			);
+		};
+
+		while (isConflict(tomorrow)) {
+			tomorrow.setDate(tomorrow.getDate() + 1); // Move to the next day
 		}
-	};
+		return tomorrow;
+	}
 
 	const formGroups = [
 		{
@@ -132,19 +149,20 @@ function AddAppointment() {
 					{
 						label: "Appointment Date *",
 						type: "date",
-						value: getLeadDate(daysOfWeek),
+						value: getLeadDate(daysOfWeek, doctorDetails?.details.breaks),
 						name: "appointmentDate",
 						size: "w-full",
 						disabled: daysOfWeek && daysOfWeek,
 						available: doctorDetails?.details && doctorDetails.details.schedule,
 						appointment:
 							doctorDetails?.details && doctorDetails.details.appointments,
+						breaks: doctorDetails?.details && doctorDetails.details.breaks,
 					},
 					{
 						label: "Start Time *",
 						type: "listbox",
 						value: "",
-						options: "",
+						options: doctorDetails?.details ? "" : timeSlots,
 						name: "appointmentStart",
 						size: "w-full",
 					},
@@ -168,7 +186,6 @@ function AddAppointment() {
 	};
 
 	const onClick = (details) => {
-		console.log(details);
 		navigate(`/patient/add-appointment/${details.id}`, {
 			state: { details },
 		});
@@ -221,14 +238,12 @@ function AddAppointment() {
 				</>
 			) : (
 				<>
-					{daysOfWeek && (
-						<ReusableForm
-							key={daysOfWeek}
-							header={header}
-							fields={formGroups}
-							onSubmit={onSubmit}
-						/>
-					)}
+					<ReusableForm
+						key={daysOfWeek}
+						header={header}
+						fields={formGroups}
+						onSubmit={onSubmit}
+					/>
 				</>
 			)}
 		</>

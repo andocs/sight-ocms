@@ -7,7 +7,7 @@
 /* width */
 ::-webkit-scrollbar {
     width: 10px;
-    
+
 }
   
 /* Track */
@@ -31,7 +31,6 @@
 }
 th:first-child{
     border-bottom-left-radius: 6px;
-    
 }
 th:last-child{
     border-bottom-right-radius: 6px;
@@ -151,8 +150,6 @@ tbody{
     background-position: 37%;
 }
 
-/* Add this CSS to your stylesheet or a separate CSS file */
-
 /* Apply perspective to create a 3D effect */
 .card-container {
   perspective: 1000px;
@@ -188,6 +185,21 @@ tbody{
 /* Apply this class to the card when flipped */
 .card.flip {
   transform: rotateY(180deg);
+}
+
+.swiper{
+    width: 100%;
+    height: 100%;
+}
+
+.swiper-slide {
+  font-size: 18px;
+  background: #fff;
+
+/* Center slide text vertically */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 

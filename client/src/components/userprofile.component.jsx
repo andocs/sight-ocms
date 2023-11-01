@@ -182,7 +182,7 @@ function UserProfile({
 															<div className="imagepreview absolute">
 																<div className="w-full h-full rounded-full overflow-hidden">
 																	<img
-																		src={`../../public/images/uploads/${initialFormData.image}`}
+																		src={`/images/uploads/${initialFormData.image}`}
 																		className="w-full object-cover"
 																		alt=""
 																	/>

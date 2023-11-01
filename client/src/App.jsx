@@ -69,6 +69,8 @@ import ViewRepair from "./pages/Doctor/ViewRepair";
 import CreateRepair from "./pages/Doctor/CreateRepair";
 import ViewPendingRepair from "./pages/Doctor/ViewPendingRepair";
 import EditRepair from "./pages/Doctor/EditRepair";
+import AddBreak from "./pages/Doctor/AddBreak";
+import ViewBreaks from "./pages/Doctor/ViewBreaks";
 
 //TECHNICIAN
 import ViewPendingOrders from "./pages/Technician/ViewPendingOrders";
@@ -89,6 +91,7 @@ import ViewVisitStaff from "./pages/Staff/ViewVisitStaff";
 import ViewScheduledStaff from "./pages/Staff/ViewScheduledStaff";
 import ViewConfirmedStaff from "./pages/Staff/ViewConfirmedStaff";
 import ViewAppointmentStaff from "./pages/Staff/ViewAppointmentStaff";
+import EditBreak from "./pages/Doctor/EditBreak";
 
 function App() {
 	return (
@@ -141,22 +144,27 @@ function App() {
 						<Route path="add-visit" element={<AddVisit />} />
 						<Route path="add-visit/:id" element={<AddVisit />} />
 						<Route path="view-visits" element={<ViewVisits />} />
+						<Route path="edit-visit" element={<EditVisit />} />
 						<Route path="edit-visit/:id" element={<EditVisit />} />
 						<Route path="add-record" element={<AddRecords />} />
 						<Route path="add-record/:id" element={<AddRecords />} />
 						<Route path="view-records" element={<ViewEyeRecords />} />
+						<Route path="edit-record" element={<EditRecord />} />
 						<Route path="edit-record/:id" element={<EditRecord />} />
 						<Route path="add-appointment" element={<AddAppointments />} />
 						<Route path="add-appointment/:id" element={<AddAppointments />} />
 						<Route path="view-appointments" element={<ViewAppointments />} />
+						<Route path="edit-appointment" element={<EditAppointment />} />
 						<Route path="edit-appointment/:id" element={<EditAppointment />} />
 						<Route path="add-order" element={<AddOrders />} />
 						<Route path="add-order/:id" element={<AddOrders />} />
 						<Route path="view-orders" element={<ViewOrders />} />
+						<Route path="edit-order" element={<EditOrders />} />
 						<Route path="edit-order/:id" element={<EditOrders />} />
 						<Route path="add-schedule" element={<AddSchedule />} />
 						<Route path="view-schedule" element={<ViewSchedule />} />
 						<Route path="view-pending" element={<ViewPending />} />
+						<Route path="edit-schedule" element={<EditSchedule />} />
 						<Route path="edit-schedule/:id" element={<EditSchedule />} />
 						<Route path="add-patient" element={<AddPatient />} />
 						<Route path="view-patients" element={<ViewPatients />} />
@@ -170,6 +178,10 @@ function App() {
 						<Route path="add-repair/:id" element={<CreateRepair />} />
 						<Route path="edit-repair" element={<EditRepair />} />
 						<Route path="edit-repair/:id" element={<EditRepair />} />
+						<Route path="view-breaks" element={<ViewBreaks />} />
+						<Route path="add-break" element={<AddBreak />} />
+						<Route path="edit-break" element={<EditBreak />} />
+						<Route path="edit-break/:id" element={<EditBreak />} />
 					</Route>
 
 					<Route path="/technician" element={<TechnicianDashboard />}>

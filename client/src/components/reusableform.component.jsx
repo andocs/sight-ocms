@@ -1,16 +1,15 @@
 import { useState, useRef, createRef, useEffect, Fragment } from "react";
+import { getInventory } from "../features/order/orderSlice";
+import { toast } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
+
 import ListBoxInput from "./listboxinput.component";
 import ImageInput from "./imageinput.component";
 import PasswordInput from "./passwordinput.component";
 import CustomSearchInput from "./customsearch.component";
-import { getInventory } from "../features/order/orderSlice";
-
 import DatePicker from "react-datepicker";
 
 import "react-datepicker/dist/react-datepicker.css";
-
-import { toast } from "react-toastify";
-import { useDispatch, useSelector } from "react-redux";
 
 function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	const initialFormData = fields.reduce((formData, group) => {
@@ -20,7 +19,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			});
 		});
 		return formData;
-	});
+	}, {});
 
 	if (imageGroup) {
 		imageGroup.forEach((group) => {
@@ -30,6 +29,7 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 		});
 	}
 
+	const dispatch = useDispatch();
 	const { inventory } = useSelector((state) => state.order);
 	const [formData, setFormData] = useState(initialFormData);
 	const [divHeight, setDivHeight] = useState(0);
@@ -54,9 +54,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 
 	let doctorSchedule = [];
 	let doctorAppointments = [];
+	let appointmentStartTime = null;
+	let existingAppointmentDate = null;
 	const timeSlots = [];
-
-	const dispatch = useDispatch();
 
 	for (let hour = 9; hour <= 17; hour++) {
 		for (let minute = 0; minute <= 30; minute += 30) {
@@ -77,24 +77,48 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	const formGroupRef = useRef(null);
 	const customSearchInputRef = createRef(null);
 
-	function getLeadDate(disabled) {
+	function getLeadDate(disabled, breaks, existingStart, existingEnd) {
 		const today = new Date();
 		const tomorrow = new Date(today);
 		tomorrow.setDate(today.getDate() + 3);
 
-		if (disabled && disabled.length > 0) {
-			// Calculate the next available date
-			while (
-				disabled.includes(
-					new Date(tomorrow).toLocaleDateString("en-US", {
-						weekday: "long",
-					})
-				)
-			) {
-				tomorrow.setDate(tomorrow.getDate() + 1); // Move to the next day
-			}
-		}
+		const isConflict = (date) => {
+			const selectedDate = new Date(date);
+			selectedDate.setHours(0, 0, 0, 0);
+			const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
+				weekday: "long",
+			});
 
+			return (
+				(disabled && disabled.includes(dayOfWeek)) ||
+				(breaks &&
+					breaks.some((breakItem) => {
+						const breakStartDate =
+							new Date(breakItem.startDate).getTime() !==
+							existingStart?.getTime()
+								? new Date(breakItem.startDate)
+								: null;
+						const breakEndDate = breakItem.endDate
+							? new Date(breakItem.endDate).getTime() !== existingEnd?.getTime()
+								? new Date(breakItem.endDate)
+								: null
+							: null;
+						const breakStartDateString = breakStartDate?.toDateString();
+
+						return (
+							(breakEndDate &&
+								selectedDate >= breakStartDate &&
+								selectedDate <= breakEndDate) ||
+							(!breakEndDate &&
+								selectedDate.toDateString() === breakStartDateString)
+						);
+					}))
+			);
+		};
+
+		while (isConflict(tomorrow)) {
+			tomorrow.setDate(tomorrow.getDate() + 1); // Move to the next day
+		}
 		return tomorrow;
 	}
 
@@ -157,7 +181,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 	function calculateAvailableTimeSlots(
 		selectedDate,
 		doctorSchedule,
-		doctorAppointments
+		doctorAppointments,
+		existingStartTime,
+		existingAppointmentStart
 	) {
 		if (doctorSchedule.length > 0 && doctorAppointments && selectedDate) {
 			const selectedDayOfWeek = selectedDate.toLocaleDateString("en-US", {
@@ -174,7 +200,6 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 
 				const appointmentEndTime = new Date(doctorStartTime);
 				appointmentEndTime.setMinutes(appointmentEndTime.getMinutes() + 30);
-
 				const bookedTimeSlots = doctorAppointments
 					.filter((appointment) => {
 						const appointmentDate = new Date(appointment.appointmentDate);
@@ -183,9 +208,25 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 						);
 					})
 					.map((appointment) => {
-						const appointmentTime = parseTime(appointment.appointmentStart);
-						return appointmentTime;
-					});
+						const appointmentDate = new Date(appointment.appointmentDate);
+						const existingStart =
+							existingStartTime && parseTime(existingStartTime);
+						const appointmentStart = parseTime(appointment.appointmentStart);
+						if (
+							existingAppointmentStart &&
+							appointmentDate.toDateString() ===
+								existingAppointmentStart.toDateString()
+						) {
+							if (existingStart.toString() !== appointmentStart.toString()) {
+								return appointmentStart;
+							} else {
+								return undefined;
+							}
+						} else {
+							return appointmentStart;
+						}
+					})
+					.filter((time) => time !== undefined);
 
 				const availableTimeSlots = [];
 				let currentTime = new Date(doctorStartTime);
@@ -405,6 +446,13 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 					["otherItems.price"]: "",
 				}));
 			}
+		} else if (field === "startDate") {
+			if (value >= formData.endDate) {
+				setFormData((prevData) => ({
+					...prevData,
+					["endDate"]: value,
+				}));
+			}
 		}
 		setFormData((prevData) => ({
 			...prevData,
@@ -519,7 +567,8 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 				<ListBoxInput
 					key={formData[field.name]}
 					options={options}
-					initialValue={formData[field?.name]}
+					initialValue={formData[field.name]}
+					disabled={field.disabled && field.disabled}
 					onChange={(value) => {
 						handleChange(field.name, value);
 					}}
@@ -690,30 +739,59 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 				const schedule = field?.available;
 				const appointment = field?.appointment;
 				const disabled = field?.disabled || null;
+				const breaks = field?.breaks || null;
+				const existingStart = field?.start || null;
+				const existingEnd = field?.end || null;
+				const existingStartTime = field?.existingStartTime;
+				const existingAppointment = field?.existingAppointmentDate;
+
 				if (schedule) {
 					doctorSchedule = schedule;
 				}
 				if (appointment) {
 					doctorAppointments = appointment;
 				}
-
-				let filterDate = null;
-
-				if (disabled) {
-					const isDisabled = (date) => {
-						const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
-							weekday: "long",
-						});
-						const daysToDisable = disabled;
-
-						if (disabled) {
-							return !daysToDisable.includes(dayOfWeek);
-						} else {
-							return null;
-						}
-					};
-					filterDate = isDisabled;
+				if (existingStartTime) {
+					appointmentStartTime = existingStartTime;
 				}
+				if (existingAppointment) {
+					existingAppointmentDate = existingAppointment;
+				}
+				const isDisabled = (date) => {
+					const selectedDate = new Date(date);
+					selectedDate.setHours(0, 0, 0, 0);
+					const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
+						weekday: "long",
+					});
+
+					return (
+						(disabled &&
+							!disabled.includes(dayOfWeek) &&
+							breaks &&
+							!breaks.some((breakItem) => {
+								const breakStartDate =
+									new Date(breakItem.startDate).getTime() !==
+									existingStart?.getTime()
+										? new Date(breakItem.startDate)
+										: null;
+								const breakEndDate = breakItem.endDate
+									? new Date(breakItem.endDate).getTime() !==
+									  existingEnd?.getTime()
+										? new Date(breakItem.endDate)
+										: null
+									: null;
+								const breakStartDateString = breakStartDate?.toDateString();
+								return (
+									(breakEndDate &&
+										selectedDate >= breakStartDate &&
+										selectedDate <= breakEndDate) ||
+									(!breakEndDate &&
+										selectedDate.toDateString() === breakStartDateString)
+								);
+							})) ||
+						(!disabled && !breaks)
+					);
+				};
 
 				if (field.name === "expirationDate") {
 					return (
@@ -736,7 +814,78 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 									}
 									onChange={(value) => handleChange(field.name, value)}
 									minDate={getDateTwoMonthsFromNow()}
-									filterDate={filterDate}
+								/>
+								<div className="w-6 h-6 absolute top-4 right-5 z-10">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										className="cursor-pointer"
+									>
+										<path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" />
+										<path
+											fillRule="evenodd"
+											d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</div>
+							</label>
+						</div>
+					);
+				} else if (field.name === "endDate") {
+					return (
+						<div className="relative w-full">
+							<label>
+								<DatePicker
+									key={formData[field.name]}
+									wrapperClassName="w-full"
+									popperPlacement="bottom-end"
+									popperModifiers={{ name: "arrow", options: { padding: 212 } }}
+									className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
+									selected={
+										formData[field.name] !== ""
+											? formData[field.name] <=
+											  getLeadDate(
+													disabled,
+													breaks,
+													existingStart,
+													existingEnd
+											  )
+												? getLeadDate(
+														disabled,
+														breaks,
+														existingStart,
+														existingEnd
+												  )
+												: formData[field.name]
+											: getLeadDate(
+													disabled,
+													breaks,
+													existingStart,
+													existingEnd
+											  ) < formData.startDate
+											? (formData[field.name] = formData.startDate)
+											: (formData[field.name] = getLeadDate(
+													disabled,
+													breaks,
+													existingStart,
+													existingEnd
+											  ))
+									}
+									onChange={(value) => handleChange(field.name, value)}
+									minDate={
+										formData?.startDate >=
+										getLeadDate(disabled, breaks, existingStart, existingEnd)
+											? formData?.startDate
+											: getLeadDate(
+													disabled,
+													breaks,
+													existingStart,
+													existingEnd
+											  )
+									}
+									filterDate={isDisabled}
 								/>
 								<div className="w-6 h-6 absolute top-4 right-5 z-10">
 									<svg
@@ -768,12 +917,35 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 									className="placeholder:text-slate-500 text-start font-medium block w-full p-4 text-sky-800 border border-sky-800 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500"
 									selected={
 										formData[field.name] !== ""
-											? formData[field.name]
-											: (formData[field.name] = getLeadDate(disabled))
+											? formData[field.name] <=
+											  getLeadDate(
+													disabled,
+													breaks,
+													existingStart,
+													existingEnd
+											  )
+												? getLeadDate(
+														disabled,
+														breaks,
+														existingStart,
+														existingEnd
+												  )
+												: formData[field.name]
+											: (formData[field.name] = getLeadDate(
+													disabled,
+													breaks,
+													existingStart,
+													existingEnd
+											  ))
 									}
 									onChange={(value) => handleChange(field.name, value)}
-									minDate={getLeadDate(disabled)}
-									filterDate={filterDate}
+									minDate={getLeadDate(
+										disabled,
+										breaks,
+										existingStart,
+										existingEnd
+									)}
+									filterDate={isDisabled}
 								/>
 								<div className="w-6 h-6 absolute top-4 right-5 z-10">
 									<svg
@@ -857,7 +1029,9 @@ function ReusableForm({ header, fields, onSubmit, imageGroup, otherItems }) {
 			const availableTimeSlots = calculateAvailableTimeSlots(
 				formData.appointmentDate,
 				doctorSchedule,
-				doctorAppointments
+				doctorAppointments,
+				appointmentStartTime,
+				existingAppointmentDate
 			);
 			setAppointmentStartOptions(availableTimeSlots);
 		}

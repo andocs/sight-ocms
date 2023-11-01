@@ -94,7 +94,7 @@ function PatientHome() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const { appointment, isLoading } = useSelector((state) => state.appointment);
-	const { infoUpdate } = useSelector((state) => state.auth);
+	const { info } = useSelector((state) => state.auth);
 	const { staff } = useSelector((state) => state.staff);
 	const { order } = useSelector((state) => state.order);
 	const { record } = useSelector((state) => state.record);
@@ -150,7 +150,7 @@ function PatientHome() {
 	};
 
 	const display = {
-		role: infoUpdate?.role,
+		role: info?.role,
 		button: "View Doctors",
 		color: "sky",
 	};
@@ -160,8 +160,9 @@ function PatientHome() {
 		header,
 		display,
 		username:
-			`${infoUpdate?.personalInfo.fname} ${infoUpdate?.personalInfo.lname}` ||
-			"John Doe",
+			info?.personalInfo?.fname || info?.personalInfo?.lname
+				? `${info?.personalInfo?.fname} ${info?.personalInfo?.lname}`
+				: "User",
 		text,
 	};
 
@@ -187,7 +188,7 @@ function PatientHome() {
 		<>
 			{appointment && staff && record && order && (
 				<DashComponent
-					key={infoUpdate}
+					key={info}
 					props={props}
 					status={status}
 					headerClick={onHeaderClick}

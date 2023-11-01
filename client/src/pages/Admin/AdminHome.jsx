@@ -91,7 +91,7 @@ function AdminHome() {
 	const { item, isLoading } = useSelector((state) => state.inventory);
 	const { staff } = useSelector((state) => state.staff);
 	const { maintenance } = useSelector((state) => state.maintenance);
-	const { infoUpdate } = useSelector((state) => state.auth);
+	const { info } = useSelector((state) => state.auth);
 
 	const onHeaderClick = () => {
 		navigate("/admin/view-inventory");
@@ -145,7 +145,7 @@ function AdminHome() {
 	};
 
 	const display = {
-		role: infoUpdate?.role,
+		role: info?.role,
 		button: "View Staff List",
 		color: "sky",
 	};
@@ -154,8 +154,7 @@ function AdminHome() {
 		header,
 		display,
 		username:
-			`${infoUpdate?.personalInfo.fname} ${infoUpdate?.personalInfo.lname}` ||
-			"John Doe",
+			`${info?.personalInfo.fname} ${info?.personalInfo.lname}` || "John Doe",
 		text,
 	};
 

@@ -1698,15 +1698,8 @@ const deleteAppointment = async (req, res) => {
 //@route POST /api/doctor/schedule
 //@access private (doctor only)
 const addDoctorSchedule = asyncHandler(async (req, res) => {
-	const {
-		dayOfWeek,
-		startTime,
-		endTime,
-		lunchBreakStart,
-		lunchBreakEnd,
-		isLeave,
-		isEmergencyBreak,
-	} = req.body;
+	const { dayOfWeek, startTime, endTime, lunchBreakStart, lunchBreakEnd } =
+		req.body;
 
 	const doctorId = req.user.id;
 
@@ -1728,9 +1721,6 @@ const addDoctorSchedule = asyncHandler(async (req, res) => {
 		return res.status(400).json({ message: "Schedule already exists!" });
 	}
 
-	const isLeaveBool = isLeave === "No" ? false : true;
-	const isEmergencyBreakBool = isEmergencyBreak === "No" ? false : true;
-
 	const session = await Schedule.startSession(sessionOptions);
 	try {
 		session.startTransaction();
@@ -1743,8 +1733,6 @@ const addDoctorSchedule = asyncHandler(async (req, res) => {
 					endTime,
 					lunchBreakStart,
 					lunchBreakEnd,
-					isLeave: isLeaveBool,
-					isEmergencyBreak: isEmergencyBreakBool,
 				},
 			],
 			{ session }
@@ -1798,10 +1786,11 @@ const addDoctorSchedule = asyncHandler(async (req, res) => {
 //@access private (doctor only)
 const getDoctorSchedule = asyncHandler(async (req, res) => {
 	const doctorId = req.user.id;
-	const doctorSchedules = await Schedule.find({ doctor: doctorId });
-	if (doctorSchedules == {}) {
-		res.json({ message: "No schedule currently added." });
-	}
+	const doctorSchedules = await Schedule.find({
+		doctor: doctorId,
+		breaks: { $exists: false },
+	});
+
 	res.json(doctorSchedules);
 });
 
@@ -1810,7 +1799,10 @@ const getDoctorSchedule = asyncHandler(async (req, res) => {
 //@access private (doctor only)
 const getDoctorScheduleDays = asyncHandler(async (req, res) => {
 	const doctorId = req.user.id;
-	const doctorSchedules = await Schedule.find({ doctor: doctorId });
+	const doctorSchedules = await Schedule.find({
+		doctor: doctorId,
+		breaks: { $exists: false },
+	});
 
 	if (doctorSchedules.length === 0) {
 		res.json({});
@@ -1981,9 +1973,316 @@ const deleteDoctorSchedule = asyncHandler(async (req, res) => {
 	session.endSession();
 });
 
+//@desc ADD DOCTOR BREAKS
+//@route POST /api/doctor/breaks
+//@access private (doctor only)
+const addBreak = asyncHandler(async (req, res) => {
+	const { startDate, endDate, reason } = req.body;
+
+	const doctorId = req.user.id;
+
+	if (!startDate || !reason) {
+		return res.status(400).json({ message: "All fields are mandatory!" });
+	}
+
+	const schedule = await Schedule.findOne({
+		doctor: doctorId,
+		breaks: { $exists: true, $ne: [] },
+	});
+
+	let existing = null;
+
+	if (schedule) {
+		existing = schedule.breaks.filter((day) => {
+			const existingStartDate = new Date(day.startDate)
+				.toISOString()
+				.split("T")[0];
+			const existingEndDate = day.endDate
+				? new Date(day.endDate).toISOString().split("T")[0]
+				: null;
+			const newBreakStartDate = new Date(startDate).toISOString().split("T")[0];
+			const newBreakEndDate = endDate
+				? new Date(endDate).toISOString().split("T")[0]
+				: null;
+
+			if (
+				newBreakStartDate === existingStartDate ||
+				(newBreakEndDate !== null && newBreakEndDate === existingEndDate)
+			) {
+				return true; // Overlap found
+			}
+
+			return false;
+		});
+	}
+
+	if (existing && existing.length > 0) {
+		return res
+			.status(400)
+			.json({ message: "Break for this day already exists!" });
+	}
+
+	const session = await Schedule.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+		const newBreak = {
+			startDate,
+			reason,
+		};
+		if (endDate && endDate !== startDate) {
+			newBreak.endDate = endDate;
+		}
+		const doctorSchedule = await Schedule.findOne({
+			doctor: doctorId,
+			breaks: { $exists: true, $ne: [] },
+		});
+
+		if (!doctorSchedule) {
+			const breaks = [newBreak];
+			const doctorBreak = await Schedule.create(
+				[
+					{
+						doctor: doctorId,
+						breaks,
+					},
+				],
+				{ session }
+			);
+			await AuditLog.create(
+				[
+					{
+						userId: doctorId,
+						operation: "create",
+						entity: "Schedule",
+						entityId: doctorBreak[0]._id,
+						oldValues: null,
+						newValues: doctorBreak[0],
+						userIpAddress: req.ip,
+						userAgent: req.get("user-agent"),
+						additionalInfo: "New doctor break added",
+					},
+				],
+				{ session }
+			);
+			res.status(201).json({
+				data: doctorBreak,
+				message: `Break for ${startDate}${
+					endDate !== startDate ? ` to ${endDate}` : ""
+				} successfully added!`,
+			});
+			await session.commitTransaction();
+		} else {
+			const updatedBreak = await Schedule.findOneAndUpdate(
+				{ doctor: doctorId, breaks: { $exists: true, $ne: [] } },
+				{ $push: { breaks: newBreak } },
+				{ new: true, runValidators: true, session }
+			);
+			await AuditLog.create(
+				[
+					{
+						userId: doctorId,
+						operation: "update",
+						entity: "Schedule",
+						entityId: schedule._id,
+						oldValues: doctorSchedule,
+						newValues: updatedBreak,
+						userIpAddress: req.ip,
+						userAgent: req.get("user-agent"),
+						additionalInfo: "New break added to existing schedule",
+					},
+				],
+				{ session }
+			);
+			await session.commitTransaction();
+			res.status(201).json({
+				data: updatedBreak,
+				message: `Break for ${startDate}${
+					endDate !== startDate ? ` to ${endDate}` : ""
+				} successfully added!`,
+			});
+		}
+	} catch (error) {
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
+
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		throw error;
+	}
+	session.endSession();
+});
+
+//@desc GET ALL DOCTOR BREAKS
+//@route GET /api/doctor/breaks
+//@access private (doctor only)
+const getBreakList = asyncHandler(async (req, res) => {
+	const today = new Date();
+	const doctorId = req.user.id;
+	const doctorSchedule = await Schedule.findOne({
+		doctor: doctorId,
+		breaks: { $exists: true, $ne: [] },
+	});
+	const allBreaks = doctorSchedule?.breaks || [];
+	if (allBreaks.length === 0) {
+		return res.json([]);
+	}
+	const breaksFromToday = allBreaks.filter((breakItem) => {
+		const breakStartDate = new Date(breakItem.startDate);
+		return breakStartDate >= today;
+	});
+	res.json(breaksFromToday);
+});
+
+//@desc GET BREAK DETAILS
+//@route GET /api/doctor/breaks/:id
+//@access private (doctor only)
+const getBreakDetails = asyncHandler(async (req, res) => {
+	const breakId = req.params.id;
+	const doctorId = req.user.id;
+	const doctorSchedule = await Schedule.findOne({
+		doctor: doctorId,
+		breaks: { $exists: true, $ne: [] },
+	});
+	const breakFound = doctorSchedule.breaks.id(breakId);
+	res.json(breakFound);
+});
+
+//@desc UPDATE DOCTOR BREAKS
+//@route PUT /api/doctor/breaks/:id
+//@access private (doctor only)
+const updateBreak = asyncHandler(async (req, res) => {
+	const breakId = req.params.id;
+	const doctorId = req.user.id;
+	const updatedFields = req.body;
+	console.log(updatedFields);
+
+	const existingBreak = await Schedule.findOne({ "breaks._id": breakId });
+	if (!existingBreak) {
+		return res.status(400).json({ message: "Schedule not found!" });
+	}
+	const updateQuery = { $set: {} };
+	Object.keys(updatedFields).forEach((field) => {
+		updateQuery.$set[`breaks.$.${field}`] = updatedFields[field];
+	});
+	const session = await Schedule.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+		const updatedBreak = await Schedule.findOneAndUpdate(
+			{ "breaks._id": breakId },
+			updateQuery,
+			{ new: true, runValidators: true, session }
+		);
+
+		await AuditLog.create(
+			[
+				{
+					userId: doctorId,
+					operation: "update",
+					entity: "Schedule",
+					entityId: existingBreak._id,
+					oldValues: existingBreak,
+					newValues: updatedBreak,
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "Updated existing break",
+				},
+			],
+			{ session }
+		);
+
+		res.status(201).json({
+			data: updatedBreak,
+			message: `Break successfully updated!`,
+		});
+		await session.commitTransaction();
+	} catch (error) {
+		if (error.name === "ValidationError") {
+			const validationErrors = [];
+			for (const field in error.errors) {
+				validationErrors.push({
+					fieldName: field,
+					message: error.errors[field].message,
+				});
+			}
+			return res.status(400).json({ message: validationErrors });
+		}
+
+		if (session) {
+			await session.abortTransaction();
+			session.endSession();
+		}
+		throw error;
+	}
+	session.endSession();
+});
+
+//@desc ADD DOCTOR BREAKS
+//@route DELETE /api/doctor/breaks
+//@access private (doctor only)
+const deleteBreak = asyncHandler(async (req, res) => {
+	const breakId = req.params.id;
+	const doctorId = req.user.id;
+
+	const existingBreak = await Schedule.findOne({ "breaks._id": breakId });
+	if (!existingBreak) {
+		return res.status(400).json({ message: "Schedule not found!" });
+	}
+
+	const session = await Schedule.startSession(sessionOptions);
+	try {
+		session.startTransaction();
+
+		const updatedBreak = await Schedule.findOneAndUpdate(
+			{ "breaks._id": breakId },
+			{ $pull: { breaks: { _id: breakId } } },
+			{ new: true, runValidators: true, session }
+		);
+
+		await AuditLog.create(
+			[
+				{
+					userId: doctorId,
+					operation: "delete",
+					entity: "Schedule",
+					entityId: existingBreak._id,
+					oldValues: existingBreak,
+					newValues: updatedBreak,
+					userIpAddress: req.ip,
+					userAgent: req.get("user-agent"),
+					additionalInfo: "Deleted existing break",
+				},
+			],
+			{ session }
+		);
+
+		res.status(201).json({
+			id: breakId,
+			message: `Break successfully deleted!`,
+		});
+		await session.commitTransaction();
+	} catch (error) {
+		await session.abortTransaction();
+		session.endSession();
+	}
+	session.endSession();
+});
+
+/**
+##### INVENTORY (READ ONLY) #####
+**/
+
 const getInventoryList = asyncHandler(async (req, res) => {
 	const inventoryList = await Inventory.find();
-	console.log(inventoryList);
 	res.json(inventoryList);
 });
 
@@ -2321,6 +2620,11 @@ module.exports = {
 	getScheduleDetails,
 	updateDoctorSchedule,
 	deleteDoctorSchedule,
+	addBreak,
+	getBreakList,
+	getBreakDetails,
+	updateBreak,
+	deleteBreak,
 
 	getInventoryList,
 

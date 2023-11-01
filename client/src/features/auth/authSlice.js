@@ -5,6 +5,7 @@ const user = JSON.parse(localStorage.getItem("user"));
 
 const initialState = {
 	user: user ? user : null,
+	info: null,
 	navPage: [],
 	infoUpdate: null,
 	newInfo: null,
@@ -132,7 +133,7 @@ export const authSlice = createSlice({
 			state.message = "";
 		},
 		clear: (state) => {
-			(state.newInfo = null), (state.infoUpdate = null);
+			(state.info = null), (state.newInfo = null), (state.infoUpdate = null);
 		},
 		setNavPage: (state, action) => {
 			state.navPage = action.payload;
@@ -174,6 +175,7 @@ export const authSlice = createSlice({
 				state.user = null;
 				state.navPage = null;
 				state.infoUpdate = null;
+				state.info = null;
 			})
 			.addCase(getUser.pending, (state) => {
 				state.isLoading = true;
@@ -181,13 +183,13 @@ export const authSlice = createSlice({
 			.addCase(getUser.fulfilled, (state, action) => {
 				state.isLoading = false;
 				state.isSuccess = true;
-				state.infoUpdate = action.payload;
+				state.info = action.payload;
 			})
 			.addCase(getUser.rejected, (state, action) => {
 				state.isLoading = false;
 				state.isError = true;
 				state.message = action.payload;
-				state.infoUpdate = null;
+				state.info = null;
 			})
 			.addCase(addInfo.pending, (state) => {
 				state.isLoading = true;

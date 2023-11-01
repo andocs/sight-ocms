@@ -1,30 +1,29 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 import {
-	getEyeRecords,
-	deleteEyeRecord,
+	getBreakList,
+	deleteBreak,
 	reset,
 	clear,
-} from "../../features/record/recordSlice";
-
-import Spinner from "../../components/spinner.component";
-import DeleteConfirmation from "../../components/deleteconfirmation.component";
-import ViewModal from "../../components/viewmodal.component";
+} from "../../features/schedule/scheduleSlice";
+import { toast } from "react-toastify";
 
 import Table from "../../components/table.component";
+import ViewModal from "../../components/viewmodal.component";
+import Spinner from "../../components/spinner.component";
+import DeleteConfirmation from "../../components/deleteconfirmation.component";
 
-function ViewRecords() {
-	const [isOpen, setIsOpen] = useState(false);
+function ViewBreaks() {
 	const [isViewOpen, setViewOpen] = useState(false);
-	const [recordId, setRecordId] = useState("");
-	const [recordData, setRecordData] = useState("");
+	const [isOpen, setIsOpen] = useState(false);
+	const [breakId, setBreakId] = useState("");
+	const [breakData, setBreakData] = useState("");
 
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
-	const { record, isLoading, isSuccess, isError, message } = useSelector(
-		(state) => state.record
+	const { breaks, isLoading, isSuccess, isError, message } = useSelector(
+		(state) => state.schedule
 	);
 
 	useEffect(() => {
@@ -34,7 +33,7 @@ function ViewRecords() {
 		if (isSuccess && message !== "") {
 			toast.success(message);
 		}
-		dispatch(getEyeRecords());
+		dispatch(getBreakList());
 		return () => {
 			dispatch(reset());
 			dispatch(clear());
@@ -53,13 +52,13 @@ function ViewRecords() {
 		setViewOpen(false);
 	}
 
-	function openModal(recordId) {
+	function openModal(breakId) {
 		setIsOpen(true);
-		setRecordId(recordId);
+		setBreakId(breakId);
 	}
 
 	function checkConfirmation() {
-		dispatch(deleteEyeRecord(recordId));
+		dispatch(deleteBreak(breakId));
 		if (isSuccess && message) {
 			toast.message(message);
 		}
@@ -67,29 +66,23 @@ function ViewRecords() {
 	}
 
 	const columns = [
-		{ header: "Record Date", field: "createdAt" },
-		{ header: "Last Name", field: "userLastName" },
-		{ header: "First Name", field: "userFirstName" },
-		{ header: "OD SPH", field: `rightEye.sphere` },
-		{ header: "OD CYL", field: "rightEye.cylinder" },
-		{ header: "OD Axis", field: "rightEye.axis" },
-		{ header: "OS SPH", field: "leftEye.sphere" },
-		{ header: "OS CYL", field: "leftEye.cylinder" },
-		{ header: "OS Axis", field: "leftEye.axis" },
+		{ header: "Start Date", field: "startDate" },
+		{ header: "End Date", field: "endDate" },
+		{ header: "Reason", field: "reason" },
 	];
 
 	const actions = [
 		{
 			label: "View",
 			handler: (details) => {
-				setRecordData(details);
+				setBreakData(details);
 				setViewOpen(true);
 			},
 		},
 		{
 			label: "Update",
 			handler: (details) => {
-				navigate(`/doctor/edit-record/${details._id}`, { state: { details } });
+				navigate(`/doctor/edit-break/${details._id}`, { state: { details } });
 			},
 		},
 		{
@@ -100,15 +93,19 @@ function ViewRecords() {
 		},
 	];
 
+	function closeModal() {
+		setIsOpen(false);
+	}
+
 	return (
 		<>
 			{isViewOpen && (
 				<ViewModal
 					isOpen={isViewOpen}
 					closeModal={closeViewModal}
-					dataFields={recordData}
+					dataFields={breakData}
 					columnHeaders={columns}
-					modalTitle="Visit Record Details"
+					modalTitle="Doctor Break Details"
 				/>
 			)}
 
@@ -120,17 +117,17 @@ function ViewRecords() {
 			<div className="w-full bg-white border-b">
 				<div className="p-8 flex justify-between items-center xl:w-5/6">
 					<div>
-						<p className="font-medium text-5xl">Eye Records</p>
+						<p className="font-medium text-5xl">Added Breaks</p>
 					</div>
 				</div>
 			</div>
 			<div className="p-8">
 				<div className="xl:w-5/6 flex flex-row">
-					<Table data={record} columns={columns} actions={actions} />
+					<Table data={breaks} columns={columns} actions={actions} />
 				</div>
 			</div>
 		</>
 	);
 }
 
-export default ViewRecords;
+export default ViewBreaks;

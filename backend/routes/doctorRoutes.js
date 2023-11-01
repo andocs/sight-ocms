@@ -40,6 +40,11 @@ const {
 	getScheduleDetails,
 	updateDoctorSchedule,
 	deleteDoctorSchedule,
+	addBreak,
+	getBreakList,
+	getBreakDetails,
+	updateBreak,
+	deleteBreak,
 
 	getInventoryList,
 
@@ -108,6 +113,14 @@ router
 	.get(getScheduleDetails)
 	.put(updateDoctorSchedule)
 	.delete(deleteDoctorSchedule);
+
+router.route("/breaks").post(addBreak).get(getBreakList);
+
+router
+	.route("/breaks/:id")
+	.get(getBreakDetails)
+	.put(updateBreak)
+	.delete(deleteBreak);
 
 router.route("/available").get(getDoctorScheduleDays);
 
