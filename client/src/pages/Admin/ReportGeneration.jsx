@@ -1609,7 +1609,7 @@ function ReportGeneration() {
 												</div>
 												{/* Monthly Sales Velocity */}
 												<div className="w-full overflow-hidden shadow-xl border-gray-200 border mt-4">
-													{monthlyOrder.length > 0 ? (
+													{monthlySales.length > 0 ? (
 														<div className="bg-white h-[500px] p-6">
 															<div className="flex flex-row justify-between z-50 relative">
 																<p className="text-lg font-medium">

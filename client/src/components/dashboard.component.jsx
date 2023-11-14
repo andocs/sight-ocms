@@ -149,7 +149,16 @@ function DashComponent({ props, headerClick, displayClick, status, table }) {
 															key={column.field}
 															className="min-w-[115px] max-w-[115px]  p-4 text-left"
 														>
-															{item[column.field] || "N/A"}
+															{column.field === "orderTime"
+																? new Date(item[column.field]).toLocaleString(
+																		"en-US",
+																		{
+																			month: "long",
+																			day: "numeric",
+																			year: "numeric",
+																		}
+																  )
+																: item[column.field] || "N/A"}
 														</td>
 													))}
 												</tr>

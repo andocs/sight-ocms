@@ -62,15 +62,6 @@ const getPendingOrders = asyncHandler(async (req, res) => {
 			},
 		},
 		{
-			$lookup: {
-				from: "inventoryDetails",
-				localField: "otherItems.item",
-				foreignField: "_id",
-				as: "itemDetails",
-			},
-		},
-
-		{
 			$project: {
 				orderTime: 1,
 				status: 1,
@@ -141,15 +132,6 @@ const getOrderHistory = asyncHandler(async (req, res) => {
 				as: "frameDetails",
 			},
 		},
-		{
-			$lookup: {
-				from: "inventoryDetails",
-				localField: "otherItems.item",
-				foreignField: "_id",
-				as: "itemDetails",
-			},
-		},
-
 		{
 			$project: {
 				orderTime: 1,
@@ -222,14 +204,6 @@ const getOrderDetails = asyncHandler(async (req, res) => {
 				localField: "frame",
 				foreignField: "_id",
 				as: "frameDetails",
-			},
-		},
-		{
-			$lookup: {
-				from: "inventoryDetails",
-				localField: "otherItems.item",
-				foreignField: "_id",
-				as: "itemDetails",
 			},
 		},
 		{

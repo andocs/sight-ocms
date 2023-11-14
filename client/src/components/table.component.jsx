@@ -98,7 +98,10 @@ const ReusableTable = ({ data, columns, actions }) => {
 							</tr>
 						</thead>
 
-						<tbody className="bg-cyan-100 text-sky-800 p-4 relative z-0 text-left">
+						<tbody
+							id="table"
+							className="bg-cyan-100 text-sky-800 p-4 relative z-0 text-left"
+						>
 							{visibleData.map((item, index) => (
 								<tr key={index} className="hover:bg-cyan-50">
 									{columns.map((column, innerIndex) => (

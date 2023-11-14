@@ -80,10 +80,10 @@ function Services() {
 											/>
 										</div>
 										<div className="flex flex-col justify-center items-center space-y-4 pb-8">
-											<p className="text-xl font-semibold">Service 1</p>
+											<p className="text-xl font-semibold">Eye Care</p>
 											<p className="text-gray-500 text-center">
-												Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-												Phasellus at felis eu nunc pellentesque posuere.
+												Provides eye exams, prescribes lenses, manages diseases,
+												and offers guidance for eye health.
 											</p>
 											<button
 												onClick={handleAboutClick}
@@ -102,10 +102,10 @@ function Services() {
 											/>
 										</div>
 										<div className="flex flex-col justify-center items-center space-y-4 pb-8">
-											<p className="text-xl font-semibold">Service 2</p>
+											<p className="text-xl font-semibold">Doctors</p>
 											<p className="text-gray-500 text-center">
-												Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-												Phasellus at felis eu nunc pellentesque posuere.
+												Maderal optical doctors aid clients with eye grade,
+												exams, eye prescriptions, and guidance.
 											</p>
 											<button
 												onClick={handleShowCarousel}
@@ -124,10 +124,10 @@ function Services() {
 											/>
 										</div>
 										<div className="flex flex-col justify-center items-center space-y-4 pb-8">
-											<p className="text-xl font-semibold">Service 3</p>
+											<p className="text-xl font-semibold">Technician</p>
 											<p className="text-gray-500 text-center">
-												Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-												Phasellus at felis eu nunc pellentesque posuere.
+												Optical technicians assist clients with eyeglasses
+												through fittings, adjustments, and lens advice.
 											</p>
 											<button
 												onClick={handleAboutClick}

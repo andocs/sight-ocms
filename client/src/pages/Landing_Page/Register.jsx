@@ -56,6 +56,7 @@ function Register() {
 	};
 
 	const onSubmit = (e) => {
+		console.log("ho");
 		e.preventDefault();
 
 		const userData = {

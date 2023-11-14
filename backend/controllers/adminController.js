@@ -1811,7 +1811,6 @@ const generateBatchesExpirationReport = asyncHandler(async (req, res) => {
 		const options = { year: "numeric", month: "short", day: "2-digit" };
 		return date.toLocaleDateString("en-US", options);
 	}
-	console.log(report);
 	res.json(report);
 });
 
@@ -1918,6 +1917,7 @@ const generateMonthlySalesVelocityReport = asyncHandler(async (req, res) => {
 					},
 				},
 			]);
+			console.log(orders);
 
 			// Format the date in your application code
 			const formattedOrders = orders.map((order) => ({
