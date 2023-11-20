@@ -429,6 +429,50 @@ const getPendingAppointments = asyncHandler(async (req, res) => {
 	res.json(appointment);
 });
 
+//@desc GET LIST OF DOCTOR'S PENDING APPOINTMENTS
+//@route GET /api/patient/confirmed
+//@access private (patient only)
+const getConfirmedAppointments = asyncHandler(async (req, res) => {
+	const patientId = new ObjectId(req.user.id);
+	const appointment = await Appointment.aggregate([
+		{
+			$lookup: {
+				from: "userDetails",
+				localField: "doctor",
+				foreignField: "_id",
+				as: "doctorDetails",
+			},
+		},
+		{
+			$match: {
+				patient: patientId,
+				status: "Confirmed",
+			},
+		},
+		{
+			$project: {
+				appointmentDate: 1,
+				doctorLastName: {
+					$arrayElemAt: ["$doctorDetails.personalInfo.lname", 0],
+				},
+				doctorFirstName: {
+					$arrayElemAt: ["$doctorDetails.personalInfo.fname", 0],
+				},
+				appointmentStart: 1,
+				appointmentEnd: 1,
+				notes: 1,
+				status: 1,
+			},
+		},
+		{
+			$sort: {
+				appointmentDate: -1,
+			},
+		},
+	]);
+	res.json(appointment);
+});
+
 //@desc GET APPOINTMENT DETAILS
 //@route GET /api/patient/appointments/:id
 //@access private (patient only)
@@ -625,6 +669,7 @@ module.exports = {
 
 	scheduleAppointment,
 	getAllAppointments,
+	getConfirmedAppointments,
 	getPendingAppointments,
 	getAppointmentDetails,
 

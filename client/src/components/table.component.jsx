@@ -2,6 +2,7 @@ import { Fragment, useState } from "react";
 import decode from "jwt-decode";
 
 const ReusableTable = ({ data, columns, actions }) => {
+	console.log(data);
 	const token = localStorage.getItem("user");
 
 	const decodedToken = decode(token);

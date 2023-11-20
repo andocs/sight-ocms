@@ -158,6 +158,11 @@ const getOrderHistory = asyncHandler(async (req, res) => {
 				otherItems: 1,
 			},
 		},
+		{
+			$sort: {
+				orderTime: -1, // Sort in descending order
+			},
+		},
 	]);
 	res.json(orders);
 });
@@ -602,9 +607,6 @@ const getMaintenanceList = asyncHandler(async (req, res) => {
 	const maintenanceRequests = await Maintenance.find({
 		technician: technicianId,
 	});
-	if (maintenanceRequests.length === 0) {
-		return res.json({ message: "No requests currently." });
-	}
 	res.json(maintenanceRequests);
 });
 
@@ -616,9 +618,6 @@ const getMaintenanceRequestDetails = asyncHandler(async (req, res) => {
 	const maintenanceRequest = await Maintenance.findOne({
 		_id: requestId,
 	});
-	if (!maintenanceRequest) {
-		return res.status(404).json({ message: "Request not found!" });
-	}
 	res.json(maintenanceRequest);
 });
 
@@ -730,8 +729,8 @@ const deleteRequest = asyncHandler(async (req, res) => {
 					userId: req.user.id,
 					operation: "delete",
 					entity: "Maintenance",
-					entityId: userId,
-					oldValues: staff,
+					entityId: maintenanceRequest._id,
+					oldValues: maintenanceRequest,
 					newValues: null,
 					userIpAddress: req.ip,
 					userAgent: req.get("user-agent"),
@@ -741,10 +740,9 @@ const deleteRequest = asyncHandler(async (req, res) => {
 			{ session }
 		);
 		await session.commitTransaction();
-		const rolestr = staff.role.charAt(0).toUpperCase() + staff.role.slice(1);
 		res.status(201).json({
-			id: userId,
-			message: `${rolestr} ${staff.personalInfo.fname} ${staff.personalInfo.lname}'s account is successfully deleted!`,
+			id: requestId,
+			message: `Maintenance request is successfully deleted!`,
 		});
 	} catch (error) {
 		await session.abortTransaction();

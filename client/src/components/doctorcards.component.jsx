@@ -539,24 +539,30 @@ function DoctorCards({ props, onClick }) {
 													</p>
 												</div>
 											</div>
-											<hr className="my-2 border-sky-600" />
 
-											<div className="flex flex-col">
-												<div className="uppercase text-sm font-normal">
-													<p>End Date</p>
-												</div>
-												<div className="text-xl font-bold">
-													<p>
-														{new Date(
-															props.breaks[currentBreakIndex].endDate
-														).toLocaleString("en-US", {
-															month: "long",
-															day: "numeric",
-															year: "numeric",
-														}) || "N/A"}
-													</p>
-												</div>
-											</div>
+											{props.breaks[currentBreakIndex].endDate ? (
+												<>
+													<hr className="my-2 border-sky-600" />
+													<div className="flex flex-col">
+														<div className="uppercase text-sm font-normal">
+															<p>End Date</p>
+														</div>
+														<div className="text-xl font-bold">
+															<p>
+																{new Date(
+																	props.breaks[currentBreakIndex].endDate
+																).toLocaleString("en-US", {
+																	month: "long",
+																	day: "numeric",
+																	year: "numeric",
+																}) || "N/A"}
+															</p>
+														</div>
+													</div>
+												</>
+											) : (
+												<div style={{ height: "71px" }}></div>
+											)}
 										</div>
 									</div>
 								</>

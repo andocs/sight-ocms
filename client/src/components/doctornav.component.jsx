@@ -271,27 +271,6 @@ const mainMenu = [
 		],
 	},
 	{
-		label: "Appointment Management",
-		svg: appointmentsvg,
-		submenus: [
-			{
-				label: "View Pending",
-				href: "/doctor/view-pending",
-				svg: submenusvg,
-			},
-			{
-				label: "View Appointments",
-				href: "/doctor/view-appointments",
-				svg: submenusvg,
-			},
-			{
-				label: "Add Appointment",
-				href: "/doctor/add-appointment",
-				svg: submenusvg,
-			},
-		],
-	},
-	{
 		label: "Repair Management",
 		svg: repairmgtsvg,
 		submenus: [
@@ -312,6 +291,28 @@ const mainMenu = [
 			},
 		],
 	},
+	{
+		label: "Appointment Management",
+		svg: appointmentsvg,
+		submenus: [
+			{
+				label: "View Pending",
+				href: "/doctor/view-pending",
+				svg: submenusvg,
+			},
+			{
+				label: "View Appointments",
+				href: "/doctor/view-appointments",
+				svg: submenusvg,
+			},
+			{
+				label: "Add Appointment",
+				href: "/doctor/add-appointment",
+				svg: submenusvg,
+			},
+		],
+	},
+
 	{
 		label: "Schedule Management",
 		svg: schedmgtsvg,

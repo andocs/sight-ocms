@@ -80,14 +80,7 @@ function ViewCards({ header, columns, data, onClick, actions }) {
 															<p className="text-gray-500 font-medium">
 																{column.header}
 															</p>
-															<p className="text-black">
-																{column.field === "isLeave" ||
-																column.field === "isEmergencyBreak"
-																	? item[column.field]
-																		? "Yes"
-																		: "No"
-																	: item[column.field]}
-															</p>
+															<p className="text-black">{item[column.field]}</p>
 														</>
 													)}
 												</>
