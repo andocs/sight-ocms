@@ -24,3 +24,5 @@ public/images/uploads
 *.sln
 *.sw?
 .env
+
+.vercel
