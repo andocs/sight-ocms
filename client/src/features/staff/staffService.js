@@ -1,5 +1,5 @@
 import axios from "axios";
-BASE_URL +="api/admin/staff";
+const BASE_URL = process.env.BASE_URL +="api/admin/staff";
 
 // Create staff account
 const createStaffAccount = async (staffData, token) => {

@@ -1,5 +1,5 @@
 import axios from "axios";
-BASE_URL +="api/users";
+const BASE_URL = process.env.BASE_URL +="api/users";
 
 // Register user
 const register = async (userData) => {

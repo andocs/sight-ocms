@@ -1,5 +1,5 @@
 import axios from "axios";
-BASE_URL +="api/admin";
+const BASE_URL = process.env.BASE_URL +="api/admin";
 
 // Get all audit logs
 const getAuditLogs = async (token) => {

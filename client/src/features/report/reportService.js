@@ -1,6 +1,6 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
-BASE_URL +="api";
+const BASE_URL = process.env.BASE_URL +="api";
 
 // Generate weekly technician report
 const getWeeklyTech = async (token) => {
