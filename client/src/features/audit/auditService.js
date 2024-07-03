@@ -1,5 +1,5 @@
 import axios from "axios";
-const BASE_URL = "https://sight-api.vercel.app/api/admin";
+const BASE_URL = "https://sight-ocms.vercel.app/api/admin";
 
 // Get all audit logs
 const getAuditLogs = async (token) => {

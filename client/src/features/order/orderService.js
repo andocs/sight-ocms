@@ -1,7 +1,7 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 
-const BASE_URL = "https://sight-api.vercel.app/api";
+const BASE_URL = "https://sight-ocms.vercel.app/api";
 
 // Create order record
 const createOrder = async ({ patientId, orderData }, token) => {
