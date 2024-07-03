@@ -1,7 +1,7 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 
-const BASE_URL = process.env.BASE_URL +="api";
+const BASE_URL = "https://sight-lyart.vercel.app/api";
 
 // Create repair record
 const addRepairRequest = async ({ patientId, requestData }, token) => {

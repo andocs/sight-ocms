@@ -21,7 +21,7 @@ const port = process.env.PORT || 5000;
 app.use(cors(
 	{
 		origin: ["https://sight-sigma.vercel.app"],
-		methods: ["POST", "GET", "DELETE", "UPDATE"],
+		methods: ["POST", "GET", "DELETE", "PUT"],
 		credentials: true
 	}
 ));

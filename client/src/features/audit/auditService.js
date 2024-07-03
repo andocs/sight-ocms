@@ -1,5 +1,5 @@
 import axios from "axios";
-const BASE_URL = process.env.BASE_URL +="api/admin";
+const BASE_URL = "https://sight-lyart.vercel.app/api/admin";
 
 // Get all audit logs
 const getAuditLogs = async (token) => {
