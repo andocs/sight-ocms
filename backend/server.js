@@ -22,7 +22,7 @@ app.use(cors(
 	{
 		origin: ["https://sight-sigma.vercel.app"],
 		methods: ["POST", "GET", "DELETE", "UPDATE"],
-		credentials: true;
+		credentials: true
 	}
 ));
 app.use(express.json());
