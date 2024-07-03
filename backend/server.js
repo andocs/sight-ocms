@@ -20,7 +20,7 @@ const handleMulterErrors = (err, req, res, next) => {
 const port = process.env.PORT || 5000;
 app.use(cors(
 	{
-		origin: ["https://sight-sigma.vercel.app"],
+		origin: ["https://sight-lyart.vercel.app"],
 		methods: ["POST", "GET", "DELETE", "PUT"],
 		credentials: true
 	}

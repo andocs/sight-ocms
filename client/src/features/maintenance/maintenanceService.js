@@ -1,7 +1,7 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 
-const BASE_URL = "https://sight-lyart.vercel.app/api";
+const BASE_URL = "https://sight-api.vercel.app/api";
 
 // Create maintenance request
 const createRequest = async (requestData, token) => {

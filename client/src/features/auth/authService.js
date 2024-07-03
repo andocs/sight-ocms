@@ -1,5 +1,5 @@
 import axios from "axios";
-const BASE_URL = "https://sight-lyart.vercel.app/api/users";
+const BASE_URL = "https://sight-api.vercel.app/api/users";
 
 // Register user
 const register = async (userData) => {
