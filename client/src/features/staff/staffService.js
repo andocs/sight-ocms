@@ -1,5 +1,5 @@
 import axios from "axios";
-const BASE_URL = "http://localhost:5001/api/admin/staff";
+BASE_URL +="api/admin/staff";
 
 // Create staff account
 const createStaffAccount = async (staffData, token) => {

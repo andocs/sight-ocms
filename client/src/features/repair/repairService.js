@@ -1,7 +1,7 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 
-const BASE_URL = "http://localhost:5001/api";
+BASE_URL +="api";
 
 // Create repair record
 const addRepairRequest = async ({ patientId, requestData }, token) => {

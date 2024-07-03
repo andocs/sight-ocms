@@ -1,7 +1,7 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 
-const BASE_URL = "http://localhost:5001/api";
+BASE_URL +="api";
 
 // Create order record
 const createOrder = async ({ patientId, orderData }, token) => {

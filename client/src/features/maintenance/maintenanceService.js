@@ -1,7 +1,7 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 
-const BASE_URL = "http://localhost:5001/api";
+BASE_URL +="api";
 
 // Create maintenance request
 const createRequest = async (requestData, token) => {

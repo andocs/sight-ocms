@@ -1,6 +1,6 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
-const BASE_URL = "http://localhost:5001/api";
+BASE_URL +="api";
 
 // Add new item
 const addNewItem = async (itemDetails, token) => {
