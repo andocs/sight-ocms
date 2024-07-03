@@ -291,14 +291,6 @@ function AddAppointments() {
 								<div>
 									<p className="font-medium text-5xl">Registered Patients</p>
 								</div>
-								<div>
-									<button
-										onClick={() => navigate("/doctor/add-patient")}
-										className="w-52 bg-blue-950 text-white rounded-lg text-base py-2 px-8 hover:bg-blue-900"
-									>
-										Add Patient
-									</button>
-								</div>
 							</div>
 						</div>
 						<div className="p-8">

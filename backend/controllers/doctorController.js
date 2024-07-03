@@ -1503,6 +1503,8 @@ const getScheduledAppointments = asyncHandler(async (req, res) => {
 const getConfirmedAppointments = asyncHandler(async (req, res) => {
 	const doctorId = new ObjectId(req.user.id);
 	const currentDate = new Date();
+	currentDate.setHours(0, 0, 0, 0); // Set time to 0
+
 	const appointment = await Appointment.aggregate([
 		{
 			$lookup: {
@@ -1539,6 +1541,7 @@ const getConfirmedAppointments = asyncHandler(async (req, res) => {
 			},
 		},
 	]);
+
 	res.json(appointment);
 });
 

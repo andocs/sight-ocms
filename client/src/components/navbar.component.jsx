@@ -296,7 +296,7 @@ export default function Navbar() {
 
 																{info?.image ? (
 																	<img
-																		className="h-8 w-8 rounded-full"
+																		className="h-8 w-8 rounded-full object-cover"
 																		src={`/images/uploads/${info?.image}`}
 																		alt=""
 																	/>

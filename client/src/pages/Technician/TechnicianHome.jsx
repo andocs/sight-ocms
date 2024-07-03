@@ -87,6 +87,21 @@ const requestsvg = (
 	</svg>
 );
 
+function formatOtherItems(order) {
+	const updatedOrder = order.map((item) => {
+		if (item.otherItems.length === 0) {
+			return { ...item, otherItems: "N/A" };
+		} else if (item.otherItems.length === 1) {
+			return { ...item, otherItems: item.otherItems[0].itemName };
+		} else {
+			const itemNames = item.otherItems.map((subItem) => subItem.itemName);
+			return { ...item, otherItems: itemNames.join(", ") };
+		}
+	});
+	console.log(updatedOrder);
+	return updatedOrder;
+}
+
 function TechnicianHome() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
@@ -173,14 +188,14 @@ function TechnicianHome() {
 		{ header: "Status", field: "status" },
 		{ header: "Last Name", field: "userLastName" },
 		{ header: "First Name", field: "userFirstName" },
-		{ header: "Lens", field: `lensName` },
+		{ header: "Lens", field: "lensName" },
 		{ header: "Frame", field: "frameName" },
 		{ header: "Other Items", field: "otherItems" },
 	];
 
 	const table = {
 		header: "Pending Orders",
-		data: order,
+		data: formatOtherItems(order),
 		columns,
 	};
 

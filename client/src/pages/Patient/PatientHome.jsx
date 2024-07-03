@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
-	getAppointmentList,
 	reset,
 	clear,
+	getConfirmedAppointments,
 } from "../../features/appointment/appointmentSlice";
 
 import { getDoctorList } from "../../features/staff/staffSlice";
@@ -93,11 +93,12 @@ const recordsvg = (
 function PatientHome() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
-	const { appointment, isLoading } = useSelector((state) => state.appointment);
+	const { confirmed, isLoading } = useSelector((state) => state.appointment);
 	const { info } = useSelector((state) => state.auth);
 	const { staff } = useSelector((state) => state.staff);
 	const { order } = useSelector((state) => state.order);
 	const { record } = useSelector((state) => state.record);
+	const today = new Date();
 
 	const onHeaderClick = () => {
 		navigate("/patient/view-records");
@@ -108,7 +109,7 @@ function PatientHome() {
 	};
 
 	useEffect(() => {
-		dispatch(getAppointmentList());
+		dispatch(getConfirmedAppointments());
 		dispatch(getDoctorList());
 		dispatch(getOrderList());
 		dispatch(getEyeRecords());
@@ -126,8 +127,13 @@ function PatientHome() {
 			svg: doctorsvg,
 		},
 		{
-			number: appointment.filter((date) => date.appointmentDate === new Date())
-				.length,
+			number: confirmed?.filter(
+				(date) =>
+					new Date(date.appointmentDate).getFullYear() ===
+						today.getFullYear() &&
+					new Date(date.appointmentDate).getMonth() === today.getMonth() &&
+					new Date(date.appointmentDate).getDate() === today.getDate()
+			).length,
 			text: "Appointments Today",
 			svg: appointmentsvg,
 		},
@@ -176,7 +182,12 @@ function PatientHome() {
 
 	const table = {
 		header: "Appointments For Today",
-		data: appointment.filter((date) => date.appointmentDate === new Date()),
+		data: confirmed.filter(
+			(date) =>
+				new Date(date.appointmentDate).getFullYear() === today.getFullYear() &&
+				new Date(date.appointmentDate).getMonth() === today.getMonth() &&
+				new Date(date.appointmentDate).getDate() === today.getDate()
+		),
 		columns,
 	};
 
@@ -186,7 +197,7 @@ function PatientHome() {
 
 	return (
 		<>
-			{appointment && staff && record && order && (
+			{confirmed && staff && record && order && (
 				<DashComponent
 					key={info}
 					props={props}

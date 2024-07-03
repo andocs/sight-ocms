@@ -10,6 +10,7 @@ const {
 
 	scheduleAppointment,
 	getAllAppointments,
+	getConfirmedAppointments,
 	getPendingAppointments,
 	getAppointmentDetails,
 
@@ -36,6 +37,7 @@ router.route("/appointments").post(scheduleAppointment).get(getAllAppointments);
 router.route("/appointments/:id").get(getAppointmentDetails);
 
 router.route("/pending").get(getPendingAppointments);
+router.route("/confirmed").get(getConfirmedAppointments);
 
 router.route("/doctor").get(getDoctorList);
 router.route("/schedule").get(getDoctorSchedule);

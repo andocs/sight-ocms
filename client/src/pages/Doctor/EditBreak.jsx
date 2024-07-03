@@ -128,10 +128,11 @@ function EditBreak() {
 				(breakStartDate <= appointmentDate &&
 					breakEndDate >= appointmentDate &&
 					appointmentDate >= currentDate) ||
-				appointmentDayOfWeek ===
-					breakStartDate.toLocaleDateString("en-US", {
-						weekday: "long",
-					})
+				(!breakEndDate &&
+					appointmentDayOfWeek ===
+						breakStartDate.toLocaleDateString("en-US", {
+							weekday: "long",
+						}))
 			) {
 				return true;
 			}
@@ -148,10 +149,11 @@ function EditBreak() {
 				(breakStartDate <= appointmentDate &&
 					breakEndDate >= appointmentDate &&
 					appointmentDate >= currentDate) ||
-				appointmentDayOfWeek ===
-					breakStartDate.toLocaleDateString("en-US", {
-						weekday: "long",
-					})
+				(!breakEndDate &&
+					appointmentDayOfWeek ===
+						breakStartDate.toLocaleDateString("en-US", {
+							weekday: "long",
+						}))
 			) {
 				return true;
 			}
@@ -215,7 +217,7 @@ function EditBreak() {
 				? formData.endDate
 				: null;
 		endDate && endDate.setHours(0, 0, 0, 0);
-		if (startDate.toDateString() === endDate.toDateString()) {
+		if (endDate && startDate.toDateString() === endDate.toDateString()) {
 			formData.endDate = null;
 		}
 		console.log(startDate, endDate, startDate === endDate);

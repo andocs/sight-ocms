@@ -119,6 +119,7 @@ function StaffHome() {
 	if (isLoading) {
 		return <Spinner />;
 	}
+	const today = new Date();
 
 	const status = [
 		{
@@ -127,8 +128,13 @@ function StaffHome() {
 			svg: patientsvg,
 		},
 		{
-			number: confirmed.filter((date) => date.appointmentDate === new Date())
-				.length,
+			number: confirmed.filter(
+				(date) =>
+					new Date(date.appointmentDate).getFullYear() ===
+						today.getFullYear() &&
+					new Date(date.appointmentDate).getMonth() === today.getMonth() &&
+					new Date(date.appointmentDate).getDate() === today.getDate()
+			).length,
 			text: "Appointments Today",
 			svg: appointmentsvg,
 		},
@@ -175,7 +181,12 @@ function StaffHome() {
 
 	const table = {
 		header: "Appointments For Today",
-		data: confirmed.filter((date) => date.appointmentDate === new Date()),
+		data: confirmed.filter(
+			(date) =>
+				new Date(date.appointmentDate).getFullYear() === today.getFullYear() &&
+				new Date(date.appointmentDate).getMonth() === today.getMonth() &&
+				new Date(date.appointmentDate).getDate() === today.getDate()
+		),
 		columns,
 	};
 

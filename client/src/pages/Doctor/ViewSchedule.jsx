@@ -80,8 +80,6 @@ function ViewSchedule() {
 		{ header: "End Time", field: "endTime" },
 		{ header: "Lunch Break Start", field: "lunchBreakStart" },
 		{ header: "Lunch Break End", field: "lunchBreakEnd" },
-		{ header: "Is Leave", field: "isLeave" },
-		{ header: "Is Emergency Break", field: "isEmergencyBreak" },
 	];
 
 	const goBack = () => {

@@ -70,6 +70,7 @@ const deleteRequest = async (requestId, token) => {
 			Authorization: `Bearer ${token}`,
 		},
 	};
+	console.log(requestId);
 	const url = `${BASE_URL}/${getUserRole(token)}/maintenance/${requestId}`;
 	const res = await axios.delete(url, config);
 	return res.data;

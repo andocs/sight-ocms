@@ -23,130 +23,131 @@ const registerUser = asyncHandler(async (req, res) => {
 
 	const userExists = await User.findOne({ email });
 	if (userExists) {
-		console.log(userExists);
-		if (userExists.password && userExists.isRegistered === true) {
+		if (password !== conf_pass) {
+			return res.status(400).json({ message: "Passwords do not match!" });
+		}
+
+		if (userExists.password && userExists.isRegistered) {
 			return res.status(400).json({ message: "User already exists!" });
-		} else {
-			if (password !== conf_pass) {
-				return res.status(400).json({ message: "Passwords do not match!" });
-			}
-			const hashedPassword = await bcrypt.hash(password, 10);
-			const updates = {
-				password: hashedPassword,
-				isRegistered: true,
-			};
-			const session = await User.startSession(sessionOptions);
-			try {
-				session.startTransaction();
-				const updatedUser = await User.findByIdAndUpdate(
-					userExists._id,
-					updates,
+		}
+
+		const hashedPassword = await bcrypt.hash(password, 10);
+		const updates = {
+			password: hashedPassword,
+			isRegistered: true,
+		};
+
+		const session = await User.startSession(sessionOptions);
+		try {
+			session.startTransaction();
+
+			const updatedUser = await User.findByIdAndUpdate(
+				userExists._id,
+				updates,
+				{
+					new: true,
+					runValidators: true,
+					session,
+				}
+			);
+
+			await AuditLog.create(
+				[
 					{
-						new: true,
-						runValidators: true,
-						session,
-					}
-				);
-
-				await AuditLog.create(
-					[
-						{
-							userId: userExists[0]._id,
-							operation: "update",
-							entity: "User",
-							entityId: userExists[0]._id,
-							oldValues: userExists,
-							newValues: updatedUser,
-							userIpAddress: req.ip,
-							userAgent: req.get("user-agent"),
-							additionalInfo: "User Account registered",
-						},
-					],
-					{ session }
-				);
-				await session.commitTransaction();
-				return res.status(201).json({
-					data: updatedUser,
-					message: "Account successfully registered!",
-				});
-			} catch (error) {
-				if (error.name === "ValidationError") {
-					const validationErrors = [];
-					for (const field in error.errors) {
-						validationErrors.push({
-							fieldName: field,
-							message: error.errors[field].message,
-						});
-					}
-					return res.status(400).json({ message: validationErrors });
+						userId: userExists._id,
+						operation: "update",
+						entity: "User",
+						entityId: userExists._id,
+						oldValues: userExists,
+						newValues: updatedUser,
+						userIpAddress: req.ip,
+						userAgent: req.get("user-agent"),
+						additionalInfo: "User Account registered",
+					},
+				],
+				{ session }
+			);
+			await session.commitTransaction();
+			return res.status(201).json({
+				data: updatedUser,
+				message: "Account successfully registered!",
+			});
+		} catch (error) {
+			if (error.name === "ValidationError") {
+				const validationErrors = [];
+				for (const field in error.errors) {
+					validationErrors.push({
+						fieldName: field,
+						message: error.errors[field].message,
+					});
 				}
-				if (session) {
-					await session.abortTransaction();
-					session.endSession();
-				}
-				return res.status(400).json({ message: error });
+				return res.status(400).json({ message: validationErrors });
 			}
-			session.endSession();
+			if (session) {
+				await session.abortTransaction();
+				session.endSession();
+			}
+			return res.status(400).json({ message: error });
 		}
-	}
-	//Hash password function
-	if (password !== conf_pass) {
-		return res.status(400).json({ message: "Passwords do not match!" });
-	}
+	} else {
+		if (password !== conf_pass) {
+			return res.status(400).json({ message: "Passwords do not match!" });
+		}
 
-	const hashedPassword = await bcrypt.hash(password, 10);
-	const session = await User.startSession(sessionOptions);
-	try {
-		session.startTransaction();
-		const user = await User.create(
-			[
-				{
-					email,
-					password: hashedPassword,
-					role: "patient",
-					isRegistered: true,
-				},
-			],
-			{ session }
-		);
-		await AuditLog.create(
-			[
-				{
-					userId: user[0]._id,
-					operation: "create",
-					entity: "User",
-					entityId: user[0]._id,
-					oldValues: null,
-					newValues: user[0],
-					userIpAddress: req.ip,
-					userAgent: req.get("user-agent"),
-					additionalInfo: "New staff account added",
-				},
-			],
-			{ session }
-		);
-		await session.commitTransaction();
-		res
-			.status(200)
-			.json({ data: user, message: `Account successfully created!` });
-	} catch (error) {
-		if (error.name === "ValidationError") {
-			const validationErrors = [];
-			for (const field in error.errors) {
-				validationErrors.push({
-					fieldName: field,
-					message: error.errors[field].message,
-				});
+		const hashedPassword = await bcrypt.hash(password, 10);
+		const session = await User.startSession(sessionOptions);
+		try {
+			session.startTransaction();
+			const user = await User.create(
+				[
+					{
+						email,
+						password: hashedPassword,
+						role: "patient",
+						isRegistered: true,
+					},
+				],
+				{ session }
+			);
+			await AuditLog.create(
+				[
+					{
+						userId: user[0]._id,
+						operation: "create",
+						entity: "User",
+						entityId: user[0]._id,
+						oldValues: null,
+						newValues: user[0],
+						userIpAddress: req.ip,
+						userAgent: req.get("user-agent"),
+						additionalInfo: "New staff account added",
+					},
+				],
+				{ session }
+			);
+			await session.commitTransaction();
+			res
+				.status(200)
+				.json({ data: user, message: `Account successfully created!` });
+		} catch (error) {
+			if (error.name === "ValidationError") {
+				const validationErrors = [];
+				for (const field in error.errors) {
+					validationErrors.push({
+						fieldName: field,
+						message: error.errors[field].message,
+					});
+				}
+				return res.status(400).json({ message: validationErrors });
 			}
-			return res.status(400).json({ message: validationErrors });
+			if (session) {
+				await session.abortTransaction();
+				session.endSession();
+			}
+			return res.status(400).json({ message: error });
 		}
-		if (session) {
-			await session.abortTransaction();
-			session.endSession();
-		}
-		return res.status(400).json({ message: error });
+		session.endSession();
 	}
-	session.endSession();
 });
 
 //@desc Login User
@@ -164,8 +165,8 @@ const loginUser = asyncHandler(async (req, res) => {
 		return res.status(401).json({ message: "Wrong email!" });
 	}
 
-	if (user && !user.password) {
-		return res.status(200).json({
+	if (!user.password) {
+		return res.status(400).json({
 			message: "Please set a password to complete your registration.",
 		});
 	}
@@ -374,7 +375,6 @@ const updateInfo = asyncHandler(async (req, res) => {
 			message: "Your account has successfully been updated!",
 		});
 	} catch (error) {
-		console.log(error);
 		if (req.file) {
 			fs.unlinkSync(req.file.path);
 		}
@@ -467,7 +467,6 @@ const changePassword = asyncHandler(async (req, res) => {
 			});
 			await session.commitTransaction();
 		} catch (error) {
-			console.log(error);
 			if (error.name === "ValidationError") {
 				const validationErrors = [];
 				for (const field in error.errors) {
