@@ -1,0 +1,191 @@
+[05-Aug-2024 04:02:36 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\pasigtrms\mobile\logout.php on line 17
+[05-Aug-2024 04:04:09 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\pasigtrms\mobile\login.php on line 14
+[05-Aug-2024 04:04:09 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:04:09 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:04:09 Europe/Berlin] PHP Warning:  Array to string conversion in C:\xampp\htdocs\pasigtrms\mobile\login.php on line 58
+[05-Aug-2024 04:04:09 Europe/Berlin] Session: Array
+[05-Aug-2024 04:06:34 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:06:34 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:06:34 Europe/Berlin] Session: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:09:21 Europe/Berlin] Session: Array
+(
+)
+
+[05-Aug-2024 04:12:08 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\pasigtrms\mobile\login.php on line 14
+[05-Aug-2024 04:12:08 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:12:08 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:12:08 Europe/Berlin] Session after login: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:13:14 Europe/Berlin] Session before logout: Array
+(
+)
+
+[05-Aug-2024 04:13:43 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:13:43 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:13:43 Europe/Berlin] Session after login: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:13:50 Europe/Berlin] Session before logout: Array
+(
+)
+
+[05-Aug-2024 04:16:11 Europe/Berlin] Session before logout: Array
+(
+)
+
+[05-Aug-2024 04:16:11 Europe/Berlin] Session before logout: Array
+(
+)
+
+[05-Aug-2024 04:16:12 Europe/Berlin] Session before logout: Array
+(
+)
+
+[05-Aug-2024 04:16:12 Europe/Berlin] Session before logout: Array
+(
+)
+
+[05-Aug-2024 04:16:12 Europe/Berlin] Session before logout: Array
+(
+)
+
+[05-Aug-2024 04:17:27 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:17:27 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:17:27 Europe/Berlin] Session after login: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:19:02 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:19:02 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:19:02 Europe/Berlin] Session after login: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:19:04 Europe/Berlin] PHP Warning:  Undefined variable $_SESSION in C:\xampp\htdocs\pasigtrms\mobile\logout.php on line 13
+[05-Aug-2024 04:19:04 Europe/Berlin] Session after login: 
+[05-Aug-2024 04:20:29 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:20:29 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:20:29 Europe/Berlin] Session after login: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:21:42 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:21:42 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:21:43 Europe/Berlin] Session after login: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:22:09 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:22:09 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:22:09 Europe/Berlin] Session after login: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:22:11 Europe/Berlin] Session logout: Array
+(
+)
+
+[05-Aug-2024 04:24:33 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:24:33 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:24:33 Europe/Berlin] Session after login: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:25:07 Europe/Berlin] Session logout: Array
+(
+)
+
+[05-Aug-2024 04:25:17 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:25:17 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:25:17 Europe/Berlin] Session after login: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:25:39 Europe/Berlin] Session logout: Array
+(
+)
+
+[05-Aug-2024 04:25:47 Europe/Berlin] Session path "C:\xampp\tmp" is not writable for PHP!
+[05-Aug-2024 04:25:47 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[05-Aug-2024 04:25:47 Europe/Berlin] Number of rows found: 1
+[05-Aug-2024 04:25:47 Europe/Berlin] Session after login: Array
+(
+    [loggedin] => 1
+    [userid] => 114
+)
+
+[05-Aug-2024 04:25:50 Europe/Berlin] Session logout: Array
+(
+)
+
+[06-Aug-2024 06:18:24 Europe/Berlin] asdasd
+[06-Aug-2024 06:18:24 Europe/Berlin] Encoded Data: {"email":"","password":"","remember_me":false}
+[06-Aug-2024 07:46:43 Europe/Berlin] asdasd
+[06-Aug-2024 07:46:53 Europe/Berlin] asdasd
+[06-Aug-2024 07:46:55 Europe/Berlin] asdasd
+[06-Aug-2024 07:46:55 Europe/Berlin] asdasd
+[06-Aug-2024 07:46:56 Europe/Berlin] PHP Warning:  mysqli::__construct(): (HY000/1045): Access denied for user 'pasigdbtrms_samequiet'@'112.200.172.111' (using password: YES) in C:\xampp\htdocs\pasigtrms\mobile\db.php on line 7
+[06-Aug-2024 07:46:56 Europe/Berlin] PHP Warning:  mysqli::__construct(): (HY000/1045): Access denied for user 'pasigdbtrms_samequiet'@'112.200.172.111' (using password: YES) in C:\xampp\htdocs\pasigtrms\mobile\db.php on line 7
+[06-Aug-2024 07:47:07 Europe/Berlin] PHP Warning:  mysqli::__construct(): (HY000/1045): Access denied for user 'pasigdbtrms_samequiet'@'112.200.172.111' (using password: YES) in C:\xampp\htdocs\pasigtrms\mobile\db.php on line 7
+[06-Aug-2024 07:47:07 Europe/Berlin] PHP Warning:  mysqli::__construct(): (HY000/1045): Access denied for user 'pasigdbtrms_samequiet'@'112.200.172.111' (using password: YES) in C:\xampp\htdocs\pasigtrms\mobile\db.php on line 7
+[06-Aug-2024 07:47:10 Europe/Berlin] asdasd
+[06-Aug-2024 07:47:11 Europe/Berlin] asdasd
+[06-Aug-2024 07:47:22 Europe/Berlin] PHP Warning:  mysqli::__construct(): (HY000/1045): Access denied for user 'pasigdbtrms_samequiet'@'112.200.172.111' (using password: YES) in C:\xampp\htdocs\pasigtrms\mobile\db.php on line 7
+[06-Aug-2024 07:47:22 Europe/Berlin] PHP Warning:  mysqli::__construct(): (HY000/1045): Access denied for user 'pasigdbtrms_samequiet'@'112.200.172.111' (using password: YES) in C:\xampp\htdocs\pasigtrms\mobile\db.php on line 7
+[06-Aug-2024 07:49:02 Europe/Berlin] asdasd
+[06-Aug-2024 07:49:09 Europe/Berlin] asdasd
+[06-Aug-2024 07:49:14 Europe/Berlin] PHP Warning:  mysqli::__construct(): (HY000/1045): Access denied for user 'pasigdbtrms_samequiet'@'112.200.172.111' (using password: YES) in C:\xampp\htdocs\pasigtrms\mobile\db.php on line 7
+[06-Aug-2024 07:49:14 Europe/Berlin] PHP Warning:  mysqli::__construct(): (HY000/1045): Access denied for user 'pasigdbtrms_samequiet'@'112.200.172.111' (using password: YES) in C:\xampp\htdocs\pasigtrms\mobile\db.php on line 7
+[06-Aug-2024 07:52:53 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[06-Aug-2024 08:56:10 Europe/Berlin] Encoded Data: {"email":"","password":"","remember_me":false}
+[06-Aug-2024 08:56:33 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[06-Aug-2024 09:29:09 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[06-Aug-2024 09:51:02 Europe/Berlin] Encoded Data: {"email":"","password":"","remember_me":false}
+[06-Aug-2024 13:37:37 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[06-Aug-2024 13:42:08 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[06-Aug-2024 14:58:35 Europe/Berlin] Encoded Data: {"email":"","password":"","remember_me":false}
+[06-Aug-2024 14:59:54 Europe/Berlin] Encoded Data: {"email":"","password":"","remember_me":false}
+[06-Aug-2024 15:00:16 Europe/Berlin] Encoded Data: {"email":"","password":"","remember_me":false}
+[06-Aug-2024 16:20:18 Europe/Berlin] Encoded Data: {"email":"","password":"","remember_me":false}
+[06-Aug-2024 16:20:32 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[06-Aug-2024 16:21:07 Europe/Berlin] Encoded Data: {"email":"","password":"","remember_me":false}
+[06-Aug-2024 16:21:19 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[06-Aug-2024 18:22:47 Europe/Berlin] Encoded Data: {"email":"","password":"","remember_me":false}
+[06-Aug-2024 18:22:59 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[07-Aug-2024 03:56:24 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[07-Aug-2024 04:04:36 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[07-Aug-2024 04:28:50 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[07-Aug-2024 07:46:12 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[07-Aug-2024 08:31:06 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[07-Aug-2024 08:54:48 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[07-Aug-2024 09:21:27 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[07-Aug-2024 11:09:28 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[08-Aug-2024 10:30:43 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[08-Aug-2024 12:54:57 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
+[08-Aug-2024 14:53:26 Europe/Berlin] Encoded Data: {"email":"docotkat@gmail.com","password":"ABcd.123","remember_me":false}
